@@ -16,7 +16,12 @@ const saleRoutes = require("./routes/sale");
 
 const app = express();
 
-var allowedDomains = ["http://localhost:3000", "http://jularbs.com:3000"];
+var allowedDomains = [
+  "http://localhost:3000",
+  "http://jularbs.com:3000",
+  "http://starcity-website.herokuapp.com",
+  "https://starcity-website.herokuapp.com",
+];
 
 app.use(
   cors({
