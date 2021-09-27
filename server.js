@@ -16,7 +16,7 @@ const saleRoutes = require("./routes/sale");
 
 const app = express();
 
-var allowedDomains = ["http://localhost:3000"];
+var allowedDomains = ["http://localhost:3000", "http://jularbs.com:3000"];
 
 app.use(
   cors({
@@ -65,6 +65,8 @@ app.use("/api", ticketRoutes);
 app.use("/api", paymentOptionRoutes);
 app.use("/api", optionRoutes);
 app.use("/api", saleRoutes);
+
+app.use(express.static(__dirname + "/data/img"));
 
 //port
 const port = process.env.PORT || 8000;

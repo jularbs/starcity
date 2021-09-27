@@ -7,6 +7,10 @@ const {
   list,
   remove,
   sync,
+  createCheckout,
+  processPayment,
+  readBySaltRefID,
+  styledQRcode,
 } = require("../controllers/sale");
 
 //Version 1.0
@@ -16,6 +20,15 @@ router.get("/v1/sale", list);
 router.get("/v1/sale/:slug", read);
 router.delete("/v1/sale", remove);
 
+router.get("/v1/access-pass", readBySaltRefID);
 router.get("/v1/sync", sync);
+
+router.post("/v1/create-checkout", createCheckout);
+
+//payment webhooks
+router.get("/v1/payment/:status/:option/:refid", processPayment);
+
+//TESTS
+router.get("/v1/test-qrcode", styledQRcode);
 
 module.exports = router;

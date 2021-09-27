@@ -42,6 +42,10 @@ const saleSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    contactNumber: {
+      type: String,
+      required: true,
+    },
     cartItems: [cartItem],
     orderTotal: {
       type: Decimal128,
@@ -59,6 +63,7 @@ const saleSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    salt: String,
     QRcode: Object,
     paymentDetails: {
       option: {

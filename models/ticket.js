@@ -25,6 +25,9 @@ const ticketSchema = new mongoose.Schema(
     description: {
       type: String,
     },
+    shortDescription: {
+      type: String,
+    },
     price: {
       type: Decimal128,
       get: getPrice,
@@ -39,6 +42,11 @@ const ticketSchema = new mongoose.Schema(
       type: String,
       default: "available",
       required: true,
+    },
+    itemCode: {
+      type: String,
+      max: 4,
+      trim: true,
     },
     meta: Object,
     id: false,

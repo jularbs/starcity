@@ -1,16 +1,25 @@
 const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
+const PaymentOption = require("../models/paymentOption");
+const AccessPass = require("../models/accessPass");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
+const mongoose = require("mongoose");
 
+const { sendMail } = require("../helpers/nodemailer");
+const { toDataURL } = require("qrcode-styled");
+
+//HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
     const { ticketId } = ticket;
-    Ticket.findOne({ _id: ticketId }).exec((err, result) => {
-      if (err) reject(err);
-      return resolve({ price: result.price });
-    });
+    Ticket.findOne({ _id: new mongoose.Types.ObjectId(`${ticketId}`) }).exec(
+      (err, result) => {
+        if (err) reject(err);
+        return resolve({ price: result.price });
+      }
+    );
   });
 };
 
@@ -32,6 +41,7 @@ exports.calculateCart = (cartItems) => {
   return Promise.all(cartItems.map((item) => this.calculateCartItem(item)));
 };
 
+//REQUESTS
 exports.sync = async (req, res) => {
   Sale.find({ status: "for sync" })
     .populate({
@@ -50,7 +60,9 @@ exports.sync = async (req, res) => {
         select: "name -_id",
       },
     })
-    .select("customerName cartItems orderTotal paymentDetails refId created_at -_id")
+    .select(
+      "customerName cartItems orderTotal paymentDetails refId created_at -_id"
+    )
     .exec(async (err, data) => {
       if (err) res.json({ error: "Failed to synchronize", message: err });
       await Sale.updateMany(
@@ -118,14 +130,26 @@ exports.create = async (req, res) => {
 
     res.json(result);
   });
+};
 
-  // check if there is duplicate
+exports.readBySaltRefID = async (req, res) => {
+  const saleDetails = await Sale.findOne({
+    salt: req.query.salt,
+    refId: req.query.refid,
+  })
+    .select("_id customerName emailAddress contactNumber")
+    .exec();
 
-  // if there is create again (LOOP)
+  if (saleDetails == null) res.json({ error: "Invalid Data" });
 
-  //get cartitems and compute for total
+  const accessPasses = await AccessPass.find({
+    salesId: saleDetails._id,
+  })
+    .populate("ticketId", "name -_id")
+    .select("ticketId QRcode accessToken -_id")
+    .exec();
 
-  //save sale
+  res.json({ details: saleDetails, accessPasses });
 };
 
 exports.read = (req, res) => {
@@ -205,4 +229,220 @@ exports.remove = async (req, res) => {
     }
     res.json({ success: "Ticket deleted successfully" });
   });
+};
+
+exports.createCheckout = async (req, res) => {
+  const { cartItems, customerName, email, contactNumber } = req.body;
+
+  let isExisting = [];
+  let refID = "";
+
+  do {
+    refID = crypto.randomBytes(6).toString("hex");
+    isExisting = await Sale.find({ refId: refID }).exec();
+  } while (isExisting.length !== 0);
+
+  let sale = new Sale();
+
+  //error when only 1 item in cart
+  const items = await Promise.all(
+    cartItems.map(async (item) => {
+      const price = await this.getCurrentTicketPrice({ ticketId: item._id });
+      return {
+        ticketId: item._id,
+        qty: item.qty,
+        priceAcquired: price.price,
+      };
+    })
+  );
+  sale.customerName = customerName;
+  sale.emailAddress = email;
+  sale.refId = refID;
+  sale.contactNumber = contactNumber;
+  sale.cartItems = items;
+  sale.status = "awaiting payment";
+  sale.orderTotal = items.reduce((sum, item) => {
+    return sum + item.qty * item.priceAcquired;
+  }, 0);
+
+  sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
+  sale.save((err, result) => {
+    if (err) {
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
+    }
+
+    res.json(result);
+  });
+};
+
+exports.processPayment = async (req, res) => {
+  const { status, refid, option } = req.params;
+
+  const sale = await Sale.findOne({ refId: refid }).exec();
+  const pOption = await PaymentOption.findOne({ slug: option })
+    .select("_id")
+    .exec();
+
+  sale.status = status;
+  sale.paymentDetails = {
+    option: pOption._id,
+    meta: {
+      referenceNumber: refid,
+      status: status,
+    },
+  };
+
+  sale.save((err, result) => {
+    res.redirect(
+      `${process.env.WEBSITE_URL}/?payment=${status}&refid=${refid}`
+    );
+  });
+
+  //process accesspass
+
+  if (status == "success") {
+    //send Acknowledgement receipt
+    const details = {
+      to: sale.emailAddress,
+      from: process.env.EMAIL_ADDRESS,
+      subject:
+        "Your acknowledgement receipt for your Star City ticket purchase",
+      html: `send details`,
+    };
+
+    try {
+      let info = sendMail(details);
+      console.log(info);
+    } catch (e) {
+      console.log(e);
+    }
+
+    //get items
+    const accessPasses = sale.cartItems;
+
+    accessPasses.map(async (ap) => {
+      //create token
+      let isExisting = [];
+      let finalToken = "";
+
+      //get ticketDetails
+      const ticket = await Ticket.findOne({
+        _id: ap.ticketId,
+      }).exec();
+
+      //repeat based on number of tickets
+      for (let i = 0; i < ap.qty; i++) {
+        //check for dupes
+        do {
+          finalToken = `W-${ticket.itemCode}-${crypto
+            .randomBytes(4)
+            .toString("hex")}`;
+
+          isExisting = await AccessPass.find({
+            accessToken: finalToken,
+          }).exec();
+        } while (isExisting.length !== 0);
+
+        //generate QR code based on token
+
+        // let base64 = await QRCode.toDataURL(finalToken, {
+        //   version: 4,
+        //   errorCorrectionLevel: "H",
+        //   type: "image/jpeg",
+        //   quality: 1,
+        //   margin: 5,
+        //   width: 250,
+        //   height: 250,
+        // });
+
+        // //upload image to s3
+        // const response = await uploadBase64(
+        //   await base64,
+        //   `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
+        // );
+
+        const opts = {
+          moduleStyle: {
+            type: "square",
+            colordark: "#ffa41b",
+            colorlight: "#ffffff",
+          },
+          positionMarker: {
+            squareType: "square",
+            squareColor: "#ffa41b",
+            innerType: "square",
+            innerColor: "#ffa41b",
+          },
+          image: `data/img/spc_logo.png`,
+          version: 4,
+          errorCorrectionLevel: "H",
+          type: "image/svg",
+          quality: 1,
+          margin: 3,
+          // width: 1000,
+          // height: 1000,
+        };
+
+        const qrCode = await toDataURL(finalToken, opts);
+        const upload = await uploadBase64(
+          await qrCode,
+          `test-qrs/${sale.customerName}/${sale.refId}/${finalToken}`
+        );
+
+        //save data to accesspassmodel
+        let accessPass = new AccessPass();
+        accessPass.ticketId = ap.ticketId;
+        accessPass.salesId = sale._id;
+        accessPass.accessToken = finalToken;
+        accessPass.QRcode = await upload;
+
+        accessPass.save((err, result) => {
+          if (err) console.log("accesspass save failed in database");
+
+          console.log("accesspass created");
+          //email customer to say that their access passes are ready to be shipped
+        });
+      }
+    });
+
+    //SEND tickets
+    const accessPassPayload = {
+      to: sale.emailAddress,
+      from: process.env.EMAIL_ADDRESS,
+      subject: "Your Star City Tickets are now available",
+      html: `<a href="${process.env.WEBSITE_URL}/accesspass?s=${sale.salt}&r=${sale.refId}">Click here to view tickets</a>`,
+    };
+
+    try {
+      let info = sendMail(accessPassPayload);
+      console.log(info);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+};
+
+//TEST QRCODE
+exports.styledQRcode = async (req, res) => {
+  const opts = {
+    moduleStyle: {
+      type: "rounded",
+      colordark: "#0D406C",
+      colorlight: "#ffffff",
+    },
+    positionMarker: {
+      squareType: "none",
+      squareColor: "#7826E1",
+      innerType: "square",
+      innerColor: "#19DE7F",
+    },
+    // image: "/data/img/spc_logo.png",
+  };
+  let base64 = await QRCode.toDataURL("asdfasdfasfsafasfasdfasf", opts);
+
+  const loc = await uploadBase64(await base64, `test-qr/2`);
+  res.json(loc);
 };

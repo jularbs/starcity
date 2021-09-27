@@ -13,12 +13,11 @@ exports.uploadBase64 = (base64, folder) => {
       "base64"
     );
     const type = base64.split(";")[0].split("/")[1];
-    const image_name = Date.now() + "-" + Math.floor(Math.random() * 1000);
 
     s3.upload(
       {
         Bucket: process.env.AWS_S3_BUCKETNAME,
-        Key: `${folder}/${image_name}.${type}`, // type is not required
+        Key: `${folder}`, // type is not required
         Body: base64Data,
         ACL: "public-read",
         ContentEncoding: "base64", // required
