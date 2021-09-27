@@ -427,6 +427,7 @@ exports.processPayment = async (req, res) => {
 
 //TEST QRCODE
 exports.styledQRcode = async (req, res) => {
+  const payload = "text_hidden_behind_fuzzy_colored_schema";
   const opts = {
     moduleStyle: {
       type: "rounded",
@@ -439,10 +440,31 @@ exports.styledQRcode = async (req, res) => {
       innerType: "square",
       innerColor: "#19DE7F",
     },
-    // image: "/data/img/spc_logo.png",
   };
-  let base64 = await QRCode.toDataURL("asdfasdfasfsafasfasdfasf", opts);
 
-  const loc = await uploadBase64(await base64, `test-qr/2`);
-  res.json(loc);
+  toDataURL(payload, opts).then((resp) => {
+    res.send(`<html lang="en">
+                <head>
+                    <style type="text/css">
+                        .container {
+                            background-color: aqua;
+                        }
+            
+                    </style>
+                </head>
+                <body class="container">
+                    <style>
+                        .qr-code {
+                            background-color: white;
+                            height: 40rem;
+                            width: 40rem;
+                            text-align: center;
+                            background-image: url('${resp}');
+                            background-repeat: no-repeat;
+                        }
+                    </style>
+                    <div class="qr-code"> </div>
+                </body>
+            </html>`);
+  });
 };
