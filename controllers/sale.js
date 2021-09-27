@@ -4,11 +4,17 @@ const PaymentOption = require("../models/paymentOption");
 const AccessPass = require("../models/accessPass");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
-const { uploadBase64 } = require("../helpers/s3uploader");
+const { uploadBase64, uploadBufferPNG } = require("../helpers/s3uploader");
 const mongoose = require("mongoose");
 
 const { sendMail } = require("../helpers/nodemailer");
 const { toDataURL } = require("qrcode-styled");
+
+//qrcodestyling node
+const {
+  QRCodeStyling,
+} = require("qr-code-styling-node/lib/qr-code-styling.common.js");
+const nodeCanvas = require("canvas");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -346,50 +352,115 @@ exports.processPayment = async (req, res) => {
           }).exec();
         } while (isExisting.length !== 0);
 
-        //generate QR code based on token
-
-        // let base64 = await QRCode.toDataURL(finalToken, {
-        //   version: 4,
-        //   errorCorrectionLevel: "H",
-        //   type: "image/jpeg",
-        //   quality: 1,
-        //   margin: 5,
-        //   width: 250,
-        //   height: 250,
-        // });
-
-        // //upload image to s3
-        // const response = await uploadBase64(
-        //   await base64,
-        //   `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
-        // );
-
-        const opts = {
-          moduleStyle: {
-            type: "square",
-            colordark: "#ffa41b",
-            colorlight: "#ffffff",
+        const options = {
+          width: 500,
+          height: 500,
+          data: "asdfasfasdfasdfafdasdfasfasf",
+          // data: data.accessToken,
+          margin: 10,
+          qrOptions: {
+            typeNumber: "4",
+            mode: "Byte",
+            errorCorrectionLevel: "H",
           },
-          positionMarker: {
-            squareType: "square",
-            squareColor: "#ffa41b",
-            innerType: "square",
-            innerColor: "#ffa41b",
+          imageOptions: {
+            hideBackgroundDots: false,
+            imageSize: 0.5,
+            margin: 0,
+          },
+          dotsOptions: {
+            type: "classy-rounded",
+            gradient: {
+              type: "linear",
+              rotation: 0,
+              colorStops: [
+                {
+                  offset: 0,
+                  color: "#ffbd24",
+                },
+                {
+                  offset: 1,
+                  color: "#ffdc33",
+                },
+              ],
+            },
+          },
+          backgroundOptions: {
+            color: "#ffffff",
           },
           image: `data/img/spc_logo.png`,
-          version: 4,
-          errorCorrectionLevel: "H",
-          type: "image/svg",
-          quality: 1,
-          margin: 3,
-          // width: 1000,
-          // height: 1000,
+          dotsOptionsHelper: {
+            colorType: {
+              single: true,
+              gradient: false,
+            },
+            gradient: {
+              linear: true,
+              radial: false,
+              color1: "#6a1a4c",
+              color2: "#6a1a4c",
+              rotation: "0",
+            },
+          },
+          cornersSquareOptions: {
+            type: "dot",
+            color: "#ffbd24",
+            gradient: null,
+          },
+          cornersSquareOptionsHelper: {
+            colorType: {
+              single: true,
+              gradient: false,
+            },
+            gradient: {
+              linear: true,
+              radial: false,
+              color1: "#000000",
+              color2: "#000000",
+              rotation: "0",
+            },
+          },
+          cornersDotOptions: {
+            type: "",
+            color: "#ffbd24",
+          },
+          cornersDotOptionsHelper: {
+            colorType: {
+              single: true,
+              gradient: false,
+            },
+            gradient: {
+              linear: true,
+              radial: false,
+              color1: "#000000",
+              color2: "#000000",
+              rotation: "0",
+            },
+          },
+          backgroundOptionsHelper: {
+            colorType: {
+              single: true,
+              gradient: false,
+            },
+            gradient: {
+              linear: true,
+              radial: false,
+              color1: "#ffffff",
+              color2: "#ffffff",
+              rotation: "0",
+            },
+          },
         };
 
-        const qrCode = await toDataURL(finalToken, opts);
-        const upload = await uploadBase64(
-          await qrCode,
-          `test-qrs/${sale.customerName}/${sale.refId}/${finalToken}`
+        const qrCodeImage = new QRCodeStyling({
+          nodeCanvas, // this is required
+          ...options,
+        });
+
+        const buffer = await qrCodeImage.getRawData("png");
+        const upload = await uploadBufferPNG(
+          buffer,
+          `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
         );
 
         //save data to accesspassmodel
@@ -427,44 +498,114 @@ exports.processPayment = async (req, res) => {
 
 //TEST QRCODE
 exports.styledQRcode = async (req, res) => {
-  const payload = "text_hidden_behind_fuzzy_colored_schema";
-  const opts = {
-    moduleStyle: {
-      type: "rounded",
-      colordark: "#0D406C",
-      colorlight: "#ffffff",
+  const options = {
+    width: 500,
+    height: 500,
+    data: "asdfasfasdfasdfafdasdfasfasf",
+    // data: data.accessToken,
+    margin: 10,
+    qrOptions: {
+      typeNumber: "4",
+      mode: "Byte",
+      errorCorrectionLevel: "H",
     },
-    positionMarker: {
-      squareType: "none",
-      squareColor: "#7826E1",
-      innerType: "square",
-      innerColor: "#19DE7F",
+    imageOptions: {
+      hideBackgroundDots: false,
+      imageSize: 0.5,
+      margin: 0,
+    },
+    dotsOptions: {
+      type: "classy-rounded",
+      gradient: {
+        type: "linear",
+        rotation: 0,
+        colorStops: [
+          {
+            offset: 0,
+            color: "#ffbd24",
+          },
+          {
+            offset: 1,
+            color: "#ffdc33",
+          },
+        ],
+      },
+    },
+    backgroundOptions: {
+      color: "#ffffff",
+    },
+    image: `data/img/spc_logo.png`,
+    dotsOptionsHelper: {
+      colorType: {
+        single: true,
+        gradient: false,
+      },
+      gradient: {
+        linear: true,
+        radial: false,
+        color1: "#6a1a4c",
+        color2: "#6a1a4c",
+        rotation: "0",
+      },
+    },
+    cornersSquareOptions: {
+      type: "dot",
+      color: "#ffbd24",
+      gradient: null,
+    },
+    cornersSquareOptionsHelper: {
+      colorType: {
+        single: true,
+        gradient: false,
+      },
+      gradient: {
+        linear: true,
+        radial: false,
+        color1: "#000000",
+        color2: "#000000",
+        rotation: "0",
+      },
+    },
+    cornersDotOptions: {
+      type: "",
+      color: "#ffbd24",
+    },
+    cornersDotOptionsHelper: {
+      colorType: {
+        single: true,
+        gradient: false,
+      },
+      gradient: {
+        linear: true,
+        radial: false,
+        color1: "#000000",
+        color2: "#000000",
+        rotation: "0",
+      },
+    },
+    backgroundOptionsHelper: {
+      colorType: {
+        single: true,
+        gradient: false,
+      },
+      gradient: {
+        linear: true,
+        radial: false,
+        color1: "#ffffff",
+        color2: "#ffffff",
+        rotation: "0",
+      },
     },
   };
 
-  toDataURL(payload, opts).then((resp) => {
-    res.send(`<html lang="en">
-                <head>
-                    <style type="text/css">
-                        .container {
-                            background-color: aqua;
-                        }
-            
-                    </style>
-                </head>
-                <body class="container">
-                    <style>
-                        .qr-code {
-                            background-color: white;
-                            height: 40rem;
-                            width: 40rem;
-                            text-align: center;
-                            background-image: url('${resp}');
-                            background-repeat: no-repeat;
-                        }
-                    </style>
-                    <div class="qr-code"> </div>
-                </body>
-            </html>`);
+  const qrCodeImage = new QRCodeStyling({
+    nodeCanvas, // this is required
+    ...options,
+  });
+
+  qrCodeImage.getRawData("png").then(async (buffer) => {
+    const loc = await uploadBufferPNG(buffer, "test/qrs");
+
+    res.send(loc);
   });
 };

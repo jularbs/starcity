@@ -6,6 +6,27 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_S3_SECRETKEY,
 });
 
+exports.uploadBufferPNG = (buffer, folder) => {
+  return new Promise((resolve, reject) => {
+    s3.upload(
+      {
+        Bucket: process.env.AWS_S3_BUCKETNAME,
+        Key: `${folder}`, // type is not required
+        Body: buffer,
+        ACL: "public-read",
+        ContentType: `image/png`, // required. Notice the back ticks
+      },
+      (err, data) => {
+        if (err) return reject(err);
+        return resolve({
+          location: data.Location,
+          bucket: data.Bucket,
+          key: data.Key,
+        });
+      }
+    );
+  });
+};
 exports.uploadBase64 = (base64, folder) => {
   return new Promise((resolve, reject) => {
     const base64Data = new Buffer.from(
