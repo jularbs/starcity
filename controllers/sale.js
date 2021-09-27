@@ -353,9 +353,9 @@ exports.processPayment = async (req, res) => {
         } while (isExisting.length !== 0);
 
         const options = {
-          width: 500,
-          height: 500,
-          data: "asdfasfasdfasdfafdasdfasfasf",
+          width: 300,
+          height: 300,
+          data: finalToken,
           // data: data.accessToken,
           margin: 10,
           qrOptions: {
