@@ -4,18 +4,15 @@ const PaymentOption = require("../models/paymentOption");
 const AccessPass = require("../models/accessPass");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
-const { uploadBase64, uploadBufferPNG } = require("../helpers/s3uploader");
+const { uploadBase64 } = require("../helpers/s3uploader");
 const mongoose = require("mongoose");
 
 const { sendMail } = require("../helpers/nodemailer");
-const { toDataURL } = require("qrcode-styled");
+const nodemailer = require("nodemailer");
 
-//qrcodestyling node
-const {
-  QRCodeStyling,
-} = require("qr-code-styling-node/lib/qr-code-styling.common.js");
-const nodeCanvas = require("canvas");
+const html_to_pdf = require("html-pdf-node");
 
+const { artemplate } = require("../helpers/artemplate");
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
@@ -352,114 +349,18 @@ exports.processPayment = async (req, res) => {
           }).exec();
         } while (isExisting.length !== 0);
 
-        const options = {
+        finalToken = finalToken.toUpperCase();
+        let base64 = await QRCode.toDataURL(finalToken, {
+          version: 4,
+          errorCorrectionLevel: "H",
+          type: "image/jpeg",
+          quality: 1,
+          margin: 5,
           width: 300,
           height: 300,
-          data: finalToken,
-          // data: data.accessToken,
-          margin: 10,
-          qrOptions: {
-            typeNumber: "4",
-            mode: "Byte",
-            errorCorrectionLevel: "H",
-          },
-          imageOptions: {
-            hideBackgroundDots: false,
-            imageSize: 0.5,
-            margin: 0,
-          },
-          dotsOptions: {
-            type: "classy-rounded",
-            gradient: {
-              type: "linear",
-              rotation: 0,
-              colorStops: [
-                {
-                  offset: 0,
-                  color: "#ffbd24",
-                },
-                {
-                  offset: 1,
-                  color: "#ffdc33",
-                },
-              ],
-            },
-          },
-          backgroundOptions: {
-            color: "#ffffff",
-          },
-          image: `data/img/spc_logo.png`,
-          dotsOptionsHelper: {
-            colorType: {
-              single: true,
-              gradient: false,
-            },
-            gradient: {
-              linear: true,
-              radial: false,
-              color1: "#6a1a4c",
-              color2: "#6a1a4c",
-              rotation: "0",
-            },
-          },
-          cornersSquareOptions: {
-            type: "dot",
-            color: "#ffbd24",
-            gradient: null,
-          },
-          cornersSquareOptionsHelper: {
-            colorType: {
-              single: true,
-              gradient: false,
-            },
-            gradient: {
-              linear: true,
-              radial: false,
-              color1: "#000000",
-              color2: "#000000",
-              rotation: "0",
-            },
-          },
-          cornersDotOptions: {
-            type: "",
-            color: "#ffbd24",
-          },
-          cornersDotOptionsHelper: {
-            colorType: {
-              single: true,
-              gradient: false,
-            },
-            gradient: {
-              linear: true,
-              radial: false,
-              color1: "#000000",
-              color2: "#000000",
-              rotation: "0",
-            },
-          },
-          backgroundOptionsHelper: {
-            colorType: {
-              single: true,
-              gradient: false,
-            },
-            gradient: {
-              linear: true,
-              radial: false,
-              color1: "#ffffff",
-              color2: "#ffffff",
-              rotation: "0",
-            },
-          },
-        };
-
-        const qrCodeImage = new QRCodeStyling({
-          nodeCanvas, // this is required
-          ...options,
         });
-
-        const buffer = await qrCodeImage.getRawData("png");
-        const upload = await uploadBufferPNG(
-          buffer,
+        const upload = await uploadBase64(
+          await base64,
           `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
         );
 
@@ -498,114 +399,41 @@ exports.processPayment = async (req, res) => {
 
 //TEST QRCODE
 exports.styledQRcode = async (req, res) => {
-  const options = {
-    width: 500,
-    height: 500,
-    data: "asdfasfasdfasdfafdasdfasfasf",
-    // data: data.accessToken,
-    margin: 10,
-    qrOptions: {
-      typeNumber: "4",
-      mode: "Byte",
-      errorCorrectionLevel: "H",
-    },
-    imageOptions: {
-      hideBackgroundDots: false,
-      imageSize: 0.5,
-      margin: 0,
-    },
-    dotsOptions: {
-      type: "classy-rounded",
-      gradient: {
-        type: "linear",
-        rotation: 0,
-        colorStops: [
-          {
-            offset: 0,
-            color: "#ffbd24",
-          },
-          {
-            offset: 1,
-            color: "#ffdc33",
-          },
-        ],
-      },
-    },
-    backgroundOptions: {
-      color: "#ffffff",
-    },
-    image: `data/img/spc_logo.png`,
-    dotsOptionsHelper: {
-      colorType: {
-        single: true,
-        gradient: false,
-      },
-      gradient: {
-        linear: true,
-        radial: false,
-        color1: "#6a1a4c",
-        color2: "#6a1a4c",
-        rotation: "0",
-      },
-    },
-    cornersSquareOptions: {
-      type: "dot",
-      color: "#ffbd24",
-      gradient: null,
-    },
-    cornersSquareOptionsHelper: {
-      colorType: {
-        single: true,
-        gradient: false,
-      },
-      gradient: {
-        linear: true,
-        radial: false,
-        color1: "#000000",
-        color2: "#000000",
-        rotation: "0",
-      },
-    },
-    cornersDotOptions: {
-      type: "",
-      color: "#ffbd24",
-    },
-    cornersDotOptionsHelper: {
-      colorType: {
-        single: true,
-        gradient: false,
-      },
-      gradient: {
-        linear: true,
-        radial: false,
-        color1: "#000000",
-        color2: "#000000",
-        rotation: "0",
-      },
-    },
-    backgroundOptionsHelper: {
-      colorType: {
-        single: true,
-        gradient: false,
-      },
-      gradient: {
-        linear: true,
-        radial: false,
-        color1: "#ffffff",
-        color2: "#ffffff",
-        rotation: "0",
-      },
-    },
+  let options = { format: "A6", printBackground: true };
+
+  // let file = { content: artemplate() };
+  let file = {
+    url: "https://starcity-website.herokuapp.com/accesspass?s=1356415833684&r=08240a7638a4&t=W-SCAP-5acfaf52",
   };
 
-  const qrCodeImage = new QRCodeStyling({
-    nodeCanvas, // this is required
-    ...options,
+  let buffer = await html_to_pdf.generatePdf(file, options);
+
+  var mail = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+      user: "ralphjularbal@gmail.com",
+      pass: "elicci1234",
+    },
   });
 
-  qrCodeImage.getRawData("png").then(async (buffer) => {
-    const loc = await uploadBufferPNG(buffer, "test/qrs");
+  const arPayload = {
+    to: "ralphjularbal@yahoo.com",
+    from: "noreply@starcity.com.ph",
+    subject: "Thank you for your purchase",
+    html: artemplate(),
+    attachments: [
+      {
+        filename: "acknowledgement-receipt.pdf",
+        content: buffer,
+      },
+    ],
+  };
 
-    res.send(loc);
-  });
+  try {
+    let info = mail.sendMail(arPayload, function (error, info) {
+      res.json({ message: info, error: error });
+    });
+  } catch (e) {
+    res.json({ e });
+  }
 };

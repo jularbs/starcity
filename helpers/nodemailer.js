@@ -17,13 +17,12 @@ const sendMail = async (email) => {
       },
     };
 
-    const { from, to, subject, html } = email;
+    const { from, to, subject, html, attachments } = email;
     const info = await nodemailer
       .createTransport(config)
-      .sendMail({ from, to, subject, html });
+      .sendMail({ from, to, subject, html, attachments });
     return info;
-  } catch (e) {
-  }
+  } catch (e) {}
 };
 
 module.exports = { sendMail };
