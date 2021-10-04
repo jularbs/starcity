@@ -241,7 +241,7 @@ exports.createCheckout = async (req, res) => {
   let refID = "";
 
   do {
-    refID = crypto.randomBytes(6).toString("hex");
+    refID = crypto.randomBytes(6).toString("hex").toUpperCase();
     isExisting = await Sale.find({ refId: refID }).exec();
   } while (isExisting.length !== 0);
 
@@ -291,7 +291,7 @@ exports.processPayment = async (req, res) => {
 
   sale.status = status;
   sale.paymentDetails = {
-    option: pOption._id,
+    option: await pOption._id,
     meta: {
       referenceNumber: refid,
       status: status,
@@ -302,85 +302,15 @@ exports.processPayment = async (req, res) => {
     res.redirect(
       `${process.env.WEBSITE_URL}/?payment=${status}&refid=${refid}`
     );
+    
+    //send Acknowledgement receipt
+    if (status == "success") this.sendAR(result.refId);
   });
 
   //process accesspass
-
   if (status == "success") {
-    //send Acknowledgement receipt
-    const details = {
-      to: sale.emailAddress,
-      from: process.env.EMAIL_ADDRESS,
-      subject:
-        "Your acknowledgement receipt for your Star City ticket purchase",
-      html: `send details`,
-    };
+    this.generateAccessPass(sale, sale.cartItems);
 
-    try {
-      let info = sendMail(details);
-      console.log(info);
-    } catch (e) {
-      console.log(e);
-    }
-
-    //get items
-    const accessPasses = sale.cartItems;
-
-    accessPasses.map(async (ap) => {
-      //create token
-      let isExisting = [];
-      let finalToken = "";
-
-      //get ticketDetails
-      const ticket = await Ticket.findOne({
-        _id: ap.ticketId,
-      }).exec();
-
-      //repeat based on number of tickets
-      for (let i = 0; i < ap.qty; i++) {
-        //check for dupes
-        do {
-          finalToken = `W-${ticket.itemCode}-${crypto
-            .randomBytes(4)
-            .toString("hex")}`;
-
-          isExisting = await AccessPass.find({
-            accessToken: finalToken,
-          }).exec();
-        } while (isExisting.length !== 0);
-
-        finalToken = finalToken.toUpperCase();
-        let base64 = await QRCode.toDataURL(finalToken, {
-          version: 4,
-          errorCorrectionLevel: "H",
-          type: "image/jpeg",
-          quality: 1,
-          margin: 5,
-          width: 300,
-          height: 300,
-        });
-        const upload = await uploadBase64(
-          await base64,
-          `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
-        );
-
-        //save data to accesspassmodel
-        let accessPass = new AccessPass();
-        accessPass.ticketId = ap.ticketId;
-        accessPass.salesId = sale._id;
-        accessPass.accessToken = finalToken;
-        accessPass.QRcode = await upload;
-
-        accessPass.save((err, result) => {
-          if (err) console.log("accesspass save failed in database");
-
-          console.log("accesspass created");
-          //email customer to say that their access passes are ready to be shipped
-        });
-      }
-    });
-
-    //SEND tickets
     const accessPassPayload = {
       to: sale.emailAddress,
       from: process.env.EMAIL_ADDRESS,
@@ -389,7 +319,7 @@ exports.processPayment = async (req, res) => {
     };
 
     try {
-      let info = sendMail(accessPassPayload);
+      const info = await sendMail(accessPassPayload);
       console.log(info);
     } catch (e) {
       console.log(e);
@@ -399,12 +329,12 @@ exports.processPayment = async (req, res) => {
 
 //TEST QRCODE
 exports.styledQRcode = async (req, res) => {
-  let options = { format: "A6", printBackground: true };
+  let options = { format: "A4" };
 
-  // let file = { content: artemplate() };
-  let file = {
-    url: "https://starcity-website.herokuapp.com/accesspass?s=1356415833684&r=08240a7638a4&t=W-SCAP-5acfaf52",
-  };
+  let file = { content: artemplate() };
+  // let file = {
+  //   url: "https://starcity-website.herokuapp.com/accesspass?s=1042476560563&r=05d82401d3fa&t=W-SCAP-5830EA90",
+  // };
 
   let buffer = await html_to_pdf.generatePdf(file, options);
 
@@ -435,5 +365,104 @@ exports.styledQRcode = async (req, res) => {
     });
   } catch (e) {
     res.json({ e });
+  }
+};
+
+exports.generateAccessPass = (sale, accessPasses) => {
+  accessPasses.map(async (ap) => {
+    let isExisting = [];
+    let finalToken = "";
+
+    //get ticketDetails
+    const ticket = await Ticket.findOne({
+      _id: ap.ticketId,
+    }).exec();
+
+    for (let i = 0; i < ap.qty; i++) {
+      //check for dupes
+      do {
+        finalToken = `W-${ticket.itemCode}-${crypto
+          .randomBytes(4)
+          .toString("hex")}`;
+
+        isExisting = await AccessPass.find({
+          accessToken: finalToken,
+        }).exec();
+      } while (isExisting.length !== 0);
+
+      finalToken = finalToken.toUpperCase();
+      let base64 = await QRCode.toDataURL(finalToken, {
+        version: 4,
+        errorCorrectionLevel: "H",
+        type: "image/jpeg",
+        quality: 1,
+        margin: 5,
+        width: 300,
+        height: 300,
+      });
+      const upload = await uploadBase64(
+        await base64,
+        `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
+      );
+
+      //save data to accesspassmodel
+      let accessPass = new AccessPass();
+      accessPass.ticketId = ap.ticketId;
+      accessPass.salesId = sale._id;
+      accessPass.accessToken = finalToken;
+      accessPass.QRcode = await upload;
+
+      accessPass.save(async (err, result) => {
+        if (err) console.log("accesspass save failed in database");
+        console.log("accesspass created");
+      });
+    }
+  });
+};
+
+exports.sendAR = async (refId) => {
+  const sale = await Sale.findOne({ refId: refId })
+    .populate({
+      path: "cartItems",
+      populate: {
+        path: "ticketId",
+        model: "Ticket",
+        select: "name -_id",
+      },
+    })
+    .populate({
+      path: "paymentDetails",
+      populate: {
+        path: "option",
+        model: "PaymentOption",
+        select: "name -_id",
+      },
+    })
+    .exec();
+  console.log(sale);
+  let options = { format: "A4" };
+  let file = { content: artemplate(sale) };
+  let buffer = await html_to_pdf.generatePdf(file, options);
+
+  const details = {
+    to: sale.emailAddress,
+    from: process.env.EMAIL_ADDRESS,
+    subject: "Your acknowledgement receipt for your Star City ticket purchase",
+    html: `<h1>Greetings, ${sale.customerName}</h1>
+        <p>Thank you for purchasing Star City tickets.</p>
+      `,
+    attachments: [
+      {
+        filename: "acknowledgement-receipt.pdf",
+        content: buffer,
+      },
+    ],
+  };
+
+  try {
+    let info = sendMail(details);
+    console.log(info);
+  } catch (e) {
+    console.log(e);
   }
 };

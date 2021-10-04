@@ -13,6 +13,7 @@ const ticketRoutes = require("./routes/ticket");
 const paymentOptionRoutes = require("./routes/paymentOption");
 const optionRoutes = require("./routes/option");
 const saleRoutes = require("./routes/sale");
+const accessPassRoutes = require("./routes/accessPass");
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use("/api", ticketRoutes);
 app.use("/api", paymentOptionRoutes);
 app.use("/api", optionRoutes);
 app.use("/api", saleRoutes);
+app.use("/api", accessPassRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

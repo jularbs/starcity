@@ -1,4 +1,32 @@
-exports.artemplate = () => {
+const { format } = require("date-fns");
+
+exports.artemplate = (data) => {
+  const {
+    refId,
+    contactNumber,
+    customerName,
+    emailAddress,
+    createdAt,
+    orderTotal,
+    cartItems,
+    paymentDetails,
+  } = data;
+
+  const localDate = format(new Date(createdAt), "MM/dd/yyyy");
+
+  const showParticulars = () => {
+    return cartItems.map((item) => {
+      return `
+        <div class="tt-row">
+          <div>${item.ticketId.name}</div>
+          <div>${item.qty}</div>
+          <div>Php ${item.priceAcquired}</div>
+          <div>Php ${item.qty * item.priceAcquired}</div>
+        </div>
+      `;
+    });
+  };
+
   return `
     <!DOCTYPE html>
 <html lang="en">
@@ -111,23 +139,23 @@ exports.artemplate = () => {
           <div class="email">helpdesk@starcity.com.ph</div>
         </div>
         <div class="ar-details">
-          <div class="ar-no" style="font-weight: bold">AR No. 123NJ2K3NF3</div>
-          <div class="ar-date" style="text-align: right">2021-09-29</div>
+          <div class="ar-no" style="font-weight: bold">AR No. ${refId}</div>
+          <div class="ar-date" style="text-align: right">${localDate}</div>
         </div>
       </div>
 
       <div class="payment-details">
         <div class="customer-details">
           <div class="customer-name" style="font-weight: bold">
-            Ralph Jularbal
+            ${customerName}
           </div>
-          <div class="contact-number">09178657533</div>
-          <div class="email-address">ralphjularbal@yahoo.com</div>
+          <div class="contact-number">${contactNumber}</div>
+          <div class="email-address">${emailAddress}</div>
         </div>
         <div class="payment-option">
-          <div>Payment Channel: Paymaya</div>
-          <div>Reference Number: 123NJ2K3NF3</div>
-          <div>Amount Paid: Php 2000.00</div>
+          <div>Payment Channel: ${paymentDetails.option.name}</div>
+          <div>Reference Number: ${refId}</div>
+          <div>Amount Paid: Php ${orderTotal}</div>
         </div>
       </div>
 
@@ -140,18 +168,13 @@ exports.artemplate = () => {
             <div>PRICE</div>
             <div>AMOUNT</div>
           </div>
-          <div class="tt-row">
-            <div>Ride All You Can</div>
-            <div>5</div>
-            <div>Php 400.00</div>
-            <div>Php 2000.00</div>
-          </div>
+          ${showParticulars()}
           <div style="height: 30px"></div>
           <div class="tt-computation">
             <div></div>
             <div></div>
             <div style="font-weight: bold">TOTAL</div>
-            <div>Php 2000.00</div>
+            <div>Php ${orderTotal}</div>
           </div>
         </div>
       </div>
@@ -166,6 +189,7 @@ exports.artemplate = () => {
     </div>
 
     <!-- page content -->
+    <pre>${JSON.stringify(data, null, 2)}</pre>
   </body>
 </html>
 `;
