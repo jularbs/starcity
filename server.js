@@ -14,7 +14,9 @@ const paymentOptionRoutes = require("./routes/paymentOption");
 const optionRoutes = require("./routes/option");
 const saleRoutes = require("./routes/sale");
 const accessPassRoutes = require("./routes/accessPass");
+var cron = require("node-cron");
 
+const { cronSyncAP } = require("./helpers/cronjobs");
 const app = express();
 
 var allowedDomains = [
@@ -74,6 +76,11 @@ app.use("/api", saleRoutes);
 app.use("/api", accessPassRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
+
+//cron jobs
+cron.schedule("*/10 * * * *", function () {
+  cronSyncAP();
+});
 
 //port
 const port = process.env.PORT || 8000;

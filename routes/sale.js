@@ -11,6 +11,7 @@ const {
   processPayment,
   readBySaltRefID,
   styledQRcode,
+  testsql,
 } = require("../controllers/sale");
 
 //Version 1.0
@@ -30,5 +31,6 @@ router.get("/v1/payment/:status/:option/:refid", processPayment);
 
 //TESTS
 router.get("/v1/test-qrcode", styledQRcode);
+router.get("/v1/test-sql", testsql);
 
 module.exports = router;

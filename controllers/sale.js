@@ -2,6 +2,8 @@ const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
 const PaymentOption = require("../models/paymentOption");
 const AccessPass = require("../models/accessPass");
+const AccessPassQueue = require("../models/accessPassQueue");
+
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
@@ -13,6 +15,9 @@ const nodemailer = require("nodemailer");
 const html_to_pdf = require("html-pdf-node");
 
 const { artemplate } = require("../helpers/artemplate");
+
+const { pool } = require("../lib/mysql/connect");
+
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
@@ -302,7 +307,7 @@ exports.processPayment = async (req, res) => {
     res.redirect(
       `${process.env.WEBSITE_URL}/?payment=${status}&refid=${refid}`
     );
-    
+
     //send Acknowledgement receipt
     if (status == "success") this.sendAR(result.refId);
   });
@@ -320,7 +325,6 @@ exports.processPayment = async (req, res) => {
 
     try {
       const info = await sendMail(accessPassPayload);
-      console.log(info);
     } catch (e) {
       console.log(e);
     }
@@ -414,6 +418,8 @@ exports.generateAccessPass = (sale, accessPasses) => {
 
       accessPass.save(async (err, result) => {
         if (err) console.log("accesspass save failed in database");
+        this.syncAccessPass(result);
+
         console.log("accesspass created");
       });
     }
@@ -439,7 +445,6 @@ exports.sendAR = async (refId) => {
       },
     })
     .exec();
-  console.log(sale);
   let options = { format: "A4" };
   let file = { content: artemplate(sale) };
   let buffer = await html_to_pdf.generatePdf(file, options);
@@ -465,4 +470,76 @@ exports.sendAR = async (refId) => {
   } catch (e) {
     console.log(e);
   }
+};
+
+exports.syncAccessPass = (accessPass) => {
+  console.log("Syncing Access Pass...");
+  try {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        //add in queue
+        let q = new AccessPassQueue();
+        q.accessPass = accessPass._id;
+        q.status = err.code;
+        q.save((err, result) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("Queue created");
+          }
+        });
+      } else {
+        const values = [["1", accessPass.accessToken, "1"]];
+        const sql =
+          "INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
+
+        connection.query(sql, [values], function (error, results, fields) {
+          if (error) {
+            // PUT IN QUEUE
+            console.log;
+            let q = new Queue();
+            q.accessPass = accessPass._id;
+            q.status = error.code;
+            q.save((err, result) => {
+              if (err) console.log(err);
+            });
+          }
+        });
+      }
+    });
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+exports.testsql = (req, res) => {
+  const TicketID = "W-RAYC-135G4D3JG8S9V";
+
+  const values = [["1", TicketID, "1"]];
+  const sql = "INSERT INTO tbles (status, barcode_number, ip_group) VALUES ?;";
+
+  try {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        res.json(err);
+      } else {
+        connection.query(sql, [values], (error, results, fields) => {
+          if (error) {
+            console.log(error);
+            res.json(error);
+          }
+          res.json(results);
+        });
+      }
+    });
+  } catch (e) {
+    console.log(e);
+  }
+
+  // const values = [["1", TicketID, "1"]];
+  // const sql = " INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
+  // connection.query(sql, [values], function (error, results, fields) {
+  //   if (error) throw error;
+  //   res.json(results);
+  // });
 };
