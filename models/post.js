@@ -12,16 +12,19 @@ const postSchema = new mongoose.Schema(
     },
     slug: {
       type: String,
-      unique: true,
+      unique: [true, "Slug is already used."],
       index: true,
       required: true,
     },
     content: {
       type: String,
     },
+    excerpt: {
+      type: String,
+    },
     featuredImage: {
       location: String,
-      contentType: String,
+      bucket: String,
       key: String,
     },
     status: {

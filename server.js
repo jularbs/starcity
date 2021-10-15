@@ -14,6 +14,8 @@ const paymentOptionRoutes = require("./routes/paymentOption");
 const optionRoutes = require("./routes/option");
 const saleRoutes = require("./routes/sale");
 const accessPassRoutes = require("./routes/accessPass");
+const postRoutes = require("./routes/post");
+
 var cron = require("node-cron");
 
 const { cronSyncAP } = require("./helpers/cronjobs");
@@ -22,6 +24,9 @@ const app = express();
 var allowedDomains = [
   "http://localhost:3000",
   "http://jularbs.com:3000",
+  "https://jularbs.com:3000",
+  "http://jularbs.com:3001",
+  "https://jularbs.com:3001",
   "http://starcity-website.herokuapp.com",
   "https://starcity-website.herokuapp.com",
 ];
@@ -74,6 +79,7 @@ app.use("/api", paymentOptionRoutes);
 app.use("/api", optionRoutes);
 app.use("/api", saleRoutes);
 app.use("/api", accessPassRoutes);
+app.use("/api", postRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

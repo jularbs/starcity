@@ -2,21 +2,23 @@ const Ticket = require("../models/ticket");
 const slugify = require("slugify");
 
 exports.create = (req, res) => {
-  const { name, description, price, status } = req.body;
+  const { name, code, shortDescription, price, details } = req.body;
 
   const slug = slugify(name).toLowerCase();
 
   let ticket = new Ticket();
 
   ticket.name = name;
-  ticket.description = description;
   ticket.slug = slug;
+  ticket.itemCode = code;
 
   ticket.price = price;
-  ticket.status = status;
+  ticket.shortDescription = shortDescription;
+  ticket.details = details;
 
   ticket.save((err, result) => {
     if (err) {
+
       return res.status(400).json({
         error: "error occured",
       });
@@ -40,27 +42,40 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  Ticket.find().exec((err, data) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-    res.json(data);
-  });
+  const { f } = req.query;
+
+  if (f) {
+    Ticket.find({ status: true }).exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      res.json(data);
+    });
+  } else {
+    Ticket.find().exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      res.json(data);
+    });
+  }
 };
 
 exports.update = async (req, res) => {
-  const { name, slug, description, price, status } = req.body;
+  const { name, _id, shortDescription, price, details } = req.body;
 
-  const ticket = await Ticket.findOne({ slug: slug }).exec();
+  const ticket = await Ticket.findOne({ _id }).exec();
 
   ticket.name = name;
-  ticket.description = description;
-
+  ticket.shortDescription = shortDescription;
   ticket.price = price;
-  ticket.status = status;
+  ticket.details = details;
 
   ticket.save((err, result) => {
     if (err) {
@@ -74,9 +89,9 @@ exports.update = async (req, res) => {
 };
 
 exports.remove = async (req, res) => {
-  const { slug } = req.body;
+  const { _id } = req.body;
 
-  Ticket.findOneAndDelete({ slug }).exec(async (err, result) => {
+  Ticket.findOneAndDelete({ _id }).exec(async (err, result) => {
     if (err) {
       return res.status(400).json({
         error: "error occured",
@@ -84,5 +99,17 @@ exports.remove = async (req, res) => {
       });
     }
     res.json({ success: "Ticket deleted successfully" });
+  });
+};
+
+exports.toggleStatus = async (req, res) => {
+  const { _id } = req.body;
+
+  let ticket = await Ticket.findOne({ _id }).exec();
+  ticket.status = !ticket.status;
+
+  ticket.save((err, result) => {
+    if (err) res.json({ error: "Unable to toggle ticket status." });
+    res.json({ result });
   });
 };

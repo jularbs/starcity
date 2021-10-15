@@ -16,9 +16,10 @@ exports.create = (req, res) => {
   rideCategory.save((err, result) => {
     if (err) {
       return res.status(400).json({
-        error: "error occured",
+        error: "Failed to add new ride category. Please try again!",
       });
     }
+
     res.json(result);
   });
 };

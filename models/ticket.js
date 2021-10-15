@@ -22,7 +22,7 @@ const ticketSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    description: {
+    details: {
       type: String,
     },
     shortDescription: {
@@ -39,8 +39,8 @@ const ticketSchema = new mongoose.Schema(
       key: String,
     },
     status: {
-      type: String,
-      default: "available",
+      type: Boolean,
+      default: true,
       required: true,
     },
     itemCode: {

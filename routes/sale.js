@@ -10,8 +10,7 @@ const {
   createCheckout,
   processPayment,
   readBySaltRefID,
-  styledQRcode,
-  testsql,
+  test,
 } = require("../controllers/sale");
 
 //Version 1.0
@@ -20,7 +19,6 @@ router.put("/v1/sale", update);
 router.get("/v1/sale", list);
 router.get("/v1/sale/:slug", read);
 router.delete("/v1/sale", remove);
-
 router.get("/v1/access-pass", readBySaltRefID);
 router.get("/v1/sync", sync);
 
@@ -30,7 +28,6 @@ router.post("/v1/create-checkout", createCheckout);
 router.get("/v1/payment/:status/:option/:refid", processPayment);
 
 //TESTS
-router.get("/v1/test-qrcode", styledQRcode);
-router.get("/v1/test-sql", testsql);
+router.get("/v1/test", test);
 
 module.exports = router;

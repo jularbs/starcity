@@ -3,19 +3,17 @@ const Ticket = require("../models/ticket");
 const PaymentOption = require("../models/paymentOption");
 const AccessPass = require("../models/accessPass");
 const AccessPassQueue = require("../models/accessPassQueue");
-
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
 const mongoose = require("mongoose");
-
 const { sendMail } = require("../helpers/nodemailer");
 const nodemailer = require("nodemailer");
-
 const html_to_pdf = require("html-pdf-node");
-
-const { artemplate } = require("../helpers/artemplate");
-
+const {
+  artemplate,
+  accessPassEmailNotification,
+} = require("../helpers/emailTemplates");
 const { pool } = require("../lib/mysql/connect");
 
 //HELPERS
@@ -47,6 +45,144 @@ exports.calculateCartItem = (item) => {
 
 exports.calculateCart = (cartItems) => {
   return Promise.all(cartItems.map((item) => this.calculateCartItem(item)));
+};
+
+exports.generateAccessPass = (sale, accessPasses) => {
+  accessPasses.map(async (ap) => {
+    let isExisting = [];
+    let finalToken = "";
+
+    //get ticketDetails
+    const ticket = await Ticket.findOne({
+      _id: ap.ticketId,
+    }).exec();
+
+    for (let i = 0; i < ap.qty; i++) {
+      //check for dupes
+      do {
+        finalToken = `W-${ticket.itemCode}-${crypto
+          .randomBytes(4)
+          .toString("hex")}`;
+
+        isExisting = await AccessPass.find({
+          accessToken: finalToken,
+        }).exec();
+      } while (isExisting.length !== 0);
+
+      finalToken = finalToken.toUpperCase();
+      let base64 = await QRCode.toDataURL(finalToken, {
+        version: 4,
+        errorCorrectionLevel: "H",
+        type: "image/jpeg",
+        quality: 1,
+        margin: 5,
+        width: 300,
+        height: 300,
+      });
+      const upload = await uploadBase64(
+        await base64,
+        `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
+      );
+
+      //save data to accesspassmodel
+      let accessPass = new AccessPass();
+      accessPass.ticketId = ap.ticketId;
+      accessPass.salesId = sale._id;
+      accessPass.accessToken = finalToken;
+      accessPass.QRcode = await upload;
+
+      accessPass.save(async (err, result) => {
+        if (err) console.log("accesspass save failed in database");
+        this.syncAccessPass(result);
+
+        console.log("accesspass created");
+      });
+    }
+  });
+};
+
+exports.sendAR = async (refId) => {
+  const sale = await Sale.findOne({ refId: refId })
+    .populate({
+      path: "cartItems",
+      populate: {
+        path: "ticketId",
+        model: "Ticket",
+        select: "name -_id",
+      },
+    })
+    .populate({
+      path: "paymentDetails",
+      populate: {
+        path: "option",
+        model: "PaymentOption",
+        select: "name -_id",
+      },
+    })
+    .exec();
+  let options = { format: "A4" };
+  let file = { content: artemplate(sale) };
+  let buffer = await html_to_pdf.generatePdf(file, options);
+
+  const details = {
+    to: sale.emailAddress,
+    from: process.env.EMAIL_ADDRESS,
+    subject: "Your acknowledgement receipt for your Star City ticket purchase",
+    html: accessPassEmailNotification(sale),
+    attachments: [
+      {
+        filename: "acknowledgement-receipt.pdf",
+        content: buffer,
+      },
+    ],
+  };
+
+  try {
+    let info = sendMail(details);
+    console.log(info);
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+exports.syncAccessPass = (accessPass) => {
+  console.log("Syncing Access Pass...");
+  try {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        //add in queue
+        let q = new AccessPassQueue();
+        q.accessPass = accessPass._id;
+        q.status = err.code;
+        q.save((err, result) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("Queue created");
+          }
+        });
+      } else {
+        const values = [["1", accessPass.accessToken, "1"]];
+        const sql =
+          "INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
+
+        connection.query(sql, [values], function (error, results, fields) {
+          if (error) {
+            // PUT IN QUEUE
+            console.log;
+            let q = new Queue();
+            q.accessPass = accessPass._id;
+            q.status = error.code;
+            q.save((err, result) => {
+              if (err) console.log(err);
+            });
+          }
+        });
+      }
+    });
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 //REQUESTS
@@ -175,6 +311,8 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
+  console.log(req.query);
+  const { skip, limit } = req.query;
   Sale.find()
     .populate({
       path: "cartItems",
@@ -192,8 +330,11 @@ exports.list = (req, res) => {
         select: "name",
       },
     })
+    .skip(parseInt(skip))
+    .limit(parseInt(limit))
     .exec((err, data) => {
       if (err) {
+        console.log(err);
         return res.status(400).json({
           error: "error occured",
           message: err,
@@ -309,39 +450,15 @@ exports.processPayment = async (req, res) => {
     );
 
     //send Acknowledgement receipt
-    if (status == "success") this.sendAR(result.refId);
-  });
-
-  //process accesspass
-  if (status == "success") {
-    this.generateAccessPass(sale, sale.cartItems);
-
-    const accessPassPayload = {
-      to: sale.emailAddress,
-      from: process.env.EMAIL_ADDRESS,
-      subject: "Your Star City Tickets are now available",
-      html: `<a href="${process.env.WEBSITE_URL}/accesspass?s=${sale.salt}&r=${sale.refId}">Click here to view tickets</a>`,
-    };
-
-    try {
-      const info = await sendMail(accessPassPayload);
-    } catch (e) {
-      console.log(e);
+    if (status == "success") {
+      this.generateAccessPass(result, result.cartItems);
+      this.sendAR(result.refId);
     }
-  }
+  });
 };
 
-//TEST QRCODE
-exports.styledQRcode = async (req, res) => {
-  let options = { format: "A4" };
-
-  let file = { content: artemplate() };
-  // let file = {
-  //   url: "https://starcity-website.herokuapp.com/accesspass?s=1042476560563&r=05d82401d3fa&t=W-SCAP-5830EA90",
-  // };
-
-  let buffer = await html_to_pdf.generatePdf(file, options);
-
+//TESTER FUNCTION
+exports.test = async (req, res) => {
   var mail = nodemailer.createTransport({
     service: "Gmail",
     auth: {
@@ -351,16 +468,10 @@ exports.styledQRcode = async (req, res) => {
   });
 
   const arPayload = {
-    to: "ralphjularbal@yahoo.com",
+    to: "starcityappdev@gmail.com",
     from: "noreply@starcity.com.ph",
     subject: "Thank you for your purchase",
-    html: artemplate(),
-    attachments: [
-      {
-        filename: "acknowledgement-receipt.pdf",
-        content: buffer,
-      },
-    ],
+    html: accessPassEmailNotification(),
   };
 
   try {
@@ -370,176 +481,4 @@ exports.styledQRcode = async (req, res) => {
   } catch (e) {
     res.json({ e });
   }
-};
-
-exports.generateAccessPass = (sale, accessPasses) => {
-  accessPasses.map(async (ap) => {
-    let isExisting = [];
-    let finalToken = "";
-
-    //get ticketDetails
-    const ticket = await Ticket.findOne({
-      _id: ap.ticketId,
-    }).exec();
-
-    for (let i = 0; i < ap.qty; i++) {
-      //check for dupes
-      do {
-        finalToken = `W-${ticket.itemCode}-${crypto
-          .randomBytes(4)
-          .toString("hex")}`;
-
-        isExisting = await AccessPass.find({
-          accessToken: finalToken,
-        }).exec();
-      } while (isExisting.length !== 0);
-
-      finalToken = finalToken.toUpperCase();
-      let base64 = await QRCode.toDataURL(finalToken, {
-        version: 4,
-        errorCorrectionLevel: "H",
-        type: "image/jpeg",
-        quality: 1,
-        margin: 5,
-        width: 300,
-        height: 300,
-      });
-      const upload = await uploadBase64(
-        await base64,
-        `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
-      );
-
-      //save data to accesspassmodel
-      let accessPass = new AccessPass();
-      accessPass.ticketId = ap.ticketId;
-      accessPass.salesId = sale._id;
-      accessPass.accessToken = finalToken;
-      accessPass.QRcode = await upload;
-
-      accessPass.save(async (err, result) => {
-        if (err) console.log("accesspass save failed in database");
-        this.syncAccessPass(result);
-
-        console.log("accesspass created");
-      });
-    }
-  });
-};
-
-exports.sendAR = async (refId) => {
-  const sale = await Sale.findOne({ refId: refId })
-    .populate({
-      path: "cartItems",
-      populate: {
-        path: "ticketId",
-        model: "Ticket",
-        select: "name -_id",
-      },
-    })
-    .populate({
-      path: "paymentDetails",
-      populate: {
-        path: "option",
-        model: "PaymentOption",
-        select: "name -_id",
-      },
-    })
-    .exec();
-  let options = { format: "A4" };
-  let file = { content: artemplate(sale) };
-  let buffer = await html_to_pdf.generatePdf(file, options);
-
-  const details = {
-    to: sale.emailAddress,
-    from: process.env.EMAIL_ADDRESS,
-    subject: "Your acknowledgement receipt for your Star City ticket purchase",
-    html: `<h1>Greetings, ${sale.customerName}</h1>
-        <p>Thank you for purchasing Star City tickets.</p>
-      `,
-    attachments: [
-      {
-        filename: "acknowledgement-receipt.pdf",
-        content: buffer,
-      },
-    ],
-  };
-
-  try {
-    let info = sendMail(details);
-    console.log(info);
-  } catch (e) {
-    console.log(e);
-  }
-};
-
-exports.syncAccessPass = (accessPass) => {
-  console.log("Syncing Access Pass...");
-  try {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        //add in queue
-        let q = new AccessPassQueue();
-        q.accessPass = accessPass._id;
-        q.status = err.code;
-        q.save((err, result) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log("Queue created");
-          }
-        });
-      } else {
-        const values = [["1", accessPass.accessToken, "1"]];
-        const sql =
-          "INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
-
-        connection.query(sql, [values], function (error, results, fields) {
-          if (error) {
-            // PUT IN QUEUE
-            console.log;
-            let q = new Queue();
-            q.accessPass = accessPass._id;
-            q.status = error.code;
-            q.save((err, result) => {
-              if (err) console.log(err);
-            });
-          }
-        });
-      }
-    });
-  } catch (e) {
-    console.log(e);
-  }
-};
-
-exports.testsql = (req, res) => {
-  const TicketID = "W-RAYC-135G4D3JG8S9V";
-
-  const values = [["1", TicketID, "1"]];
-  const sql = "INSERT INTO tbles (status, barcode_number, ip_group) VALUES ?;";
-
-  try {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        res.json(err);
-      } else {
-        connection.query(sql, [values], (error, results, fields) => {
-          if (error) {
-            console.log(error);
-            res.json(error);
-          }
-          res.json(results);
-        });
-      }
-    });
-  } catch (e) {
-    console.log(e);
-  }
-
-  // const values = [["1", TicketID, "1"]];
-  // const sql = " INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
-  // connection.query(sql, [values], function (error, results, fields) {
-  //   if (error) throw error;
-  //   res.json(results);
-  // });
 };

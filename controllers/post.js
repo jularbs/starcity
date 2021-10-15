@@ -1,0 +1,126 @@
+const Post = require("../models/post");
+const slugify = require("slugify");
+const { smartTrim } = require("../helpers/commonFunctions");
+const { stripHtml } = require("string-strip-html");
+const formidable = require("formidable");
+const {
+  uploadTos3withKey,
+  deleteObjectFromS3,
+} = require("../helpers/s3uploader");
+
+exports.create = (req, res) => {
+  const form = formidable({ multiples: true });
+
+  form.parse(req, async (err, fields, files) => {
+    const { title, content } = fields;
+    const { image } = files;
+
+    if (!title || !title.length) {
+      return res.status(400).json({
+        error: "Title is required",
+      });
+    }
+
+    const slug = slugify(title).toLowerCase();
+    const excerpt = smartTrim(
+      stripHtml(content).result.substring(0, 300),
+      280,
+      " ",
+      "..."
+    );
+
+    if (image) {
+      if (image.size > 1000000) {
+        return res.status(400).json({
+          error: "Image too large. ( > 1MB ).",
+        });
+      }
+
+      const imageInfo = await uploadTos3withKey(image, `post/${slug}`);
+      if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
+        let post = new Post();
+        post.title = title;
+        post.slug = slug;
+        post.content = content;
+        post.excerpt = excerpt;
+        post.featuredImage = imageInfo;
+        post.status = "draft";
+
+        post.save((err, result) => {
+          if (err) {
+            res.json({
+              erorr: "Failed to save post. Please try again later.",
+            });
+          }
+          res.json(result);
+        });
+      } else {
+        res.json({ error: "Error on uploading image to Amazon S3" });
+      }
+    } else {
+      return res.status(400).json({
+        error: "Featured Image is required",
+      });
+    }
+  });
+};
+
+exports.read = (req, res) => {
+  const { slug } = req.params;
+  Post.findOne({ slug }).exec((err, result) => {
+    res.json(result);
+  });
+};
+
+exports.list = (req, res) => {
+  Post.find({}).exec((err, result) => {
+    res.json(result);
+  });
+};
+
+exports.update = async (req, res) => {
+  const form = formidable({ multiples: true });
+
+  form.parse(req, async (err, fields, files) => {
+    const { title, content, slug } = fields;
+    const { image } = files;
+
+    let post = await Post.findOne({ slug }).exec();
+
+    if (image) {
+      console.log("Request has image, upload image");
+      deleteObjectFromS3(post.featuredImage.key, post.featuredImage.bucket);
+      const imageInfo = await uploadTos3withKey(image, `post/${slug}`);
+      post.featuredImage = imageInfo;
+    }
+
+    const excerpt = smartTrim(
+      stripHtml(content).result.substring(0, 300),
+      280,
+      " ",
+      "..."
+    );
+    post.title = title;
+    post.slug = slug;
+    post.content = content;
+    post.excerpt = excerpt;
+    post.status = "draft";
+
+    post.save((err, result) => {
+      if (err) {
+        res.json({
+          error: "Error on updating post. Please try again later.",
+          payload: err,
+        });
+      }
+      res.json(result);
+    });
+  });
+};
+
+exports.remove = async (req, res) => {
+  const { slug } = req.body;
+
+  const data = await Post.deleteOne({ slug }).exec();
+  res.json({ message: "Post deleted successfully" });
+};
