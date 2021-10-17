@@ -19,7 +19,19 @@ exports.create = (req, res) => {
 
     if (!name || !name.length) {
       return res.status(400).json({
-        error: "Title is required",
+        error: "Name identifier is required",
+      });
+    }
+
+    if (!startDate || !startDate.length) {
+      return res.status(400).json({
+        error: "Start date is required",
+      });
+    }
+
+    if (!endDate || !endDate.length) {
+      return res.status(400).json({
+        error: "End date is required",
       });
     }
 
@@ -72,15 +84,9 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  const { skip, limit } = req.query;
-  console.log("REQ: ", req.query);
-  Post.find({})
-    .skip(parseInt(skip))
-    .limit(parseInt(limit))
-    .exec((err, result) => {
-      // console.log(result);
-      res.json(result);
-    });
+  ImageSlider.find({}).exec((err, result) => {
+    res.json(result);
+  });
 };
 
 exports.update = async (req, res) => {
@@ -125,6 +131,6 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   const { slug } = req.body;
 
-  const data = await Post.deleteOne({ slug }).exec();
+  const data = await ImageSlider.deleteOne({ slug }).exec();
   res.json({ message: "Post deleted successfully" });
 };
