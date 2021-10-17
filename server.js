@@ -15,6 +15,7 @@ const optionRoutes = require("./routes/option");
 const saleRoutes = require("./routes/sale");
 const accessPassRoutes = require("./routes/accessPass");
 const postRoutes = require("./routes/post");
+const imageSliderRoutes = require("./routes/imageSlider");
 
 var cron = require("node-cron");
 
@@ -80,6 +81,7 @@ app.use("/api", optionRoutes);
 app.use("/api", saleRoutes);
 app.use("/api", accessPassRoutes);
 app.use("/api", postRoutes);
+app.use("/api", imageSliderRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 
