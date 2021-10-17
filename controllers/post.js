@@ -12,7 +12,7 @@ exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content } = fields;
+    const { title, content, status } = fields;
     const { image } = files;
 
     if (!title || !title.length) {
@@ -44,7 +44,7 @@ exports.create = (req, res) => {
         post.content = content;
         post.excerpt = excerpt;
         post.featuredImage = imageInfo;
-        post.status = "draft";
+        post.status = status;
 
         post.save((err, result) => {
           if (err) {
@@ -73,22 +73,27 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  Post.find({}).exec((err, result) => {
-    res.json(result);
-  });
+  const { skip, limit } = req.query;
+  console.log("REQ: ", req.query);
+  Post.find({})
+    .skip(parseInt(skip))
+    .limit(parseInt(limit))
+    .exec((err, result) => {
+      // console.log(result);
+      res.json(result);
+    });
 };
 
 exports.update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content, slug } = fields;
+    const { title, content, slug, status } = fields;
     const { image } = files;
 
     let post = await Post.findOne({ slug }).exec();
 
     if (image) {
-      console.log("Request has image, upload image");
       deleteObjectFromS3(post.featuredImage.key, post.featuredImage.bucket);
       const imageInfo = await uploadTos3withKey(image, `post/${slug}`);
       post.featuredImage = imageInfo;
@@ -104,11 +109,11 @@ exports.update = async (req, res) => {
     post.slug = slug;
     post.content = content;
     post.excerpt = excerpt;
-    post.status = "draft";
+    post.status = status;
 
     post.save((err, result) => {
       if (err) {
-        res.json({
+        res.status(400).json({
           error: "Error on updating post. Please try again later.",
           payload: err,
         });
