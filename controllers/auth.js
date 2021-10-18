@@ -4,34 +4,28 @@ const jwt = require("jsonwebtoken");
 
 const expressJwt = require("express-jwt");
 const { add, isBefore } = require("date-fns");
-const { sendMail } = require("../helpers/nodemailer/mailer");
-const { errorHandler } = require("../helpers/dbErrorHandlers");
 
 exports.signup = (req, res) => {
-  const { name, username, email, password } = req.body;
+  const { name, email, password, confirmPassword } = req.body;
+  console.log(req.body);
 
-  if (user) {
-    return res.status(400).json({
-      error: "Email is already registered. Please proceed to logging in.",
-      message: err,
-    });
-  }
+  if (password !== confirmPassword)
+    res
+      .status(400)
+      .json({ error: "Password and Confirm Password should match" });
 
-  User.findOne({ mobileNumber }).exec((err, user) => {
+  User.findOne({ email }).exec((err, user) => {
     if (user) {
       return res.status(400).json({
         error:
-          "Mobile Number is already registered. Please proceed to logging in.",
+          "Email address is already registered. Please proceed to logging in.",
         message: err,
       });
     }
 
     let username = shortId.generate();
     let newUser = new User({
-      firstName,
-      lastName,
-      gender,
-      mobileNumber,
+      name,
       email,
       password,
       username,
@@ -46,88 +40,104 @@ exports.signup = (req, res) => {
 
     newUser.save(async (err, success) => {
       if (err) {
-        console.log(err.keyValue);
-        console.log("Unable to signup new user: ", errorHandler(err));
         return res.status(400).json({
           error: "Unable to signup new user.",
           message: err,
         });
       }
 
-      //email otp to user
-      const details = {
-        to: success.email,
-        from: process.env.MBC_EMAIL,
-        subject: "Activate Your Account with DZRH News",
-        html: `
-        <h1>ONE LAST STEP</h1>
-        <a href="${process.env.DOMAIN}api/account/verify/${success._id}/${success.otp.token}">Click here to verify!</a>
-        <p>Please activate your account by clicking on the link above within the next 24 hours.<p>
-        <p>If you encounter issues verifying your email address, copy and paste the following url in your browser: 
-        ${process.env.DOMAIN}api/account/verify/${success._id}/${success.otp.token}</p>
-        <p style="margin-top: 15px; font-style: italic;">Please ignore this email if you didn't register an account with DZRH News.`,
-      };
-
-      try {
-        let info = await sendMail(details);
-      } catch (e) {
-        console.log(e);
-      }
-
       res.json({
         success:
-          "Signup Success! Please check your email to verify your account.",
+          "Signup Success! Please wait for your acccount to be processed.",
       });
     });
   });
 };
 
-// exports.signin = (req, res) => {
-//   //check if user exists
-//   const { email, password } = req.body;
-//   User.findOne({ email }).exec((err, user) => {
-//     if (err || !user) {
-//       return res.status(400).json({
-//         error: "User with that email does not exist. Please create an account.",
-//       });
-//     }
-//     //authenticate
-//     if (!user.authenticate(password)) {
-//       return res.status(400).json({
-//         error: "Email and password do not match.",
-//       });
-//     }
+exports.pendingUsers = (req, res) => {
+  User.find({ status: false })
+    .select("_id name email createdAt department role")
+    .exec((err, users) => {
+      if (err)
+        res.status(400).json({ error: "Error on getting pending users" });
+      res.json(users);
+    });
+};
 
-//     if (user.verificationMethod == "unverified") {
-//       return res.status(400).json({
-//         error: "Account is not yet verified. Please check your email to verify",
-//       });
-//     }
+exports.processApproval = async (req, res) => {
+  const { _id, department, status } = req.body;
+  let user = await User.findOne({ _id }).exec();
+  if (!user) {
+    res.status(400).json({ error: "User does not exist" });
+  }
 
-//     //generate JWT
-//     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-//       expiresIn: "7d",
-//     });
+  if (status) {
+    user.department = department;
+    user.status = status;
 
-//     res.cookie("sso-token", token, { expiresIn: "7d" });
-//     console.log(user);
-//     const { _id, username, firstName, lastName, gender, mobileNumber, email } =
-//       user;
+    user.save((err, result) => {
+      if (err)
+        res.status(400).json({
+          error: "Failed to process approval",
+        });
+      res.json({
+        success: `User is now ${status ? "approved" : "disapproved"}`,
+      });
+    });
+  } else {
+    User.deleteOne({ _id }).exec((err, result) => {
+      if (err)
+        res.status(400).json({
+          error: "Failed to process approval",
+        });
+      res.json({
+        success: `User is now ${status ? "approved" : "disapproved"}`,
+      });
+    });
+  }
+};
 
-//     return res.json({
-//       token,
-//       user: {
-//         _id,
-//         username,
-//         firstName,
-//         lastName,
-//         gender,
-//         mobileNumber,
-//         email,
-//       },
-//     });
-//   });
-// };
+exports.signin = (req, res) => {
+  //check if user exists
+  const { email, password } = req.body;
+  User.findOne({ email }).exec((err, user) => {
+    if (err || !user) {
+      return res.status(400).json({
+        error: "User with that email does not exist. Please create an account.",
+      });
+    }
+    //authenticate
+    if (!user.authenticate(password)) {
+      return res.status(400).json({
+        error: "Email and password do not match.",
+      });
+    }
+
+    if (!user.status) {
+      return res.status(400).json({
+        error: "Account is not yet approved.",
+      });
+    }
+
+    //generate JWT
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("token", token, { expiresIn: "7d" });
+    const { _id, name, email, department } = user;
+
+    return res.json({
+      token,
+      user: {
+        _id,
+        name,
+        email,
+        department,
+      },
+    });
+  });
+};
 
 // exports.signout = (req, res) => {
 //   res.clearCookie("sso-token");

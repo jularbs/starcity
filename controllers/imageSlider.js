@@ -93,34 +93,35 @@ exports.update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content, slug, status } = fields;
+    const { name, startDate, endDate, slug } = fields;
     const { image } = files;
-
-    let post = await Post.findOne({ slug }).exec();
+    let is = await ImageSlider.findOne({ slug: slug }).exec();
+    console.log(is);
+    is.name = name;
+    is.startDate = startDate;
+    is.endDate = endDate;
 
     if (image) {
-      deleteObjectFromS3(post.featuredImage.key, post.featuredImage.bucket);
-      const imageInfo = await uploadTos3withKey(image, `post/${slug}`);
-      post.featuredImage = imageInfo;
+      if (image.size > 1000000) {
+        return res.status(400).json({
+          error: "Image too large. ( > 1MB ).",
+        });
+      }
+
+      const imageInfo = await uploadTos3withKey(image, `image-slider/${slug}`);
+      if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
+        is.image = imageInfo;
+      } else {
+        res
+          .status(400)
+          .json({ error: "Error on uploading image to Amazon S3" });
+      }
     }
 
-    const excerpt = smartTrim(
-      stripHtml(content).result.substring(0, 300),
-      280,
-      " ",
-      "..."
-    );
-    post.title = title;
-    post.slug = slug;
-    post.content = content;
-    post.excerpt = excerpt;
-    post.status = status;
-
-    post.save((err, result) => {
+    is.save((err, result) => {
       if (err) {
         res.status(400).json({
-          error: "Error on updating post. Please try again later.",
-          payload: err,
+          erorr: "Failed to add item in image stlider. Please try again later.",
         });
       }
       res.json(result);
@@ -133,4 +134,16 @@ exports.remove = async (req, res) => {
 
   const data = await ImageSlider.deleteOne({ slug }).exec();
   res.json({ message: "Post deleted successfully" });
+};
+
+exports.toggleStatus = async (req, res) => {
+  const { _id } = req.body;
+  let is = await ImageSlider.findOne({ _id }).exec();
+  is.status = !is.status;
+
+  is.save((err, result) => {
+    if (err)
+      res.status(400).json({ error: "Unable to toggle Image Slider status." });
+    res.json({ result });
+  });
 };
