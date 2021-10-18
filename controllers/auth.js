@@ -139,17 +139,17 @@ exports.signin = (req, res) => {
   });
 };
 
-// exports.signout = (req, res) => {
-//   res.clearCookie("sso-token");
-//   res.json({
-//     message: "Signout success",
-//   });
-// };
+exports.signout = (req, res) => {
+  res.clearCookie("token");
+  res.json({
+    message: "Signout success",
+  });
+};
 
-// exports.requireSignin = expressJwt({
-//   secret: process.env.JWT_SECRET,
-//   algorithms: ["HS256"],
-// });
+exports.requireSignin = expressJwt({
+  secret: process.env.JWT_SECRET,
+  algorithms: ["HS256"],
+});
 
 // exports.authMiddleware = (req, res, next) => {
 //   const authUserId = req.user._id;

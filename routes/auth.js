@@ -5,7 +5,7 @@ const {
   pendingUsers,
   processApproval,
   signin,
-  //   signout,
+  signout,
   //   requireSignin,
   //   createOTP,
   //   sendOTP,
@@ -17,6 +17,7 @@ const {
 } = require("../controllers/auth.js");
 
 router.post("/v1/signup", signup);
+router.get("/v1/signout", signout);
 router.get("/v1/pending-users", pendingUsers);
 
 router.put("/v1/process-approval", processApproval);
