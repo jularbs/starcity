@@ -15,9 +15,9 @@ const paymentOptionSchema = new mongoose.Schema(
       index: true,
     },
     status: {
-      type: String,
+      type: Boolean,
       required: true,
-      default: "disabled",
+      default: false,
     },
     meta: Object,
   },

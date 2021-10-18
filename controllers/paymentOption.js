@@ -75,7 +75,18 @@ exports.remove = async (req, res) => {
         message: err,
       });
     }
-    
+
     res.json({ success: "Payment Option deleted successfully" });
+  });
+};
+
+exports.toggleStatus = async (req, res) => {
+  const { _id } = req.body;
+  let paymentOption = await PaymentOption.findOne({ _id }).exec();
+  paymentOption.status = !paymentOption.status;
+
+  paymentOption.save((err, result) => {
+    if (err) res.json({ error: "Unable to toggle payment option status." });
+    res.json({ result });
   });
 };

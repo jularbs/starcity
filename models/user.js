@@ -35,8 +35,8 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
     status: {
-      type: String,
-      default: "for verification",
+      type: Boolean,
+      default: false,
       require: true,
     },
     otp: {
@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      default: "Admin"
+      default: "admin",
     },
     role: {
       type: String,

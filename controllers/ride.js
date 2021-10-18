@@ -1,7 +1,5 @@
-const RideCategory = require("../models/rideCategory.js");
 const Ride = require("../models/ride");
 const slugify = require("slugify");
-const formidable = require("formidable");
 
 exports.create = (req, res) => {
   const { name, description, heightRequirements, categoryId } = req.body;
@@ -17,13 +15,14 @@ exports.create = (req, res) => {
   ride.heightRequirements = heightRequirements;
   ride.rideCategoryId = categoryId;
 
-  ride.save((err, result) => {
+  ride.save(async (err, result) => {
     if (err) {
       return res.status(400).json({
-        error: "error occured",
+        error: "Failed to add new ride/attraction. Please try again later",
       });
     }
-    res.json(result);
+    const r = await result.populate("rideCategoryId", "name").execPopulate();
+    res.status(200).json(r);
   });
 };
 
@@ -89,6 +88,6 @@ exports.remove = async (req, res) => {
         message: err,
       });
     }
-  res.json({ success: "Ride deleted successfully" });
+    res.json({ success: "Ride deleted successfully" });
   });
 };
