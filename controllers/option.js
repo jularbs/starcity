@@ -1,25 +1,44 @@
 const slugify = require("slugify");
 const Option = require("../models/option");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   const { name, value, meta } = req.body;
-  const slug = slugify(name).toLowerCase();
 
-  let option = new Option();
+  let option = await Option.findOne({ name }).exec();
 
-  option.name = name;
-  option.slug = slug;
-  option.value = value;
-  option.meta = meta;
+  if (option) {
+    option.name = name;
+    option.value = value;
+    option.meta = meta;
 
-  option.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-      });
-    }
-    res.json(result);
-  });
+    option.save((err, result) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      res.json({ result, status: "success" });
+    });
+  } else {
+    const slug = slugify(name).toLowerCase();
+
+    let newOption = new Option();
+
+    newOption.name = name;
+    newOption.slug = slug;
+    newOption.value = value;
+    newOption.meta = meta;
+
+    newOption.save((err, result) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+        });
+      }
+      res.json(result);
+    });
+  }
 };
 
 exports.read = (req, res) => {
@@ -37,15 +56,31 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  Option.find().exec((err, data) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
+  const { keys } = req.query;
+  console.log(keys);
+  if (!keys) {
+    Option.find()
+      .select("name value")
+      .exec((err, data) => {
+        if (err) {
+          return res.status(400).json({
+            error: "error occured",
+            message: err,
+          });
+        }
+        res.json(data);
       });
-    }
-    res.json(data);
-  });
+  } else {
+    Option.find()
+      .select("name value")
+      .where("name")
+      .in(keys)
+      .exec((err, options) => {
+        if (err) res.status(400).json({ error: "Unable to retrieve options" });
+
+        res.json(options);
+      });
+  }
 };
 
 exports.update = async (req, res) => {

@@ -98,12 +98,30 @@ exports.processApproval = async (req, res) => {
 };
 
 exports.signin = (req, res) => {
-  //check if user exists
   const { email, password } = req.body;
+  //check if superadmin
+  if (
+    email == process.env.SUPER_ADMIN_UN &&
+    password == process.env.SUPER_ADMIN_PW
+  ) {
+    const saToken = jwt.sign({ _id: email }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    res.cookie("token", saToken, { expiresIn: "1d" });
+    return res.json({
+      saToken,
+      user: {
+        name: "superadmin",
+        email: "superadmin",
+      },
+    });
+  }
+
+  //check if user exists
   User.findOne({ email }).exec((err, user) => {
     if (err || !user) {
       return res.status(400).json({
-        error: "User with that email does not exist. Please create an account.",
+        error: "Email is not yet registered. Please create an account.",
       });
     }
     //authenticate
@@ -143,6 +161,77 @@ exports.signout = (req, res) => {
   res.clearCookie("token");
   res.json({
     message: "Signout success",
+  });
+};
+
+exports.changePassword = (req, res) => {
+  const { _id, currentPassword, newPassword, confirmation } = req.body;
+
+  User.findOne({ _id }).exec((err, user) => {
+    if (err) {
+      res
+        .status(400)
+        .json({ error: "Unable to change password. Please try again later" });
+    }
+
+    if (!user.authenticate(currentPassword)) {
+      return res.status(400).json({
+        error: "Current password is incorrect.",
+      });
+    }
+
+    if (newPassword !== confirmation) {
+      return res.status(400).json({
+        error: "New Password and confirmation should match",
+      });
+    }
+
+    user.password = confirmation;
+
+    user.save((err, result) => {
+      if (err) {
+        res.status(400).json({
+          error: "Unable to change password. Please try again later",
+        });
+      }
+
+      res.json({ success: "Password successfully changed" });
+    });
+  });
+};
+
+exports.registeredUsers = (req, res) => {
+  const { department } = req.query;
+  console.log(req.query);
+  if (!department) {
+    User.find({ status: true })
+      .select("_id name email createdAt department role")
+      .exec((err, users) => {
+        if (err)
+          res.status(400).json({ error: "Error on getting registered users" });
+        res.json(users);
+      });
+  } else {
+    User.find({ status: true, department })
+      .select("_id name email createdAt department role")
+      .exec((err, users) => {
+        if (err)
+          res.status(400).json({ error: "Error on getting registered users" });
+        res.json(users);
+      });
+  }
+};
+
+exports.deleteUser = (req, res) => {
+  const { _id } = req.body;
+  User.deleteOne({ _id }).exec((err, result) => {
+    if (err) {
+      res
+        .status(400)
+        .json({ error: "Unable to delete user. Please try again later" });
+    }
+
+    res.json({ success: "User deleted successfully." });
   });
 };
 
