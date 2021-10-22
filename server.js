@@ -17,6 +17,7 @@ const accessPassRoutes = require("./routes/accessPass");
 const postRoutes = require("./routes/post");
 const imageSliderRoutes = require("./routes/imageSlider");
 const authRoutes = require("./routes/auth");
+const bannerRoutes = require("./routes/banner");
 
 var cron = require("node-cron");
 
@@ -84,6 +85,7 @@ app.use("/api", accessPassRoutes);
 app.use("/api", postRoutes);
 app.use("/api", imageSliderRoutes);
 app.use("/api", authRoutes);
+app.use("/api", bannerRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

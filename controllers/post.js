@@ -129,3 +129,39 @@ exports.remove = async (req, res) => {
   const data = await Post.deleteOne({ slug }).exec();
   res.json({ message: "Post deleted successfully" });
 };
+
+exports.uploadImage = (req, res) => {
+  let form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.log(err);
+      return res.status(400).json({
+        error: "There was a problem with uploading the image.",
+      });
+    }
+
+    if (files.photo) {
+      if (files.photo.size > 1000000) {
+        return res.status(400).json({
+          error: "Image too large. ( > 1MB ).",
+        });
+      }
+
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        files.photo,
+        `attachments/${year}/${month}`
+      );
+      if (imageInfo) res.json({ location: imageInfo.location });
+    } else {
+      return res.status(400).json({
+        error: "No image is selected.",
+      });
+    }
+  });
+};

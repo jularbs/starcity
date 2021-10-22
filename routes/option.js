@@ -12,7 +12,7 @@ const {
 router.post("/v1/option", create);
 router.put("/v1/option", update);
 router.get("/v1/option", list);
-router.get("/v1/option/:slug", read);
+router.get("/v1/option/:name", read);
 router.delete("/v1/option", remove);
 
 module.exports = router;

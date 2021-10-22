@@ -42,8 +42,9 @@ exports.create = async (req, res) => {
 };
 
 exports.read = (req, res) => {
-  Option.findOne({ slug: req.params.slug })
-    .select("name value meta")
+  console.log(req.query);
+  Option.findOne({ name: req.params.name })
+    .select("name value")
     .exec((err, data) => {
       if (err) {
         return res.status(400).json({
