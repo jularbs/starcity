@@ -9,6 +9,8 @@ const {
   deleteObjectFromS3,
 } = require("../helpers/s3uploader");
 
+const { createEntry } = require("../controllers/auditTrail");
+
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -17,23 +19,18 @@ exports.create = (req, res) => {
     const { image } = files;
 
     if (!name || !name.length) {
-      console.log("error at name");
       return res.status(400).json({
         error: "Name identifier is required",
       });
     }
 
     if (!startDate || !startDate.length) {
-      console.log("error at sd");
-
       return res.status(400).json({
         error: "Start date is required",
       });
     }
 
     if (!endDate || !endDate.length) {
-      console.log("error at ed");
-
       return res.status(400).json({
         error: "End date is required",
       });
@@ -43,8 +40,6 @@ exports.create = (req, res) => {
 
     if (image) {
       if (image.size > 1000000) {
-        console.log("error at image size");
-
         return res.status(400).json({
           error: "Image too large. ( > 1MB ).",
         });
@@ -63,13 +58,23 @@ exports.create = (req, res) => {
 
         b.save((err, result) => {
           if (err) {
-            console.log(err
-              );
+            console.log(err);
             res.status(400).json({
               erorr: "Failed to add banner. Please try again later.",
             });
           }
           res.json(result);
+          createEntry(
+            req.profile.name,
+            "Created new banner",
+            {
+              name,
+              startDate,
+              endDate,
+              sizeCategory,
+            },
+            req
+          );
         });
       } else {
         console.log("error at image upload");
@@ -108,7 +113,6 @@ exports.update = async (req, res) => {
     const { name, startDate, endDate, slug, sizeCategory } = fields;
     const { image } = files;
     let b = await Banner.findOne({ slug: slug }).exec();
-    console.log(b);
     b.name = name;
     b.startDate = startDate;
     b.endDate = endDate;
@@ -138,6 +142,18 @@ exports.update = async (req, res) => {
         });
       }
       res.json(result);
+      createEntry(
+        req.profile.name,
+        `Updated banner ${slug}`,
+        {
+          slug,
+          name,
+          startDate,
+          endDate,
+          sizeCategory,
+        },
+        req
+      );
     });
   });
 };
@@ -147,6 +163,7 @@ exports.remove = async (req, res) => {
 
   const data = await Banner.deleteOne({ slug }).exec();
   res.json({ message: "Banner deleted successfully" });
+  createEntry(req.profile.name, `Deleted banner ${slug}`, {}, req);
 };
 
 exports.toggleStatus = async (req, res) => {
@@ -157,5 +174,11 @@ exports.toggleStatus = async (req, res) => {
   b.save((err, result) => {
     if (err) res.status(400).json({ error: "Unable to toggle banner status." });
     res.json({ result });
+    createEntry(
+      req.profile.name,
+      `Toggled banner status ${result.name}`,
+      { status: result.status },
+      req
+    );
   });
 };
