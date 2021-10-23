@@ -58,6 +58,7 @@ if (process.env.NODE_ENV === "production") {
 } else {
   database = process.env.DATABASE_DEV;
 }
+
 mongoose
   .connect(database, {
     useNewUrlParser: true,

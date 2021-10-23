@@ -2,6 +2,7 @@ const slugify = require("slugify");
 const Option = require("../models/option");
 
 exports.create = async (req, res) => {
+  console.log(req);
   const { name, value, meta } = req.body;
 
   let option = await Option.findOne({ name }).exec();
