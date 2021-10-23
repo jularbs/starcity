@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 const expressJwt = require("express-jwt");
 const { add, isBefore } = require("date-fns");
-
+const { createEntry } = require("../controllers/auditTrail");
 exports.signup = (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
   console.log(req.body);
@@ -107,54 +107,57 @@ exports.signin = (req, res) => {
     const saToken = jwt.sign({ _id: email }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
-    res.cookie("token", saToken, { expiresIn: "1d" });
-    return res.json({
-      saToken,
+    res.cookie("token", saToken, { expiresIn: "7d" });
+    res.json({
+      token: saToken,
       user: {
         name: "superadmin",
         email: "superadmin",
       },
     });
+    createEntry("superadmin", "Logged in to system", { email: email }, req);
+  } else {
+    //check if user exists
+    User.findOne({ email }).exec((err, user) => {
+      if (err || !user) {
+        return res.status(400).json({
+          error: "Email is not yet registered. Please create an account.",
+        });
+      }
+      //authenticate
+      if (!user.authenticate(password)) {
+        return res.status(400).json({
+          error: "Email and password do not match.",
+        });
+      }
+
+      if (!user.status) {
+        return res.status(400).json({
+          error: "Account is not yet approved.",
+        });
+      }
+
+      //generate JWT
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      res.cookie("token", token, { expiresIn: "7d" });
+      const { _id, name, email, department } = user;
+
+      res.json({
+        token,
+        user: {
+          _id,
+          name,
+          email,
+          department,
+        },
+      });
+
+      createEntry(user.name, "Logged in to system", { email: email }, req);
+    });
   }
-
-  //check if user exists
-  User.findOne({ email }).exec((err, user) => {
-    if (err || !user) {
-      return res.status(400).json({
-        error: "Email is not yet registered. Please create an account.",
-      });
-    }
-    //authenticate
-    if (!user.authenticate(password)) {
-      return res.status(400).json({
-        error: "Email and password do not match.",
-      });
-    }
-
-    if (!user.status) {
-      return res.status(400).json({
-        error: "Account is not yet approved.",
-      });
-    }
-
-    //generate JWT
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.cookie("token", token, { expiresIn: "7d" });
-    const { _id, name, email, department } = user;
-
-    return res.json({
-      token,
-      user: {
-        _id,
-        name,
-        email,
-        department,
-      },
-    });
-  });
 };
 
 exports.signout = (req, res) => {
@@ -241,16 +244,23 @@ exports.requireSignin = expressJwt({
 });
 
 exports.authMiddleware = (req, res, next) => {
-  const authUserId = req.user._id;
-  User.findById({ _id: authUserId }).exec((err, user) => {
-    if (err || !user) {
-      return res.status(400).json({
-        error: "User not found",
-      });
-    }
-    req.profile = user;
+  if (req.user._id === process.env.SUPER_ADMIN_UN) {
+    req.profile = {
+      name: "superadmin",
+    };
     next();
-  });
+  } else {
+    const authUserId = req.user._id;
+    User.findById({ _id: authUserId }).exec((err, user) => {
+      if (err || !user) {
+        return res.status(400).json({
+          error: "User not found",
+        });
+      }
+      req.profile = user;
+      next();
+    });
+  }
 };
 
 // exports.adminMiddleware = (req, res, next) => {

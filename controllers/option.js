@@ -1,8 +1,8 @@
 const slugify = require("slugify");
 const Option = require("../models/option");
+const { createEntry } = require("../controllers/auditTrail");
 
 exports.create = async (req, res) => {
-  console.log(req);
   const { name, value, meta } = req.body;
 
   let option = await Option.findOne({ name }).exec();
@@ -20,6 +20,13 @@ exports.create = async (req, res) => {
         });
       }
       res.json({ result, status: "success" });
+
+      createEntry(
+        req.profile.name,
+        `Option ${name} updated`,
+        { value: req.value },
+        req
+      );
     });
   } else {
     const slug = slugify(name).toLowerCase();
@@ -38,6 +45,14 @@ exports.create = async (req, res) => {
         });
       }
       res.json(result);
+      createEntry(
+        req.profile.name,
+        `Option ${name} created`,
+        {
+          value: req.value,
+        },
+        req
+      );
     });
   }
 };

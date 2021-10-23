@@ -51,22 +51,23 @@ app.use(
   })
 );
 
-//database
-let database = "";
+//DATABASE CONNECTIONS
+let cmsDatabase = "";
 if (process.env.NODE_ENV === "production") {
-  database = process.env.DATABASE_PROD;
+  cmsDatabase = process.env.DATABASE_PROD;
 } else {
-  database = process.env.DATABASE_DEV;
+  cmsDatabase = process.env.DATABASE_DEV;
 }
 
+
 mongoose
-  .connect(database, {
+  .connect(cmsDatabase, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
     useUnifiedTopology: true,
   })
-  .then(() => console.log(`DB connected at ${database}`))
+  .then(() => console.log(`DB connected at ${cmsDatabase}`))
   .catch((error) => console.log("Error in connecting to DB: " + error));
 
 //middlewares
