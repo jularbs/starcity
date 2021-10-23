@@ -83,6 +83,12 @@ exports.processApproval = async (req, res) => {
       res.json({
         success: `User is now ${status ? "approved" : "disapproved"}`,
       });
+      createEntry(
+        req.profile.name,
+        `Approved registration for ${user.name}`,
+        {},
+        req
+      );
     });
   } else {
     User.deleteOne({ _id }).exec((err, result) => {
@@ -93,6 +99,12 @@ exports.processApproval = async (req, res) => {
       res.json({
         success: `User is now ${status ? "approved" : "disapproved"}`,
       });
+      createEntry(
+        req.profile.name,
+        `Disapproved registration for ${user.name}`,
+        {},
+        req
+      );
     });
   }
 };
@@ -199,6 +211,7 @@ exports.changePassword = (req, res) => {
       }
 
       res.json({ success: "Password successfully changed" });
+      createEntry(req.profile.name, `Changed Password`, {}, req);
     });
   });
 };
@@ -235,6 +248,7 @@ exports.deleteUser = (req, res) => {
     }
 
     res.json({ success: "User deleted successfully." });
+    createEntry(req.profile.name, `Deleted user`, { _id }, req);
   });
 };
 

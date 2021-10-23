@@ -16,18 +16,30 @@ const {
   //   verifyThroughEmail,
   //   createChangePasswordToken,
   changePassword,
+  requireSignin,
+  authMiddleware,
 } = require("../controllers/auth.js");
 
 router.post("/v1/signup", signup);
 router.post("/v1/signin", signin);
-router.post("/v1/change-password", changePassword);
+router.post(
+  "/v1/change-password",
+  requireSignin,
+  authMiddleware,
+  changePassword
+);
 
 router.get("/v1/signout", signout);
 router.get("/v1/pending-users", pendingUsers);
 router.get("/v1/registered-users", registeredUsers);
 
-router.put("/v1/process-approval", processApproval);
+router.put(
+  "/v1/process-approval",
+  requireSignin,
+  authMiddleware,
+  processApproval
+);
 
-router.delete("/v1/delete-user", deleteUser);
+router.delete("/v1/delete-user", requireSignin, authMiddleware, deleteUser);
 
 module.exports = router;
