@@ -45,7 +45,7 @@ exports.create = (req, res) => {
       }
 
       const imageInfo = await uploadTos3withKey(image, `image-slider/${slug}`);
-      if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
+      if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let is = new ImageSlider();
         is.name = name;
         is.slug = slug;

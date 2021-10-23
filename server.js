@@ -17,6 +17,7 @@ const accessPassRoutes = require("./routes/accessPass");
 const postRoutes = require("./routes/post");
 const imageSliderRoutes = require("./routes/imageSlider");
 const authRoutes = require("./routes/auth");
+const bannerRoutes = require("./routes/banner");
 
 var cron = require("node-cron");
 
@@ -57,6 +58,7 @@ if (process.env.NODE_ENV === "production") {
 } else {
   database = process.env.DATABASE_DEV;
 }
+
 mongoose
   .connect(database, {
     useNewUrlParser: true,
@@ -84,6 +86,7 @@ app.use("/api", accessPassRoutes);
 app.use("/api", postRoutes);
 app.use("/api", imageSliderRoutes);
 app.use("/api", authRoutes);
+app.use("/api", bannerRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

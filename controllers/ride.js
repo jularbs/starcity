@@ -1,28 +1,56 @@
 const Ride = require("../models/ride");
+const formidable = require("formidable");
 const slugify = require("slugify");
-
+const { uploadTos3withKey } = require("../helpers/s3uploader.js");
 exports.create = (req, res) => {
-  const { name, description, heightRequirements, categoryId } = req.body;
+  const form = formidable({ multiples: true });
 
-  const slug = slugify(name).toLowerCase();
+  form.parse(req, async (err, fields, files) => {
+    const { name, description, heightRequirements, categoryId, status } =
+      fields;
+    const { image } = files;
 
-  let ride = new Ride();
+    const slug = slugify(name).toLowerCase();
 
-  ride.name = name;
-  ride.description = description;
-  ride.slug = slug;
+    if (image) {
+      if (image.size > 1000000) {
+        return res.status(400).json({
+          error: "Image too large. ( > 1MB ).",
+        });
+      }
 
-  ride.heightRequirements = heightRequirements;
-  ride.rideCategoryId = categoryId;
+      const imageInfo = await uploadTos3withKey(image, `ride/${slug}`);
 
-  ride.save(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "Failed to add new ride/attraction. Please try again later",
-      });
+      if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
+        let ride = new Ride();
+        ride.name = name;
+        ride.description = description;
+        ride.slug = slug;
+        ride.status = status;
+        ride.heightRequirements = heightRequirements;
+        ride.rideCategoryId = categoryId;
+        ride.media = imageInfo;
+
+        ride.save(async (err, result) => {
+          if (err) {
+            return res.status(400).json({
+              error:
+                "Failed to add new ride/attraction. Please try again later",
+            });
+          }
+          const r = await result
+            .populate("rideCategoryId", "name")
+            .execPopulate();
+          res.status(200).json(r);
+        });
+      } else {
+        res
+          .status(400)
+          .json({ error: "Unable to upload image. Please try again later." });
+      }
+    } else {
+      res.status(400).json({ error: "Image is required" });
     }
-    const r = await result.populate("rideCategoryId", "name").execPopulate();
-    res.status(200).json(r);
   });
 };
 
@@ -56,25 +84,44 @@ exports.list = (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const { name, slug, description, heightRequirements, categoryId } = req.body;
+  const form = formidable({ multiples: true });
 
-  const ride = await Ride.findOne({ slug: slug }).exec();
+  form.parse(req, async (err, fields, files) => {
+    const { name, slug, description, heightRequirements, status, categoryId } =
+      fields;
+    const { image } = files;
 
-  ride.name = name;
-  ride.description = description;
-  ride.slug = slug;
+    const ride = await Ride.findOne({ slug: slug }).exec();
 
-  ride.heightRequirements = heightRequirements;
-  ride.rideCategoryId = categoryId;
+    if (image) {
+      if (image.size > 1000000) {
+        return res.status(400).json({
+          error: "Image too large. ( > 1MB ).",
+        });
+      }
 
-  ride.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
+      const imageInfo = await uploadTos3withKey(image, `ride/${slug}`);
+      ride.media = imageInfo;
     }
-    res.json({ result, status: "success" });
+
+    ride.name = name;
+    ride.description = description;
+    ride.status = status;
+    ride.heightRequirements = heightRequirements;
+    ride.rideCategoryId = categoryId;
+
+    ride.save(async (err, result) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      const r = await result
+        .populate("rideCategoryId", "name _id")
+        .execPopulate();
+      res.json({ result: r, status: "success" });
+    });
   });
 };
 
@@ -84,7 +131,7 @@ exports.remove = async (req, res) => {
   Ride.findOneAndDelete({ slug }).exec(async (err, result) => {
     if (err) {
       return res.status(400).json({
-        error: "error occured",
+        error: "Unable to delete ride. Please try again later",
         message: err,
       });
     }
