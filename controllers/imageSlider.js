@@ -104,7 +104,6 @@ exports.update = async (req, res) => {
     const { name, startDate, endDate, slug } = fields;
     const { image } = files;
     let is = await ImageSlider.findOne({ slug: slug }).exec();
-    console.log(is);
     is.name = name;
     is.startDate = startDate;
     is.endDate = endDate;

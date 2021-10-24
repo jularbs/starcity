@@ -1,6 +1,7 @@
 const slugify = require("slugify");
 const PaymentOption = require("../models/paymentOption");
 
+const { createEntry } = require("../controllers/auditTrail");
 exports.create = (req, res) => {
   const { name } = req.body;
   const slug = slugify(name).toLowerCase();
@@ -17,6 +18,12 @@ exports.create = (req, res) => {
       });
     }
     res.json(result);
+    createEntry(
+      req.profile.name,
+      "Created New Payment Option",
+      { name: name },
+      req
+    );
   });
 };
 
@@ -62,6 +69,12 @@ exports.update = async (req, res) => {
       });
     }
     res.json({ result, status: "success" });
+    createEntry(
+      req.profile.name,
+      `Updated Payment Option ${slug}`,
+      { name: name },
+      req
+    );
   });
 };
 
@@ -77,6 +90,7 @@ exports.remove = async (req, res) => {
     }
 
     res.json({ success: "Payment Option deleted successfully" });
+    createEntry(req.profile.name, `Deleted Payment Option ${slug}`, {}, req);
   });
 };
 
@@ -88,5 +102,11 @@ exports.toggleStatus = async (req, res) => {
   paymentOption.save((err, result) => {
     if (err) res.json({ error: "Unable to toggle payment option status." });
     res.json({ result });
+    createEntry(
+      req.profile.name,
+      `Deleted Payment Option ${paymentOption.name}`,
+      {},
+      req
+    );
   });
 };
