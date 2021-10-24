@@ -104,7 +104,7 @@ exports.toggleStatus = async (req, res) => {
     res.json({ result });
     createEntry(
       req.profile.name,
-      `Deleted Payment Option ${paymentOption.name}`,
+      `Toggled Payment Option ${paymentOption.name}`,
       {},
       req
     );

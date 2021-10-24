@@ -9,12 +9,14 @@ const {
   uploadImage,
 } = require("../controllers/post");
 
+const { requireSignin, authMiddleware } = require("../controllers/auth");
+
 //Version 1.0
-router.post("/v1/post", create);
-router.put("/v1/post", update);
+router.post("/v1/post", requireSignin, authMiddleware, create);
+router.put("/v1/post", requireSignin, authMiddleware, update);
 router.get("/v1/post", list);
 router.get("/v1/post/:slug", read);
-router.delete("/v1/post", remove);
+router.delete("/v1/post", requireSignin, authMiddleware, remove);
 
 router.post("/v1/image-uploader", uploadImage);
 

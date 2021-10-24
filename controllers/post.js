@@ -8,6 +8,8 @@ const {
   deleteObjectFromS3,
 } = require("../helpers/s3uploader");
 
+const { createEntry } = require("../controllers/auditTrail");
+
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -53,6 +55,7 @@ exports.create = (req, res) => {
             });
           }
           res.json(result);
+          createEntry(req.profile.name, "Created new post", result, req);
         });
       } else {
         res.json({ error: "Error on uploading image to Amazon S3" });
@@ -119,6 +122,7 @@ exports.update = async (req, res) => {
         });
       }
       res.json(result);
+      createEntry(req.profile.name, `Updated post ${post.name}`, result, req);
     });
   });
 };
@@ -128,6 +132,7 @@ exports.remove = async (req, res) => {
 
   const data = await Post.deleteOne({ slug }).exec();
   res.json({ message: "Post deleted successfully" });
+  createEntry(req.profile.name, `Deleted post ${slug}`, {}, req);
 };
 
 exports.uploadImage = (req, res) => {
