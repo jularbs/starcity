@@ -1,6 +1,8 @@
 const Ticket = require("../models/ticket");
 const slugify = require("slugify");
 
+const { createEntry } = require("../controllers/auditTrail");
+
 exports.create = (req, res) => {
   const { name, code, shortDescription, price, details } = req.body;
 
@@ -18,12 +20,12 @@ exports.create = (req, res) => {
 
   ticket.save((err, result) => {
     if (err) {
-
       return res.status(400).json({
         error: "error occured",
       });
     }
     res.json(result);
+    createEntry(req.profile.name, `Created New Ticket ${name}`, result, req);
   });
 };
 
@@ -85,6 +87,7 @@ exports.update = async (req, res) => {
       });
     }
     res.json({ result, status: "success" });
+    createEntry(req.profile.name, `Updated ticket ${name}`, result, req);
   });
 };
 
@@ -99,6 +102,7 @@ exports.remove = async (req, res) => {
       });
     }
     res.json({ success: "Ticket deleted successfully" });
+    createEntry(req.profile.name, `Deleted ticket ${_id}`, {}, req);
   });
 };
 
@@ -111,5 +115,11 @@ exports.toggleStatus = async (req, res) => {
   ticket.save((err, result) => {
     if (err) res.json({ error: "Unable to toggle ticket status." });
     res.json({ result });
+    createEntry(
+      req.profile.name,
+      `Toggled ticket ${ticket.name}`,
+      { status: result.status },
+      req
+    );
   });
 };

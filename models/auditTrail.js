@@ -9,7 +9,7 @@ const auditTrailSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    capped: { size: 10000000, max: 10000, autoIndexId: true },
+    capped: { size: 20000000, max: 60000, autoIndexId: true },
   }
 );
 

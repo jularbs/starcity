@@ -122,7 +122,7 @@ exports.update = async (req, res) => {
         });
       }
       res.json(result);
-      createEntry(req.profile.name, `Updated post ${post.name}`, result, req);
+      createEntry(req.profile.name, `Updated post ${post.title}`, result, req);
     });
   });
 };
