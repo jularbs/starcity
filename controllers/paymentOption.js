@@ -42,15 +42,28 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  PaymentOption.find().exec((err, data) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-    res.json(data);
-  });
+  const { f } = req.query;
+  if (f) {
+    PaymentOption.find({ status: true }).exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      res.json(data);
+    });
+  } else {
+    PaymentOption.find().exec((err, data) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      res.json(data);
+    });
+  }
 };
 
 exports.update = async (req, res) => {
