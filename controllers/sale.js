@@ -297,8 +297,18 @@ exports.readBySaltRefID = async (req, res) => {
 };
 
 exports.read = (req, res) => {
-  Ticket.findOne({ slug: req.params.slug })
-    .select("name description slug price status")
+  Sale.findOne({ refId: req.params.refid })
+    .select(
+      "customerName emailAddress contactNumber orderTotal refId salt paymentDetails"
+    )
+    .populate({
+      path: "paymentDetails",
+      populate: {
+        path: "option",
+        model: "PaymentOption",
+        select: "name",
+      },
+    })
     .exec((err, data) => {
       if (err) {
         return res.status(400).json({
@@ -330,9 +340,10 @@ exports.list = (req, res) => {
         select: "name",
       },
     })
+    .sort("-createdAt")
     .skip(parseInt(skip))
     .limit(parseInt(limit))
-    .exec((err, data) => {
+    .exec(async (err, data) => {
       if (err) {
         console.log(err);
         return res.status(400).json({
@@ -340,7 +351,8 @@ exports.list = (req, res) => {
           message: err,
         });
       }
-      res.json(data);
+      const count = await Sale.countDocuments();
+      res.json({ data, count });
     });
 };
 
@@ -381,7 +393,8 @@ exports.remove = async (req, res) => {
 };
 
 exports.createCheckout = async (req, res) => {
-  const { cartItems, customerName, email, contactNumber } = req.body;
+  const { cartItems, customerName, email, contactNumber, paymentDetails } =
+    req.body;
 
   let isExisting = [];
   let refID = "";
@@ -404,6 +417,19 @@ exports.createCheckout = async (req, res) => {
       };
     })
   );
+
+  if (paymentDetails) {
+    const pOption = await PaymentOption.findOne({ slug: paymentDetails.slug })
+      .select("_id")
+      .exec();
+
+    sale.paymentDetails = {
+      option: await pOption._id,
+      referenceNumber: paymentDetails.orderID,
+      status: paymentDetails.status,
+    };
+  }
+
   sale.customerName = customerName;
   sale.emailAddress = email;
   sale.refId = refID;
@@ -438,10 +464,8 @@ exports.processPayment = async (req, res) => {
   sale.status = status;
   sale.paymentDetails = {
     option: await pOption._id,
-    meta: {
-      referenceNumber: refid,
-      status: status,
-    },
+    referenceNumber: refid,
+    status: status,
   };
 
   sale.save((err, result) => {
@@ -457,28 +481,40 @@ exports.processPayment = async (req, res) => {
   });
 };
 
+exports.processPaypalPayment = async (req, res) => {
+  console.log("REQ: ", req.body);
+  const { status, orderId } = req.body;
+  const sale = await Sale.findOne({
+    "paymentDetails.referenceNumber": orderId,
+  }).exec();
+
+  if (sale) {
+    sale.status = "success";
+    sale.paymentDetails = {
+      ...sale.paymentDetails,
+      status: status,
+    };
+
+    sale.save((err, result) => {
+      res.json({ refid: result.refId, payment: result.status });
+      if (status == "COMPLETED") {
+        this.generateAccessPass(result, result.cartItems);
+        this.sendAR(result.refId);
+      }
+    });
+  } else {
+    console.log("ERROR NO SALE FOUND");
+    res.status(400).json({ error: "Sale undefined" });
+  }
+};
+
 //TESTER FUNCTION
 exports.test = async (req, res) => {
-  var mail = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: "ralphjularbal@gmail.com",
-      pass: "elicci1234",
-    },
-  });
+  console.log(req.query);
+  const { status, orderId } = req.query;
+  const sale = await Sale.findOne({
+    "paymentDetails.referenceNumber": orderId,
+  }).exec();
 
-  const arPayload = {
-    to: "starcityappdev@gmail.com",
-    from: "noreply@starcity.com.ph",
-    subject: "Thank you for your purchase",
-    html: accessPassEmailNotification(),
-  };
-
-  try {
-    let info = mail.sendMail(arPayload, function (error, info) {
-      res.json({ message: info, error: error });
-    });
-  } catch (e) {
-    res.json({ e });
-  }
+  res.json(sale);
 };

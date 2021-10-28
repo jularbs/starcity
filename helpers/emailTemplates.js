@@ -1334,8 +1334,7 @@ exports.accessPassEmailNotification = (data) => {
                                                         class="tw-light"
                                                         style="font-weight: 300"
                                                         >${
-                                                          paymentDetails.meta
-                                                            .referenceNumber
+                                                          paymentDetails.referenceNumber
                                                         }</span
                                                       >
                                                     </p>

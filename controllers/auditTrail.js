@@ -14,3 +14,21 @@ exports.createEntry = (user, action, payload, req) => {
 
   at.save();
 };
+
+exports.list = (req, res) => {
+  const { skip, limit } = req.body;
+  AuditTrail.find({})
+    .select("userName action payload createdAt ipAddress -_id")
+    .sort("-createdAt")
+    .skip(skip)
+    .limit(limit)
+    .exec(async (err, result) => {
+      if (err)
+        res.status(400).json({
+          error: "Error occured",
+        });
+
+      const count = await AuditTrail.countDocuments();
+      res.json({ result, count });
+    });
+};

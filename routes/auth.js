@@ -20,6 +20,8 @@ const {
   authMiddleware,
 } = require("../controllers/auth.js");
 
+const { list } = require("../controllers/auditTrail");
+
 router.post("/v1/signup", signup);
 router.post("/v1/signin", signin);
 router.post(
@@ -41,5 +43,7 @@ router.put(
 );
 
 router.delete("/v1/delete-user", requireSignin, authMiddleware, deleteUser);
+router.post("/v1/audit-trail/list", requireSignin, authMiddleware, 
+list);
 
 module.exports = router;
