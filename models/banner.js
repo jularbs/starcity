@@ -11,6 +11,9 @@ const bannerSchema = new mongoose.Schema(
       index: true,
       required: true,
     },
+    link: {
+      type: String,
+    },
     image: {
       location: String,
       bucket: String,

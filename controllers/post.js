@@ -77,12 +77,10 @@ exports.read = (req, res) => {
 
 exports.list = (req, res) => {
   const { skip, limit } = req.query;
-  console.log("REQ: ", req.query);
   Post.find({})
     .skip(parseInt(skip))
     .limit(parseInt(limit))
     .exec((err, result) => {
-      // console.log(result);
       res.json(result);
     });
 };

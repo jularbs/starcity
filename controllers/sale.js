@@ -482,7 +482,6 @@ exports.processPayment = async (req, res) => {
 };
 
 exports.processPaypalPayment = async (req, res) => {
-  console.log("REQ: ", req.body);
   const { status, orderId } = req.body;
   const sale = await Sale.findOne({
     "paymentDetails.referenceNumber": orderId,

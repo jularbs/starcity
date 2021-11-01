@@ -15,7 +15,7 @@ exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { name, startDate, endDate, sizeCategory } = fields;
+    const { name, link, startDate, endDate, sizeCategory } = fields;
     const { image } = files;
 
     if (!name || !name.length) {
@@ -49,6 +49,7 @@ exports.create = (req, res) => {
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let b = new Banner();
         b.name = name;
+        b.link = link;
         b.slug = slug;
         b.startDate = startDate;
         b.endDate = endDate;
@@ -110,13 +111,15 @@ exports.update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { name, startDate, endDate, slug, sizeCategory } = fields;
+    const { name, link, startDate, endDate, slug, sizeCategory } = fields;
     const { image } = files;
     let b = await Banner.findOne({ slug: slug }).exec();
     b.name = name;
+
     b.startDate = startDate;
     b.endDate = endDate;
     b.sizeCategory = sizeCategory;
+    b.link = link;
 
     if (image) {
       if (image.size > 1000000) {
