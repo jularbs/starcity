@@ -18,6 +18,7 @@ const postRoutes = require("./routes/post");
 const imageSliderRoutes = require("./routes/imageSlider");
 const authRoutes = require("./routes/auth");
 const bannerRoutes = require("./routes/banner");
+const healthDeclarationRoutes = require("./routes/healthDeclaration");
 
 var cron = require("node-cron");
 
@@ -59,7 +60,6 @@ if (process.env.NODE_ENV === "production") {
   cmsDatabase = process.env.DATABASE_DEV;
 }
 
-
 mongoose
   .connect(cmsDatabase, {
     useNewUrlParser: true,
@@ -88,6 +88,7 @@ app.use("/api", postRoutes);
 app.use("/api", imageSliderRoutes);
 app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
+app.use("/api", healthDeclarationRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

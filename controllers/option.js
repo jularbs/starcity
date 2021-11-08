@@ -58,7 +58,6 @@ exports.create = async (req, res) => {
 };
 
 exports.read = (req, res) => {
-  console.log(req.query);
   Option.findOne({ name: req.params.name })
     .select("name value")
     .exec((err, data) => {
