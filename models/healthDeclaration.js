@@ -10,6 +10,14 @@ const healthDeclarationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    contactNumber: {
+      type: String,
+      require: true,
+    },
+    temperature: {
+      type: String,
+      require: true,
+    },
     nationality: {
       type: String,
       required: true,
@@ -37,6 +45,9 @@ const healthDeclarationSchema = new mongoose.Schema(
       required: true,
     },
     recentTravel: {
+      type: String,
+    },
+    closeEnvironment: {
       type: String,
     },
     questionAnswer: [

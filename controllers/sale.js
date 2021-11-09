@@ -321,7 +321,6 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  console.log(req.query);
   const { skip, limit } = req.query;
   Sale.find()
     .populate({
