@@ -19,6 +19,7 @@ const imageSliderRoutes = require("./routes/imageSlider");
 const authRoutes = require("./routes/auth");
 const bannerRoutes = require("./routes/banner");
 const healthDeclarationRoutes = require("./routes/healthDeclaration");
+const mediaRoutes = require("./routes/media");
 
 var cron = require("node-cron");
 
@@ -89,6 +90,7 @@ app.use("/api", imageSliderRoutes);
 app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
 app.use("/api", healthDeclarationRoutes);
+app.use("/api", mediaRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 
