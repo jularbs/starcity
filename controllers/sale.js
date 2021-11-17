@@ -134,6 +134,10 @@ exports.sendAR = async (refId) => {
         filename: "acknowledgement-receipt.pdf",
         content: buffer,
       },
+      {
+        filename: "healthdeclaration-form.pdf",
+        content: `${process.env.DOMAIN}/data/img/health-declaration-form.pdf`,
+      },
     ],
   };
 

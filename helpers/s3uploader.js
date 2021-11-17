@@ -63,7 +63,7 @@ exports.uploadTos3withKey = (file, folder) => {
         Key: `${folder}/${file.name}`,
         Bucket: process.env.AWS_S3_BUCKETNAME,
         Body: fs.readFileSync(file.path),
-        // ACL: "public-read",
+        ACL: "public-read",
       },
       (err, data) => {
         if (err) return reject(err);
