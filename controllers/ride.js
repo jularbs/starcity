@@ -139,6 +139,8 @@ exports.remove = async (req, res) => {
         message: err,
       });
     }
+
+    //TODO: DELETE IMAGE
     res.json({ success: "Ride deleted successfully" });
     createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);
   });

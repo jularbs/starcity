@@ -146,6 +146,7 @@ exports.remove = async (req, res) => {
   const { slug } = req.body;
 
   const data = await ImageSlider.deleteOne({ slug }).exec();
+  //TODO: DELETE IMAGE
   res.json({ message: "Post deleted successfully" });
   createEntry(req.profile.name, `Deleted Image Slider Item ${slug}`, {}, req);
 };
