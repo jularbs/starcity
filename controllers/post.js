@@ -14,7 +14,7 @@ exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content, status } = fields;
+    const { title, content, status, publishDate } = fields;
     const { image } = files;
 
     if (!title || !title.length) {
@@ -47,6 +47,7 @@ exports.create = (req, res) => {
         post.excerpt = excerpt;
         post.featuredImage = imageInfo;
         post.status = status;
+        post.publishDate = publishDate;
 
         post.save((err, result) => {
           if (err) {
@@ -89,7 +90,7 @@ exports.update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content, slug, status } = fields;
+    const { title, content, slug, status, publishDate } = fields;
     const { image } = files;
 
     let post = await Post.findOne({ slug }).exec();
@@ -111,6 +112,7 @@ exports.update = async (req, res) => {
     post.content = content;
     post.excerpt = excerpt;
     post.status = status;
+    post.publishDate = publishDate;
 
     post.save((err, result) => {
       if (err) {
