@@ -81,8 +81,16 @@ exports.list = (req, res) => {
   Post.find({})
     .skip(parseInt(skip))
     .limit(parseInt(limit))
-    .exec((err, result) => {
-      res.json(result);
+    .exec(async (err, result) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+      const count = await Post.countDocuments();
+      res.json({ data: result, count });
     });
 };
 
@@ -131,6 +139,8 @@ exports.remove = async (req, res) => {
   const { slug } = req.body;
 
   const data = await Post.deleteOne({ slug }).exec();
+  //TODO: DELETE IMAGE
+
   res.json({ message: "Post deleted successfully" });
   createEntry(req.profile.name, `Deleted post ${slug}`, {}, req);
 };
