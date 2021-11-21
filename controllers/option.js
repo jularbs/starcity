@@ -1,8 +1,70 @@
 const slugify = require("slugify");
 const Option = require("../models/option");
+const { createEntry } = require("../controllers/auditTrail");
+const { uploadTos3withKey } = require("../helpers/s3uploader");
+const formidable = require("formidable");
+
+exports.logoUpload = async (req, res) => {
+  const form = formidable({ multiples: true });
+
+  form.parse(req, async (err, fields, files) => {
+    console.log("FILES: ", files);
+    console.log("FIELD: ", fields);
+    const { value } = files;
+    const { name } = fields;
+
+    const imageInfo = await uploadTos3withKey(value, `logo-image`);
+    let option = await Option.findOne({ name }).exec();
+
+    if (option) {
+      option.name = name;
+      option.value = imageInfo.location;
+
+      option.save((err, result) => {
+        if (err) {
+          return res.status(400).json({
+            error: "error occured",
+            message: err,
+          });
+        }
+        res.json({ result, status: "success" });
+
+        createEntry(
+          req.profile.name,
+          `Option ${name} updated`,
+          { value: imageInfo.location },
+          req
+        );
+      });
+    } else {
+      const slug = slugify(name).toLowerCase();
+      let newOption = new Option();
+
+      newOption.name = name;
+      newOption.slug = slug;
+      newOption.value = value;
+
+      newOption.save((err, result) => {
+        if (err) {
+          return res.status(400).json({
+            error: "error occured",
+          });
+        }
+        res.json(result);
+        createEntry(
+          req.profile.name,
+          `Option ${name} created`,
+          {
+            value: imageInfo.location,
+          },
+          req
+        );
+      });
+    }
+  });
+};
 
 exports.create = async (req, res) => {
-  console.log(req);
   const { name, value, meta } = req.body;
 
   let option = await Option.findOne({ name }).exec();
@@ -20,6 +82,13 @@ exports.create = async (req, res) => {
         });
       }
       res.json({ result, status: "success" });
+
+      createEntry(
+        req.profile.name,
+        `Option ${name} updated`,
+        { value: req.value },
+        req
+      );
     });
   } else {
     const slug = slugify(name).toLowerCase();
@@ -38,12 +107,19 @@ exports.create = async (req, res) => {
         });
       }
       res.json(result);
+      createEntry(
+        req.profile.name,
+        `Option ${name} created`,
+        {
+          value: req.value,
+        },
+        req
+      );
     });
   }
 };
 
 exports.read = (req, res) => {
-  console.log(req.query);
   Option.findOne({ name: req.params.name })
     .select("name value")
     .exec((err, data) => {

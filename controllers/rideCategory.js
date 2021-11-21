@@ -2,6 +2,8 @@ const RideCategory = require("../models/rideCategory.js");
 const slugify = require("slugify");
 const formidable = require("formidable");
 
+const { createEntry } = require("../controllers/auditTrail");
+
 exports.create = (req, res) => {
   const { name, description } = req.body;
 
@@ -21,6 +23,7 @@ exports.create = (req, res) => {
     }
 
     res.json(result);
+    createEntry(req.profile.name, `Created new Ride Category`, result, req);
   });
 };
 
@@ -66,6 +69,7 @@ exports.update = async (req, res) => {
       });
     }
     res.json({ result, status: "success" });
+    createEntry(req.profile.name, `Updated Ride Category ${name}`, result, req);
   });
 };
 
@@ -83,5 +87,6 @@ exports.remove = async (req, res) => {
     const data = await RideCategory.find().exec();
 
     res.json({ success: "Ride Category deleted successfully" });
+    createEntry(req.profile.name, `Deleted Ride Category`, { slug }, req);
   });
 };

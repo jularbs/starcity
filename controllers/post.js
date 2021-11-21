@@ -8,11 +8,13 @@ const {
   deleteObjectFromS3,
 } = require("../helpers/s3uploader");
 
+const { createEntry } = require("../controllers/auditTrail");
+
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content, status } = fields;
+    const { title, content, status, publishDate } = fields;
     const { image } = files;
 
     if (!title || !title.length) {
@@ -45,6 +47,7 @@ exports.create = (req, res) => {
         post.excerpt = excerpt;
         post.featuredImage = imageInfo;
         post.status = status;
+        post.publishDate = publishDate;
 
         post.save((err, result) => {
           if (err) {
@@ -53,6 +56,7 @@ exports.create = (req, res) => {
             });
           }
           res.json(result);
+          createEntry(req.profile.name, "Created new post", result, req);
         });
       } else {
         res.json({ error: "Error on uploading image to Amazon S3" });
@@ -74,12 +78,10 @@ exports.read = (req, res) => {
 
 exports.list = (req, res) => {
   const { skip, limit } = req.query;
-  console.log("REQ: ", req.query);
   Post.find({})
     .skip(parseInt(skip))
     .limit(parseInt(limit))
     .exec((err, result) => {
-      // console.log(result);
       res.json(result);
     });
 };
@@ -88,7 +90,7 @@ exports.update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { title, content, slug, status } = fields;
+    const { title, content, slug, status, publishDate } = fields;
     const { image } = files;
 
     let post = await Post.findOne({ slug }).exec();
@@ -110,6 +112,7 @@ exports.update = async (req, res) => {
     post.content = content;
     post.excerpt = excerpt;
     post.status = status;
+    post.publishDate = publishDate;
 
     post.save((err, result) => {
       if (err) {
@@ -119,6 +122,7 @@ exports.update = async (req, res) => {
         });
       }
       res.json(result);
+      createEntry(req.profile.name, `Updated post ${post.title}`, result, req);
     });
   });
 };
@@ -128,6 +132,7 @@ exports.remove = async (req, res) => {
 
   const data = await Post.deleteOne({ slug }).exec();
   res.json({ message: "Post deleted successfully" });
+  createEntry(req.profile.name, `Deleted post ${slug}`, {}, req);
 };
 
 exports.uploadImage = (req, res) => {

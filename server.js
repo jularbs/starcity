@@ -18,6 +18,8 @@ const postRoutes = require("./routes/post");
 const imageSliderRoutes = require("./routes/imageSlider");
 const authRoutes = require("./routes/auth");
 const bannerRoutes = require("./routes/banner");
+const healthDeclarationRoutes = require("./routes/healthDeclaration");
+const mediaRoutes = require("./routes/media");
 
 var cron = require("node-cron");
 
@@ -51,22 +53,22 @@ app.use(
   })
 );
 
-//database
-let database = "";
+//DATABASE CONNECTIONS
+let cmsDatabase = "";
 if (process.env.NODE_ENV === "production") {
-  database = process.env.DATABASE_PROD;
+  cmsDatabase = process.env.DATABASE_PROD;
 } else {
-  database = process.env.DATABASE_DEV;
+  cmsDatabase = process.env.DATABASE_DEV;
 }
 
 mongoose
-  .connect(database, {
+  .connect(cmsDatabase, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
     useUnifiedTopology: true,
   })
-  .then(() => console.log(`DB connected at ${database}`))
+  .then(() => console.log(`DB connected at ${cmsDatabase}`))
   .catch((error) => console.log("Error in connecting to DB: " + error));
 
 //middlewares
@@ -87,6 +89,8 @@ app.use("/api", postRoutes);
 app.use("/api", imageSliderRoutes);
 app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
+app.use("/api", healthDeclarationRoutes);
+app.use("/api", mediaRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

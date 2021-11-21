@@ -32,6 +32,9 @@ const postSchema = new mongoose.Schema(
       required: true,
       defualt: "draft",
     },
+    publishDate: {
+      type: Date,
+    },
     meta: Object,
   },
   { timestamps: true }

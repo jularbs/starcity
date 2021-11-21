@@ -10,6 +10,8 @@ const {
   deleteObjectFromS3,
 } = require("../helpers/s3uploader");
 
+const { createEntry } = require("../controllers/auditTrail");
+
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -62,6 +64,12 @@ exports.create = (req, res) => {
             });
           }
           res.json(result);
+          createEntry(
+            req.profile.name,
+            "Created new Image Slider Item",
+            { ...result, image: null },
+            req
+          );
         });
       } else {
         res
@@ -96,7 +104,6 @@ exports.update = async (req, res) => {
     const { name, startDate, endDate, slug } = fields;
     const { image } = files;
     let is = await ImageSlider.findOne({ slug: slug }).exec();
-    console.log(is);
     is.name = name;
     is.startDate = startDate;
     is.endDate = endDate;
@@ -125,6 +132,12 @@ exports.update = async (req, res) => {
         });
       }
       res.json(result);
+      createEntry(
+        req.profile.name,
+        `Updated Image Slider Item ${slug}`,
+        { ...result, image: null },
+        req
+      );
     });
   });
 };
@@ -134,6 +147,7 @@ exports.remove = async (req, res) => {
 
   const data = await ImageSlider.deleteOne({ slug }).exec();
   res.json({ message: "Post deleted successfully" });
+  createEntry(req.profile.name, `Deleted Image Slider Item ${slug}`, {}, req);
 };
 
 exports.toggleStatus = async (req, res) => {
@@ -145,5 +159,11 @@ exports.toggleStatus = async (req, res) => {
     if (err)
       res.status(400).json({ error: "Unable to toggle Image Slider status." });
     res.json({ result });
+    createEntry(
+      req.profile.name,
+      `Toggled Image Slider Item ${result.name}`,
+      { status: result.status },
+      req
+    );
   });
 };

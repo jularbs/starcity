@@ -2,6 +2,7 @@ const Ride = require("../models/ride");
 const formidable = require("formidable");
 const slugify = require("slugify");
 const { uploadTos3withKey } = require("../helpers/s3uploader.js");
+const { createEntry } = require("../controllers/auditTrail");
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -42,6 +43,8 @@ exports.create = (req, res) => {
             .populate("rideCategoryId", "name")
             .execPopulate();
           res.status(200).json(r);
+
+          createEntry(req.profile.name, `Create new ride`, { result }, req);
         });
       } else {
         res
@@ -121,6 +124,7 @@ exports.update = async (req, res) => {
         .populate("rideCategoryId", "name _id")
         .execPopulate();
       res.json({ result: r, status: "success" });
+      createEntry(req.profile.name, `Updated ride ${r.name}`, {}, req);
     });
   });
 };
@@ -136,5 +140,6 @@ exports.remove = async (req, res) => {
       });
     }
     res.json({ success: "Ride deleted successfully" });
+    createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);
   });
 };

@@ -101,3 +101,18 @@ exports.deleteObjectFromS3 = async (key, bucket) => {
 
   return res;
 };
+
+exports.getObjectFromS3 = async (key, bucket) => {
+  const params = {
+    Bucket: bucket,
+    Key: key,
+  };
+
+  const res = await new Promise((resolve, reject) => {
+    s3.getObject(params, function (err, data) {
+      err == null ? resolve(data) : reject(err);
+    });
+  });
+
+  return res;
+};
