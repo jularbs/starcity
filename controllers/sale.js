@@ -17,6 +17,7 @@ const {
 const { pool } = require("../lib/mysql/connect");
 
 const { format } = require("date-fns");
+const moment = require("moment");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -341,8 +342,18 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  const { skip, limit } = req.query;
-  Sale.find()
+  const { skip, limit, start, end } = req.query;
+
+  //check UTC Formatting when in server
+  const startDate = moment(start).startOf("day").toISOString();
+  const endDate = moment(end).endOf("day").toISOString();
+
+  Sale.find({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+  })
     .populate({
       path: "cartItems",
       populate: {
@@ -370,7 +381,12 @@ exports.list = (req, res) => {
           message: err,
         });
       }
-      const count = await Sale.countDocuments();
+      const count = await Sale.countDocuments({
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      });
       res.json({ data, count });
     });
 };
