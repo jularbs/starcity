@@ -16,6 +16,8 @@ const {
 } = require("../helpers/emailTemplates");
 const { pool } = require("../lib/mysql/connect");
 
+const { format } = require("date-fns");
+
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
@@ -166,9 +168,23 @@ exports.syncAccessPass = (accessPass) => {
           }
         });
       } else {
-        const values = [["1", accessPass.accessToken, "1"]];
+        const date = format(accessPass.createdAt, "yyyy-MM-dd");
+        const time = format(accessPass.createdAt, "HH:mm:ss");
+
+        const values = [
+          [
+            accessPass.accessToken,
+            "Pop Tag",
+            date,
+            time,
+            "Purchased",
+            "webPOS",
+            "1",
+          ],
+        ];
+
         const sql =
-          "INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
+          "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus) VALUES ?;";
 
         connection.query(sql, [values], function (error, results, fields) {
           if (error) {

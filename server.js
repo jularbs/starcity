@@ -95,7 +95,7 @@ app.use("/api", mediaRoutes);
 app.use(express.static(__dirname + "/data/img"));
 
 //cron jobs
-cron.schedule("*/10 * * * *", function () {
+cron.schedule("*/2 * * * *", function () {
   cronSyncAP();
 });
 

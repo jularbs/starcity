@@ -1,6 +1,7 @@
 const AccessPassQueue = require("../models/accessPassQueue");
 const { pool } = require("../lib/mysql/connect");
 const { addAuditTrailEntry } = require("../helpers/auditTrailHandler");
+const { format } = require("date-fns");
 
 exports.cronSyncAP = async () => {
   const queues = await AccessPassQueue.find({}).populate("accessPass").exec();
@@ -13,9 +14,23 @@ exports.cronSyncAP = async () => {
         if (err) {
         } else {
           queues.map((q) => {
-            const values = [["1", q.accessPass.accessToken, "1"]];
+            const date = format(q.accessPass.createdAt, "yyyy-MM-dd");
+            const time = format(q.accessPass.createdAt, "HH:mm:ss");
+
+            const values = [
+              [
+                q.accessPass.accessToken,
+                "Pop Tag",
+                date,
+                time,
+                "Purchased",
+                "webPOS",
+                "1",
+              ],
+            ];
+
             const sql =
-              "INSERT INTO tablebarcode (status, barcode_number, ip_group) VALUES ?;";
+              "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus) VALUES ?;";
 
             connection.query(sql, [values], function (error, results, fields) {
               if (error) {
