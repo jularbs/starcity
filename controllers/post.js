@@ -9,7 +9,7 @@ const {
 } = require("../helpers/s3uploader");
 
 const { createEntry } = require("../controllers/auditTrail");
-
+const { zonedTimeToUtc } = require("date-fns-tz");
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
