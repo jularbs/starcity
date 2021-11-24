@@ -1,5 +1,6 @@
 const HealthDeclaration = require("../models/healthDeclaration");
 const { uploadBase64 } = require("../helpers/s3uploader");
+const moment = require("moment");
 
 exports.create = async (req, res) => {
   const {
@@ -52,12 +53,10 @@ exports.create = async (req, res) => {
 
     hd.save((err, result) => {
       if (err) {
-        res
-          .status(400)
-          .json({
-            error:
-              "Something went wrong. Please make sure all required fields are filled.",
-          });
+        res.status(400).json({
+          error:
+            "Something went wrong. Please make sure all required fields are filled.",
+        });
       } else {
         res.json(result);
       }
@@ -68,9 +67,17 @@ exports.create = async (req, res) => {
 };
 
 exports.list = async (req, res) => {
-  const { skip, limit } = req.query;
+  const { skip, limit, startDate, endDate } = req.query;
 
-  HealthDeclaration.find()
+  const start = moment(startDate).startOf("day").toISOString();
+  const end = moment(endDate).endOf("day").toISOString();
+
+  HealthDeclaration.find({
+    createdAt: {
+      $gte: start,
+      $lte: end,
+    },
+  })
     .select("fullName contactNumber temperature companyName createdAt")
     .sort("-createdAt")
     .skip(parseInt(skip))
@@ -83,7 +90,12 @@ exports.list = async (req, res) => {
           message: err,
         });
       }
-      const count = await HealthDeclaration.countDocuments();
+      const count = await HealthDeclaration.countDocuments({
+        createdAt: {
+          $gte: start,
+          $lte: end,
+        },
+      });
       res.json({ data, count });
     });
 };

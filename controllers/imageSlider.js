@@ -2,8 +2,6 @@ const Post = require("../models/post");
 const ImageSlider = require("../models/imageSlider");
 
 const slugify = require("slugify");
-const { smartTrim } = require("../helpers/commonFunctions");
-const { stripHtml } = require("string-strip-html");
 const formidable = require("formidable");
 const {
   uploadTos3withKey,
