@@ -18,6 +18,7 @@ const { pool } = require("../lib/mysql/connect");
 
 const { format } = require("date-fns");
 const moment = require("moment");
+const axios = require("axios");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -434,64 +435,90 @@ exports.remove = async (req, res) => {
 };
 
 exports.createCheckout = async (req, res) => {
-  const { cartItems, customerName, email, contactNumber, paymentDetails } =
-    req.body;
+  const {
+    cartItems,
+    customerName,
+    email,
+    contactNumber,
+    paymentDetails,
+    token,
+  } = req.body;
 
-  let isExisting = [];
-  let refID = "";
+  //CHECK RECAPTCHA
+  const captcha = await axios({
+    method: "POST",
+    url: "https://www.google.com/recaptcha/api/siteverify",
+    params: {
+      secret: process.env.RECAPTCHA_SECRET_KEY,
+      response: token,
+    },
+  });
 
-  do {
-    refID = crypto.randomBytes(6).toString("hex").toUpperCase();
-    isExisting = await Sale.find({ refId: refID }).exec();
-  } while (isExisting.length !== 0);
+  if (!captcha.data.success) {
+    res.status(400).json({
+      error: "Please prove you are not a robot by checking the checkbox below.",
+    });
+  } else {
+    let isExisting = [];
+    let refID = "";
 
-  let sale = new Sale();
+    do {
+      refID = crypto.randomBytes(6).toString("hex").toUpperCase();
+      isExisting = await Sale.find({ refId: refID }).exec();
+    } while (isExisting.length !== 0);
 
-  //error when only 1 item in cart
-  const items = await Promise.all(
-    cartItems.map(async (item) => {
-      const price = await this.getCurrentTicketPrice({ ticketId: item._id });
-      return {
-        ticketId: item._id,
-        qty: item.qty,
-        priceAcquired: price.price,
+    let sale = new Sale();
+
+    //error when only 1 item in cart
+    const items = await Promise.all(
+      cartItems.map(async (item) => {
+        const price = await this.getCurrentTicketPrice({
+          ticketId: item._id,
+        });
+        return {
+          ticketId: item._id,
+          qty: item.qty,
+          priceAcquired: price.price,
+        };
+      })
+    );
+
+    if (paymentDetails) {
+      const pOption = await PaymentOption.findOne({
+        slug: paymentDetails.slug,
+      })
+        .select("_id")
+        .exec();
+
+      sale.paymentDetails = {
+        option: await pOption._id,
+        referenceNumber: paymentDetails.orderID,
+        status: paymentDetails.status,
       };
-    })
-  );
-
-  if (paymentDetails) {
-    const pOption = await PaymentOption.findOne({ slug: paymentDetails.slug })
-      .select("_id")
-      .exec();
-
-    sale.paymentDetails = {
-      option: await pOption._id,
-      referenceNumber: paymentDetails.orderID,
-      status: paymentDetails.status,
-    };
-  }
-
-  sale.customerName = customerName;
-  sale.emailAddress = email;
-  sale.refId = refID;
-  sale.contactNumber = contactNumber;
-  sale.cartItems = items;
-  sale.status = "awaiting payment";
-  sale.orderTotal = items.reduce((sum, item) => {
-    return sum + item.qty * item.priceAcquired;
-  }, 0);
-
-  sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
-  sale.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
     }
 
-    res.json(result);
-  });
+    sale.customerName = customerName;
+    sale.emailAddress = email;
+    sale.refId = refID;
+    sale.contactNumber = contactNumber;
+    sale.cartItems = items;
+    sale.status = "awaiting payment";
+    sale.orderTotal = items.reduce((sum, item) => {
+      return sum + item.qty * item.priceAcquired;
+    }, 0);
+
+    sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
+    sale.save((err, result) => {
+      if (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+
+      res.json(result);
+    });
+  }
 };
 
 exports.processPayment = async (req, res) => {
