@@ -353,6 +353,9 @@ exports.list = (req, res) => {
       $gte: startDate,
       $lte: endDate,
     },
+    status: {
+      $ne: "awaiting payment",
+    },
   })
     .populate({
       path: "cartItems",
@@ -385,6 +388,9 @@ exports.list = (req, res) => {
         createdAt: {
           $gte: startDate,
           $lte: endDate,
+        },
+        status: {
+          $ne: "awaiting payment",
         },
       });
       res.json({ data, count });

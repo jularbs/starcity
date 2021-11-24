@@ -236,7 +236,6 @@ exports.changePassword = (req, res) => {
 
 exports.registeredUsers = (req, res) => {
   const { department } = req.query;
-  console.log(req.query);
   if (!department) {
     User.find({ status: true })
       .select("_id name email createdAt department role")
@@ -258,6 +257,7 @@ exports.registeredUsers = (req, res) => {
 
 exports.deleteUser = (req, res) => {
   const { _id } = req.body;
+  console.log(req.body);
   User.deleteOne({ _id }).exec((err, result) => {
     if (err) {
       res
