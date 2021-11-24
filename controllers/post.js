@@ -38,7 +38,14 @@ exports.create = (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `post/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `post/${year}/${month}/${slug}`
+      );
       if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
         let post = new Post();
         post.title = title;
@@ -105,7 +112,15 @@ exports.update = async (req, res) => {
 
     if (image) {
       deleteObjectFromS3(post.featuredImage.key, post.featuredImage.bucket);
-      const imageInfo = await uploadTos3withKey(image, `post/${slug}`);
+
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `post/${year}/${month}/${slug}`
+      );
+
       post.featuredImage = imageInfo;
     }
 

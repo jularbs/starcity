@@ -46,7 +46,14 @@ exports.create = (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `image-slider/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `image-slider/${year}/${month}/${slug}`
+      );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let is = new ImageSlider();
         is.name = name;
@@ -115,7 +122,14 @@ exports.update = async (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `image-slider/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `image-slider/${year}/${month}/${slug}`
+      );
       if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
         is.image = imageInfo;
       } else {

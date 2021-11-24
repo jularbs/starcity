@@ -83,9 +83,14 @@ exports.generateAccessPass = (sale, accessPasses) => {
         width: 300,
         height: 300,
       });
+
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
       const upload = await uploadBase64(
         await base64,
-        `access-pass/${sale.customerName}/${sale.refId}/${finalToken}`
+        `access-pass/${year}/${month}/${sale.customerName}/${sale.refId}/${finalToken}`
       );
 
       //save data to accesspassmodel

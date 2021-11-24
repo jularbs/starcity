@@ -20,8 +20,14 @@ exports.create = (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `ride/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
 
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `ride/${year}/${month}/${slug}`
+      );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let ride = new Ride();
         ride.name = name;
@@ -103,7 +109,14 @@ exports.update = async (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `ride/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `ride/${year}/${month}/${slug}`
+      );
       ride.media = imageInfo;
     }
 

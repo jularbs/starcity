@@ -45,7 +45,14 @@ exports.create = (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `banners/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `banners/${year}/${month}/${slug}`
+      );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let b = new Banner();
         b.name = name;
@@ -116,8 +123,8 @@ exports.update = async (req, res) => {
     let b = await Banner.findOne({ slug: slug }).exec();
     b.name = name;
 
-    b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");;
-    b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");;
+    b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
+    b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
     b.sizeCategory = sizeCategory;
     b.link = link;
 
@@ -128,7 +135,14 @@ exports.update = async (req, res) => {
         });
       }
 
-      const imageInfo = await uploadTos3withKey(image, `banners/${slug}`);
+      var date = new Date();
+      var month = date.getUTCMonth() + 1; //months from 1-12
+      var year = date.getUTCFullYear();
+
+      const imageInfo = await uploadTos3withKey(
+        image,
+        `banners/${year}/${month}/${slug}`
+      );
       if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
         b.image = imageInfo;
       } else {
