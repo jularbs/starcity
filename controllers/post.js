@@ -47,7 +47,7 @@ exports.create = (req, res) => {
         post.excerpt = excerpt;
         post.featuredImage = imageInfo;
         post.status = status;
-        post.publishDate = publishDate;
+        post.publishDate = zonedTimeToUtc(publishDate, "Asia/Manila");
 
         post.save((err, result) => {
           if (err) {
@@ -120,7 +120,7 @@ exports.update = async (req, res) => {
     post.content = content;
     post.excerpt = excerpt;
     post.status = status;
-    post.publishDate = publishDate;
+    post.publishDate = zonedTimeToUtc(publishDate, "Asia/Manila");
 
     post.save((err, result) => {
       if (err) {

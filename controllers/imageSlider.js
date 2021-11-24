@@ -12,6 +12,8 @@ const {
 
 const { createEntry } = require("../controllers/auditTrail");
 
+const { zonedTimeToUtc } = require("date-fns-tz");
+
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -51,8 +53,8 @@ exports.create = (req, res) => {
         let is = new ImageSlider();
         is.name = name;
         is.slug = slug;
-        is.startDate = startDate;
-        is.endDate = endDate;
+        is.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
+        is.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
         is.image = imageInfo;
         is.status = false;
 
@@ -105,8 +107,8 @@ exports.update = async (req, res) => {
     const { image } = files;
     let is = await ImageSlider.findOne({ slug: slug }).exec();
     is.name = name;
-    is.startDate = startDate;
-    is.endDate = endDate;
+    is.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
+    is.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
 
     if (image) {
       if (image.size > 1000000) {

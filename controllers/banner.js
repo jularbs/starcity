@@ -1,8 +1,6 @@
 const Banner = require("../models/banner");
 
 const slugify = require("slugify");
-const { smartTrim } = require("../helpers/commonFunctions");
-const { stripHtml } = require("string-strip-html");
 const formidable = require("formidable");
 const {
   uploadTos3withKey,
@@ -10,6 +8,8 @@ const {
 } = require("../helpers/s3uploader");
 
 const { createEntry } = require("../controllers/auditTrail");
+
+const { zonedTimeToUtc } = require("date-fns-tz");
 
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
@@ -51,8 +51,8 @@ exports.create = (req, res) => {
         b.name = name;
         b.link = link;
         b.slug = slug;
-        b.startDate = startDate;
-        b.endDate = endDate;
+        b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
+        b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
         b.image = imageInfo;
         b.status = false;
         b.sizeCategory = sizeCategory;
@@ -116,8 +116,8 @@ exports.update = async (req, res) => {
     let b = await Banner.findOne({ slug: slug }).exec();
     b.name = name;
 
-    b.startDate = startDate;
-    b.endDate = endDate;
+    b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");;
+    b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");;
     b.sizeCategory = sizeCategory;
     b.link = link;
 
