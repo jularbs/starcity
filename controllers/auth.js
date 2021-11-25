@@ -3,7 +3,7 @@ const shortId = require("shortid");
 const jwt = require("jsonwebtoken");
 
 const expressJwt = require("express-jwt");
-const { add, isBefore } = require("date-fns");
+const { add } = require("date-fns");
 const { createEntry } = require("../controllers/auditTrail");
 const axios = require("axios");
 exports.signup = (req, res) => {
