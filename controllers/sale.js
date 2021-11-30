@@ -348,7 +348,7 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  const { skip, limit, start, end } = req.query;
+  const { skip, limit, start, end, search } = req.query;
 
   //check UTC Formatting when in server
   const startDate = moment(start).startOf("day").toISOString();
@@ -362,6 +362,10 @@ exports.list = (req, res) => {
     status: {
       $ne: "awaiting payment",
     },
+    $or: [
+      { refId: { $regex: search, $options: "i" } },
+      { customerName: { $regex: search, $options: "i" } },
+    ],
   })
     .populate({
       path: "cartItems",
@@ -398,8 +402,12 @@ exports.list = (req, res) => {
         status: {
           $ne: "awaiting payment",
         },
+        $or: [
+          { refId: { $regex: search, $options: "i" } },
+          { customerName: { $regex: search, $options: "i" } },
+        ],
       });
-      res.json({ data, count });
+      res.json({ count, data });
     });
 };
 
