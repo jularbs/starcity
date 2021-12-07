@@ -12,6 +12,7 @@ exports.cronSyncAP = async () => {
     try {
       pool.getConnection((err, connection) => {
         if (err) {
+          console.log("ERROR: ", err);
         } else {
           queues.map((q) => {
             const date = format(q.accessPass.createdAt, "yyyy-MM-dd");
@@ -24,7 +25,7 @@ exports.cronSyncAP = async () => {
                 date,
                 time,
                 "Purchased",
-                "webPOS",
+                "web",
                 "1",
               ],
             ];

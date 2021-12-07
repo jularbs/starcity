@@ -185,7 +185,7 @@ exports.syncAccessPass = (accessPass) => {
             date,
             time,
             "Purchased",
-            "webPOS",
+            "web",
             "1",
           ],
         ];
@@ -196,7 +196,7 @@ exports.syncAccessPass = (accessPass) => {
         connection.query(sql, [values], function (error, results, fields) {
           if (error) {
             // PUT IN QUEUE
-            console.log;
+            console.log("ERROR: ", error);
             let q = new Queue();
             q.accessPass = accessPass._id;
             q.status = error.code;
