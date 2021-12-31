@@ -152,11 +152,14 @@ exports.sendAR = async (refId) => {
   };
 
   try {
+    console.log("SENDING EMAIL FOR: ", refId);
     sendMail(details).then((info) => {
+      console.log("EMAIL SENT SUCCESSFULLY");
       console.log("EMAIL STACK: ", info);
     });
   } catch (e) {
     console.log("ERROR IN MAILER: ", e);
+    console.log("EMAIL SENT FAILED");
   }
 };
 
@@ -592,14 +595,49 @@ exports.processPaypalPayment = async (req, res) => {
 
 //TESTER FUNCTION
 exports.test = async (req, res) => {
+  const refId = req.query.refid;
+  console.log("SENDING AR...");
+  const sale = await Sale.findOne({ refId: refId })
+    .populate({
+      path: "cartItems",
+      populate: {
+        path: "ticketId",
+        model: "Ticket",
+        select: "name -_id",
+      },
+    })
+    .populate({
+      path: "paymentDetails",
+      populate: {
+        path: "option",
+        model: "PaymentOption",
+        select: "name -_id",
+      },
+    })
+    .exec();
+  let options = { format: "A4" };
+  let file = { content: artemplate(sale) };
+  let buffer = await html_to_pdf.generatePdf(file, options);
+
   const details = {
-    to: "starcityappdev@gmail.com",
+    to: sale.emailAddress,
     from: process.env.EMAIL_ADDRESS,
-    subject: "test email",
-    html: "test email",
+    subject: "Your acknowledgement receipt for your Star City ticket purchase",
+    html: accessPassEmailNotification(sale),
+    attachments: [
+      {
+        filename: "acknowledgement-receipt.pdf",
+        content: buffer,
+      },
+      {
+        filename: "healthdeclaration-form.pdf",
+        path: `${process.env.DOMAIN}health-declaration-form.pdf`,
+      },
+    ],
   };
 
   try {
+    console.log("SENDING EMAIL FOR: ", refId);
     sendMail(details).then((info) => {
       console.log("EMAIL STACK: ", info);
       res.json(info);
