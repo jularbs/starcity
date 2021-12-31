@@ -111,6 +111,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
 };
 
 exports.sendAR = async (refId) => {
+  console.log("SENDING AR...");
   const sale = await Sale.findOne({ refId: refId })
     .populate({
       path: "cartItems",
@@ -145,16 +146,17 @@ exports.sendAR = async (refId) => {
       },
       {
         filename: "healthdeclaration-form.pdf",
-        content: `${process.env.DOMAIN}/data/img/health-declaration-form.pdf`,
+        path: `${process.env.DOMAIN}health-declaration-form.pdf`,
       },
     ],
   };
 
   try {
-    let info = sendMail(details);
-    console.log(info);
+    sendMail(details).then((info) => {
+      console.log("EMAIL STACK: ", info);
+    });
   } catch (e) {
-    console.log(e);
+    console.log("ERROR IN MAILER: ", e);
   }
 };
 

@@ -9,28 +9,21 @@ const sendMail = async (email) => {
         user: process.env.EMAIL_ADDRESS,
         pass: process.env.EMAIL_PASSWORD,
       },
-      // debug: true,
-      // logger: true,
+      debug: true,
+      logger: true,
       tls: {
         secure: true,
         requireTLS: true,
       },
     };
-
-    // const config = {
-    //   service: "Gmail",
-    //   auth: {
-    //     user: "ralphjularbal@gmail.com",
-    //     pass: "elicci1234",
-    //   },
-    // };
-
     const { from, to, subject, html, attachments } = email;
     const info = await nodemailer
       .createTransport(config)
       .sendMail({ from, to, subject, html, attachments });
     return info;
-  } catch (e) {}
+  } catch (e) {
+    console.log("ERROR IN MAILER: ", e);
+  }
 };
 
 module.exports = { sendMail };
