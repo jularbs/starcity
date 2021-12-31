@@ -9,12 +9,7 @@ const sendMail = async (email) => {
         user: process.env.EMAIL_ADDRESS,
         pass: process.env.EMAIL_PASSWORD,
       },
-      debug: true,
-      logger: true,
-      tls: {
-        secure: true,
-        requireTLS: true,
-      },
+      tls: { rejectUnauthorized: false },
     };
     const { from, to, subject, html, attachments } = email;
     const info = await nodemailer

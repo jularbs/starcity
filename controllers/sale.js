@@ -592,11 +592,20 @@ exports.processPaypalPayment = async (req, res) => {
 
 //TESTER FUNCTION
 exports.test = async (req, res) => {
-  console.log(req.query);
-  const { status, orderId } = req.query;
-  const sale = await Sale.findOne({
-    "paymentDetails.referenceNumber": orderId,
-  }).exec();
+  const details = {
+    to: "starcityappdev@gmail.com",
+    from: process.env.EMAIL_ADDRESS,
+    subject: "test email",
+    html: "test email",
+  };
 
-  res.json(sale);
+  try {
+    sendMail(details).then((info) => {
+      console.log("EMAIL STACK: ", info);
+      res.json(info);
+    });
+  } catch (e) {
+    console.log("ERROR IN MAILER: ", e);
+    res.json(e);
+  }
 };
