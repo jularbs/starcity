@@ -130,9 +130,9 @@ exports.sendAR = async (refId) => {
       },
     })
     .exec();
-  let options = { format: "A4" };
-  let file = { content: artemplate(sale) };
-  let buffer = await html_to_pdf.generatePdf(file, options);
+  // let options = { format: "A4" };
+  // let file = { content: artemplate(sale) };
+  // let buffer = await html_to_pdf.generatePdf(file, options);
 
   const details = {
     to: sale.emailAddress,
@@ -140,10 +140,10 @@ exports.sendAR = async (refId) => {
     subject: "Your acknowledgement receipt for your Star City ticket purchase",
     html: accessPassEmailNotification(sale),
     attachments: [
-      {
-        filename: "acknowledgement-receipt.pdf",
-        content: buffer,
-      },
+      // {
+      //   filename: "acknowledgement-receipt.pdf",
+      //   content: buffer,
+      // },
       {
         filename: "healthdeclaration-form.pdf",
         path: `${process.env.DOMAIN}health-declaration-form.pdf`,
