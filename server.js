@@ -34,6 +34,12 @@ var allowedDomains = [
   "https://jularbs.com:3001",
   "http://starcity-website.herokuapp.com",
   "https://starcity-website.herokuapp.com",
+  "http://starcity.com.ph",
+  "https://starcity.com.ph",
+  "http://www.starcity.com.ph",
+  "https://www.starcity.com.ph",
+  "http://uat.starcity.com.ph",
+  "https://uat.starcity.com.ph",
 ];
 
 app.use(
