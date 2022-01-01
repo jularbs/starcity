@@ -141,7 +141,7 @@ exports.sendAR = async (refId) => {
   const APattachments = accessPasses.map((item, key) => {
     return {
       filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-      path: item.QRcode.location,
+      path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
     };
   });
 
@@ -633,7 +633,7 @@ exports.test = async (req, res) => {
   const APattachments = accessPasses.map((item, key) => {
     return {
       filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-      path: item.QRcode.location,
+      path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
     };
   });
 
@@ -652,13 +652,12 @@ exports.test = async (req, res) => {
   };
 
   try {
-    console.log("SENDING EMAIL FOR: ", refId);
     sendMail(details).then((info) => {
+      console.log("EMAIL SENT SUCCESSFULLY");
       console.log("EMAIL STACK: ", info);
-      res.json({ emailStack: info, details: sale });
     });
   } catch (e) {
     console.log("ERROR IN MAILER: ", e);
-    res.json(e);
+    console.log("EMAIL SENT FAILED");
   }
 };
