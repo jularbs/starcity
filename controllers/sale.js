@@ -111,7 +111,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
 };
 
 exports.sendAR = async (refId) => {
-  console.log("SENDING AR...");
+  console.log("SENDING AR FOR ", refId);
   const sale = await Sale.findOne({ refId: refId })
     .populate({
       path: "cartItems",
@@ -130,9 +130,20 @@ exports.sendAR = async (refId) => {
       },
     })
     .exec();
-  // let options = { format: "A4" };
-  // let file = { content: artemplate(sale) };
-  // let buffer = await html_to_pdf.generatePdf(file, options);
+
+  const saleId = sale._id;
+
+  const accessPasses = await AccessPass.find({ salesId: saleId })
+    .populate("ticketId", "slug")
+    .select("ticketId accessToken QRcode")
+    .exec();
+
+  const APattachments = accessPasses.map((item, key) => {
+    return {
+      filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
+      path: item.QRcode.location,
+    };
+  });
 
   const details = {
     to: sale.emailAddress,
@@ -140,19 +151,15 @@ exports.sendAR = async (refId) => {
     subject: "Your acknowledgement receipt for your Star City ticket purchase",
     html: accessPassEmailNotification(sale),
     attachments: [
-      // {
-      //   filename: "acknowledgement-receipt.pdf",
-      //   content: buffer,
-      // },
       {
         filename: "healthdeclaration-form.pdf",
         path: `${process.env.DOMAIN}health-declaration-form.pdf`,
       },
+      ...APattachments,
     ],
   };
 
   try {
-    console.log("SENDING EMAIL FOR: ", refId);
     sendMail(details).then((info) => {
       console.log("EMAIL SENT SUCCESSFULLY");
       console.log("EMAIL STACK: ", info);
@@ -615,9 +622,20 @@ exports.test = async (req, res) => {
       },
     })
     .exec();
-  // let options = { format: "A4" };
-  // let file = { content: artemplate(sale) };
-  // let buffer = await html_to_pdf.generatePdf(file, options);
+
+  const saleId = sale._id;
+
+  const accessPasses = await AccessPass.find({ salesId: saleId })
+    .populate("ticketId", "slug")
+    .select("ticketId accessToken QRcode")
+    .exec();
+
+  const APattachments = accessPasses.map((item, key) => {
+    return {
+      filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
+      path: item.QRcode.location,
+    };
+  });
 
   const details = {
     to: sale.emailAddress,
@@ -625,14 +643,11 @@ exports.test = async (req, res) => {
     subject: "Your acknowledgement receipt for your Star City ticket purchase",
     html: accessPassEmailNotification(sale),
     attachments: [
-      // {
-      //   filename: "acknowledgement-receipt.pdf",
-      //   content: buffer,
-      // },
       {
         filename: "healthdeclaration-form.pdf",
         path: `${process.env.DOMAIN}health-declaration-form.pdf`,
       },
+      ...APattachments,
     ],
   };
 
@@ -640,7 +655,7 @@ exports.test = async (req, res) => {
     console.log("SENDING EMAIL FOR: ", refId);
     sendMail(details).then((info) => {
       console.log("EMAIL STACK: ", info);
-      res.json(info);
+      res.json({ emailStack: info, details: sale });
     });
   } catch (e) {
     console.log("ERROR IN MAILER: ", e);
