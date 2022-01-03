@@ -712,7 +712,7 @@ exports.accessPassEmailNotification = (data) => {
                                       class="tw-light"
                                       style="
                                         margin: 0;
-                                        margin-bottom: 10px;
+                                        margin-bottom: 20px;
                                         color: #0a0a0a;
                                         font-family: Helvetica, Arial,
                                           sans-serif;
@@ -731,7 +731,31 @@ exports.accessPassEmailNotification = (data) => {
                                       Thank you for purchasing Star City
                                       tickets! We hope that you have an awesome
                                       experience and enjoy our rides and
-                                      attractions.
+                                      attractions. 
+                                    </p>
+                                    <p
+                                      class="tw-light"
+                                      style="
+                                        margin: 0;
+                                        margin-bottom: 10px;
+                                        color: #0a0a0a;
+                                        font-family: Helvetica, Arial,
+                                          sans-serif;
+                                        font-size: 16px;
+                                        font-weight: 300;
+                                        line-height: 1.3;
+                                        margin: 0;
+                                        margin-bottom: 10px;
+                                        padding-bottom: 0;
+                                        padding-left: 0;
+                                        padding-right: 0;
+                                        padding-top: 0;
+                                        text-align: left;
+                                      "
+                                    >  
+                                      Please download the QR codes and 
+                                      print or save in your mobile phone for scanning 
+                                      at the park's main entrance turnstiles. One QR code per person. 
                                     </p>
                                     <p
                                       style="
