@@ -637,6 +637,11 @@ exports.test = async (req, res) => {
     };
   });
 
+  let options = { format: "A4" };
+  let file = { content: artemplate(sale) };
+  // or //
+  const receipt = await html_to_pdf.generatePdf(file, options);
+
   const details = {
     to: sale.emailAddress,
     from: process.env.EMAIL_ADDRESS,
@@ -646,6 +651,10 @@ exports.test = async (req, res) => {
       {
         filename: "healthdeclaration-form.pdf",
         path: `${process.env.DOMAIN}health-declaration-form.pdf`,
+      },
+      {
+        filename: "acknowledgement-receipt.pdf",
+        content: receipt
       },
       ...APattachments,
     ],
