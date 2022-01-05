@@ -6,7 +6,7 @@ const {
 
 
 //Version 1.0
-router.get("/v1/paymaya-success", paymayaSuccess);
+router.post("/v1/paymaya-success", paymayaSuccess);
 
 
 module.exports = router;
