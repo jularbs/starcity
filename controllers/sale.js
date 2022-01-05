@@ -633,7 +633,7 @@ exports.test = async (req, res) => {
   const APattachments = accessPasses.map((item, key) => {
     return {
       filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-      path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
+      content: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
     };
   });
 
@@ -654,7 +654,7 @@ exports.test = async (req, res) => {
       },
       {
         filename: "acknowledgement-receipt.pdf",
-        content: receipt
+        content: receipt,
       },
       ...APattachments,
     ],

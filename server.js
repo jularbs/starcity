@@ -20,6 +20,7 @@ const authRoutes = require("./routes/auth");
 const bannerRoutes = require("./routes/banner");
 const healthDeclarationRoutes = require("./routes/healthDeclaration");
 const mediaRoutes = require("./routes/media");
+const webhookRoutes = require("./routes/webhooks");
 
 var cron = require("node-cron");
 
@@ -97,6 +98,7 @@ app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
 app.use("/api", healthDeclarationRoutes);
 app.use("/api", mediaRoutes);
+app.use("/webhook", webhookRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 
