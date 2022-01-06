@@ -8,7 +8,6 @@ const {
   remove,
   sync,
   createCheckout,
-  processPayment,
   processPaypalPayment,
   readBySaltRefID,
   test,
@@ -26,7 +25,6 @@ router.get("/v1/sync", sync);
 router.post("/v1/create-checkout", createCheckout);
 
 //payment webhooks
-router.get("/v1/payment/:status/:option/:refid", processPayment);
 router.put("/v1/payment/paypal", processPaypalPayment);
 
 //TESTS

@@ -11,10 +11,10 @@ const sendMail = async (email) => {
       },
       tls: { rejectUnauthorized: false },
     };
-    const { from, to, subject, html, attachments } = email;
+    const { from, to, subject, html, attachments, cc, bcc } = email;
     const info = await nodemailer
       .createTransport(config)
-      .sendMail({ from, to, subject, html, attachments });
+      .sendMail({ from, to, subject, html, attachments, cc, bcc });
     return info;
   } catch (e) {
     console.log("ERROR IN MAILER: ", e);

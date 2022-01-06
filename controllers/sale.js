@@ -150,6 +150,7 @@ exports.sendAR = async (refId) => {
     from: process.env.EMAIL_ADDRESS,
     subject: "Your acknowledgement receipt for your Star City ticket purchase",
     html: accessPassEmailNotification(sale),
+    bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
     attachments: [
       {
         filename: "healthdeclaration-form.pdf",
@@ -546,36 +547,6 @@ exports.createCheckout = async (req, res) => {
   }
 };
 
-exports.processPayment = async (req, res) => {
-
-  //REMOVE NO NEED?
-  // const { status, refid, option } = req.params;
-
-  // const sale = await Sale.findOne({ refId: refid }).exec();
-  // const pOption = await PaymentOption.findOne({ slug: option })
-  //   .select("_id")
-  //   .exec();
-
-  // sale.status = status;
-  // sale.paymentDetails = {
-  //   option: await pOption._id,
-  //   referenceNumber: refid,
-  //   status: status,
-  // };
-
-  // sale.save((err, result) => {
-  //   res.redirect(
-  //     `${process.env.WEBSITE_URL}/?payment=${status}&refid=${refid}`
-  //   );
-
-  //   //send Acknowledgement receipt
-  //   if (status == "success") {
-  //     this.generateAccessPass(result, result.cartItems);
-  //     this.sendAR(result.refId);
-  //   }
-  // });
-};
-
 exports.processPaypalPayment = async (req, res) => {
   const { status, orderId } = req.body;
   const sale = await Sale.findOne({
@@ -647,8 +618,10 @@ exports.test = async (req, res) => {
   const details = {
     to: sale.emailAddress,
     from: process.env.EMAIL_ADDRESS,
+    // from: "Star City Tickets",
     subject: "Your acknowledgement receipt for your Star City ticket purchase",
     html: accessPassEmailNotification(sale),
+    bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
     attachments: [
       {
         filename: "healthdeclaration-form.pdf",
