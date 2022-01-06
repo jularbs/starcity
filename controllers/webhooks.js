@@ -3,7 +3,9 @@ const PaymentOption = require("../models/paymentOption");
 const { generateAccessPass, sendAR } = require("../controllers/sale");
 
 exports.paymayaPaymentSuccess = async (req, res) => {
-  const { id, status, requestReferenceNumber } = req.body;
+  console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
+  console.log("PAYLOAD: ", req.body);
+  const { status, requestReferenceNumber } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
   const pOption = await PaymentOption.findOne({ slug: option })
@@ -24,7 +26,9 @@ exports.paymayaPaymentSuccess = async (req, res) => {
 
     //send Acknowledgement receipt
     if (status == "success" || status == "PAYMENT_SUCCESS") {
+      console.log("GENERATING ACCESS PASS");
       generateAccessPass(result, result.cartItems);
+      console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
       sendAR(result.refId);
     }
   });
