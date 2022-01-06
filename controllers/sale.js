@@ -547,31 +547,33 @@ exports.createCheckout = async (req, res) => {
 };
 
 exports.processPayment = async (req, res) => {
-  const { status, refid, option } = req.params;
 
-  const sale = await Sale.findOne({ refId: refid }).exec();
-  const pOption = await PaymentOption.findOne({ slug: option })
-    .select("_id")
-    .exec();
+  //REMOVE NO NEED?
+  // const { status, refid, option } = req.params;
 
-  sale.status = status;
-  sale.paymentDetails = {
-    option: await pOption._id,
-    referenceNumber: refid,
-    status: status,
-  };
+  // const sale = await Sale.findOne({ refId: refid }).exec();
+  // const pOption = await PaymentOption.findOne({ slug: option })
+  //   .select("_id")
+  //   .exec();
 
-  sale.save((err, result) => {
-    res.redirect(
-      `${process.env.WEBSITE_URL}/?payment=${status}&refid=${refid}`
-    );
+  // sale.status = status;
+  // sale.paymentDetails = {
+  //   option: await pOption._id,
+  //   referenceNumber: refid,
+  //   status: status,
+  // };
 
-    //send Acknowledgement receipt
-    if (status == "success") {
-      this.generateAccessPass(result, result.cartItems);
-      this.sendAR(result.refId);
-    }
-  });
+  // sale.save((err, result) => {
+  //   res.redirect(
+  //     `${process.env.WEBSITE_URL}/?payment=${status}&refid=${refid}`
+  //   );
+
+  //   //send Acknowledgement receipt
+  //   if (status == "success") {
+  //     this.generateAccessPass(result, result.cartItems);
+  //     this.sendAR(result.refId);
+  //   }
+  // });
 };
 
 exports.processPaypalPayment = async (req, res) => {
