@@ -18,7 +18,9 @@ exports.paymayaPaymentSuccess = async (req, res) => {
   };
 
   sale.save((err, result) => {
-    res.json({ status: status, message: "Paymaya payment processed" });
+    res
+      .status(200)
+      .json({ status: status, message: "Paymaya payment processed" });
 
     //send Acknowledgement receipt
     if (status == "success" || status == "PAYMENT_SUCCESS") {
@@ -29,7 +31,7 @@ exports.paymayaPaymentSuccess = async (req, res) => {
 };
 
 exports.paymayaPaymentFailed = async (req, res) => {
-  res.json({
+  res.status(200).json({
     function: "PaymayaPaymentFailed",
     resPayload: req.body,
     params: req.params,
@@ -37,7 +39,7 @@ exports.paymayaPaymentFailed = async (req, res) => {
 };
 
 exports.paymayaPaymentExpired = async (req, res) => {
-  res.json({
+  res.status(200).json({
     function: "PaymayaPaymentExpired",
     resPayload: req.body,
     params: req.params,
@@ -45,7 +47,7 @@ exports.paymayaPaymentExpired = async (req, res) => {
 };
 
 exports.paymayaAuthorized = async (req, res) => {
-  res.json({
+  res.status(200).json({
     function: "PaymayaAuthorized",
     resPayload: req.body,
     params: req.params,
@@ -53,7 +55,7 @@ exports.paymayaAuthorized = async (req, res) => {
 };
 
 exports.paymayaCheckoutSuccess = async (req, res) => {
-  res.json({
+  res.status(200).json({
     function: "PaymayaCheckoutSuccess",
     resPayload: req.body,
     params: req.params,
@@ -61,7 +63,7 @@ exports.paymayaCheckoutSuccess = async (req, res) => {
 };
 
 exports.paymayaCheckoutFailure = async (req, res) => {
-  res.json({
+  res.status(200).json({
     function: "PaymayaCheckoutFailure",
     resPayload: req.body,
     params: req.params,
@@ -69,7 +71,7 @@ exports.paymayaCheckoutFailure = async (req, res) => {
 };
 
 exports.paymayaCheckoutDropout = async (req, res) => {
-  res.json({
+  res.status(200).json({
     function: "PaymayaCheckoutDropout",
     resPayload: req.body,
     params: req.params,
