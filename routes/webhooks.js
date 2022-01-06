@@ -1,12 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const {
-  paymayaSuccess
+  paymayaAuthorized,
+  paymayaCheckoutDropout,
+  paymayaCheckoutFailure,
+  paymayaCheckoutSuccess,
+  paymayaPaymentExpired,
+  paymayaPaymentFailed,
+  paymayaPaymentSuccess,
 } = require("../controllers/webhooks");
 
-
 //Version 1.0
-router.post("/v1/paymaya-success", paymayaSuccess);
-
+router.post("/v1/paymaya/payment-success", paymayaPaymentSuccess);
+router.post("/v1/paymaya/payment-failed", paymayaPaymentFailed);
+router.post("/v1/paymaya/payment-expired", paymayaPaymentExpired);
+router.post("/v1/paymaya/checkout-success", paymayaCheckoutSuccess);
+router.post("/v1/paymaya/checkout-failure", paymayaCheckoutFailure);
+router.post("/v1/paymaya/checkout-dropout", paymayaCheckoutDropout);
+router.post("/v1/paymaya/authorized", paymayaAuthorized);
 
 module.exports = router;

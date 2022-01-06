@@ -2,7 +2,7 @@ const Sale = require("../models/sale");
 const PaymentOption = require("../models/paymentOption");
 const { generateAccessPass, sendAR } = require("../controllers/sale");
 
-exports.paymayaSuccess = async (req, res) => {
+exports.paymayaPaymentSuccess = async (req, res) => {
   const { id, status, requestReferenceNumber } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
@@ -25,5 +25,53 @@ exports.paymayaSuccess = async (req, res) => {
       generateAccessPass(result, result.cartItems);
       sendAR(result.refId);
     }
+  });
+};
+
+exports.paymayaPaymentFailed = async (req, res) => {
+  res.json({
+    function: "PaymayaPaymentFailed",
+    resPayload: req.body,
+    params: req.params,
+  });
+};
+
+exports.paymayaPaymentExpired = async (req, res) => {
+  res.json({
+    function: "PaymayaPaymentExpired",
+    resPayload: req.body,
+    params: req.params,
+  });
+};
+
+exports.paymayaAuthorized = async (req, res) => {
+  res.json({
+    function: "PaymayaAuthorized",
+    resPayload: req.body,
+    params: req.params,
+  });
+};
+
+exports.paymayaCheckoutSuccess = async (req, res) => {
+  res.json({
+    function: "PaymayaCheckoutSuccess",
+    resPayload: req.body,
+    params: req.params,
+  });
+};
+
+exports.paymayaCheckoutFailure = async (req, res) => {
+  res.json({
+    function: "PaymayaCheckoutFailure",
+    resPayload: req.body,
+    params: req.params,
+  });
+};
+
+exports.paymayaCheckoutDropout = async (req, res) => {
+  res.json({
+    function: "PaymayaCheckoutDropout",
+    resPayload: req.body,
+    params: req.params,
   });
 };

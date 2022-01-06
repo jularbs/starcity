@@ -98,7 +98,7 @@ app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
 app.use("/api", healthDeclarationRoutes);
 app.use("/api", mediaRoutes);
-app.use("/webhook", webhookRoutes);
+app.use("/webhooks", webhookRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 
