@@ -145,10 +145,10 @@ exports.sendAR = async (refId) => {
     };
   });
 
-  let options = { format: "A4" };
-  let file = { content: artemplate(sale) };
-  // or //
-  const receipt = await html_to_pdf.generatePdf(file, options);
+  // let options = { format: "A4" };
+  // let file = { content: artemplate(sale) };
+  // // or //
+  // const receipt = await html_to_pdf.generatePdf(file, options);
 
   const details = {
     to: sale.emailAddress,
@@ -161,10 +161,10 @@ exports.sendAR = async (refId) => {
         filename: "healthdeclaration-form.pdf",
         path: `${process.env.DOMAIN}health-declaration-form.pdf`,
       },
-      {
-        filename: "acknowledgement-receipt.pdf",
-        content: receipt,
-      },
+      // {
+      //   filename: "acknowledgement-receipt.pdf",
+      //   content: receipt,
+      // },
       ...APattachments,
     ],
   };
