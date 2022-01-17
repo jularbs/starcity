@@ -27,11 +27,12 @@ exports.cronSyncAP = async () => {
                 "Purchased",
                 "web",
                 "1",
+                q.accessPass.itemCode,
               ],
             ];
 
             const sql =
-              "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus) VALUES ?;";
+              "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, rideCode) VALUES ?;";
 
             connection.query(sql, [values], function (error, results, fields) {
               if (error) {
