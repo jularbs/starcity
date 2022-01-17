@@ -18,6 +18,9 @@ exports.cronSyncAP = async () => {
             const date = format(q.accessPass.createdAt, "yyyy-MM-dd");
             const time = format(q.accessPass.createdAt, "HH:mm:ss");
 
+            //extract itemCode from AccessToken
+            const RideCode = q.accessPass.accessToken.match("-(.*)-")[1];
+
             const values = [
               [
                 q.accessPass.accessToken,
@@ -27,7 +30,7 @@ exports.cronSyncAP = async () => {
                 "Purchased",
                 "web",
                 "1",
-                q.accessPass.itemCode,
+                RideCode,
               ],
             ];
 

@@ -102,7 +102,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
 
       accessPass.save(async (err, result) => {
         if (err) console.log("accesspass save failed in database");
-        this.syncAccessPass(result);
+        this.syncAccessPass(result, ticket.itemCode);
 
         console.log("accesspass created");
       });
@@ -180,7 +180,7 @@ exports.sendAR = async (refId) => {
   }
 };
 
-exports.syncAccessPass = (accessPass) => {
+exports.syncAccessPass = (accessPass, RideCode) => {
   console.log("Syncing Access Pass...");
   try {
     pool.getConnection((err, connection) => {
@@ -209,7 +209,7 @@ exports.syncAccessPass = (accessPass) => {
             "Purchased",
             "web",
             "1",
-            accessPass.itemCode,
+            RideCode,
           ],
         ];
 
@@ -584,74 +584,4 @@ exports.processPaypalPayment = async (req, res) => {
 };
 
 //TESTER FUNCTION
-exports.test = async (req, res) => {
-  const refId = req.query.refid;
-  console.log("SENDING AR...");
-  const sale = await Sale.findOne({ refId: refId })
-    .populate({
-      path: "cartItems",
-      populate: {
-        path: "ticketId",
-        model: "Ticket",
-        select: "name -_id",
-      },
-    })
-    .populate({
-      path: "paymentDetails",
-      populate: {
-        path: "option",
-        model: "PaymentOption",
-        select: "name -_id",
-      },
-    })
-    .exec();
-
-  const saleId = sale._id;
-
-  const accessPasses = await AccessPass.find({ salesId: saleId })
-    .populate("ticketId", "slug")
-    .select("ticketId accessToken QRcode")
-    .exec();
-
-  const APattachments = accessPasses.map((item, key) => {
-    return {
-      filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-      content: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
-    };
-  });
-
-  let options = { format: "A4" };
-  let file = { content: artemplate(sale) };
-  // or //
-  const receipt = await html_to_pdf.generatePdf(file, options);
-
-  const details = {
-    to: sale.emailAddress,
-    from: process.env.EMAIL_ADDRESS,
-    // from: "Star City Tickets",
-    subject: "Your acknowledgement receipt for your Star City ticket purchase",
-    html: accessPassEmailNotification(sale),
-    bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
-    attachments: [
-      {
-        filename: "healthdeclaration-form.pdf",
-        path: `${process.env.DOMAIN}health-declaration-form.pdf`,
-      },
-      {
-        filename: "acknowledgement-receipt.pdf",
-        content: receipt,
-      },
-      ...APattachments,
-    ],
-  };
-
-  try {
-    sendMail(details).then((info) => {
-      console.log("EMAIL SENT SUCCESSFULLY");
-      console.log("EMAIL STACK: ", info);
-    });
-  } catch (e) {
-    console.log("ERROR IN MAILER: ", e);
-    console.log("EMAIL SENT FAILED");
-  }
-};
+exports.test = async (req, res) => {};
