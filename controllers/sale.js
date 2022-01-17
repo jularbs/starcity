@@ -214,7 +214,7 @@ exports.syncAccessPass = (accessPass) => {
         ];
 
         const sql =
-          "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, rideCode) VALUES ?;";
+          "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
 
         connection.query(sql, [values], function (error, results, fields) {
           if (error) {
