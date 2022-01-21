@@ -83,14 +83,15 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 };
 
 exports.dragonPaySuccess = async (req, res) => {
-  console.log("DRAGONPAY DATA CALLBACK: ");
+  console.log("DRAGONPAY DATA CALLBACK: ", req.data);
+  console.log("DRAGONPAY body CALLBACK: ", req.body);
+  console.log("DRAGONPAY query CALLBACK: ", req.query);
   res.setHeader("Content-Type", "text/plain");
   res.send("result=OK");
 };
 
 exports.dragonPayReturn = async (req, res) => {
-  console.log("DRAGONPAY RETURN: ", req);
   res.redirect(
-    `${process.env.WEBSITE_URL}/?payment=success?refid=${req.params.txnid}}`
+    `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}}`
   );
 };
