@@ -83,13 +83,13 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 };
 
 exports.dragonPaySuccess = async (req, res) => {
-  console.log("DRAGONPAY CALLBACK: ", req);
+  console.log("DRAGONPAY DATA CALLBACK: ");
   res.setHeader("Content-Type", "text/plain");
   res.send("result=OK");
 };
 
 exports.dragonPayReturn = async (req, res) => {
-  console.log("DRAGONPAY RETURN: ", req.params);
+  console.log("DRAGONPAY RETURN: ", req);
   res.redirect(
     `${process.env.WEBSITE_URL}/?payment=success?refid=${req.params.txnid}}`
   );
