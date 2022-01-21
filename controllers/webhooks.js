@@ -86,6 +86,7 @@ exports.dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY DATA CALLBACK: ", req.data);
   console.log("DRAGONPAY body CALLBACK: ", req.body);
   console.log("DRAGONPAY query CALLBACK: ", req.query);
+  console.log("DRAGONPAY params CALLBACK: ", req.params);
   res.setHeader("Content-Type", "text/plain");
   res.send("result=OK");
 };
