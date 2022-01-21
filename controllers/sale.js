@@ -518,16 +518,10 @@ exports.createCheckout = async (req, res) => {
     );
 
     if (paymentDetails) {
-      const pOption = await PaymentOption.findOne({
-        slug: paymentDetails.slug,
-      })
-        .select("_id")
-        .exec();
-
       sale.paymentDetails = {
-        option: await pOption._id,
-        referenceNumber: paymentDetails.orderID,
-        status: paymentDetails.status,
+        option: "",
+        referenceNumber: "",
+        status: "",
       };
     }
 
