@@ -8,8 +8,6 @@ const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
 const mongoose = require("mongoose");
 const { sendMail } = require("../helpers/nodemailer");
-const nodemailer = require("nodemailer");
-const html_to_pdf = require("html-pdf-node");
 const {
   artemplate,
   accessPassEmailNotification,
@@ -555,6 +553,32 @@ exports.createCheckout = async (req, res) => {
       res.json(result);
     });
   }
+};
+
+exports.createDragonPayRequest = async (req, res) => {
+  const { txnId, amount, email } = req.body;
+  const token = Buffer.from(
+    `${process.env.DRAGONPAY_MERCH_ID}:${process.env.DRAGONPAY_PW}`,
+    "utf8"
+  ).toString("base64");
+
+  const dpRequest = await axios({
+    method: "POST",
+    url: `${process.env.DRAGONPAY_URL}/${txnId}/post`,
+    data: {
+      Amount: amount.toFixed(2),
+      Currency: "PHP",
+      Description: "Star City tickets",
+      Email: email,
+    },
+    headers: {
+      Authorization: `Basic ${token}`,
+    },
+  }).catch((error) => {
+    console.log(error.response);
+  });
+
+  if (dpRequest.data.Status == "S") res.json(dpRequest.data);
 };
 
 exports.processPaypalPayment = async (req, res) => {

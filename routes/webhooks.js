@@ -8,6 +8,9 @@ const {
   paymayaPaymentExpired,
   paymayaPaymentFailed,
   paymayaPaymentSuccess,
+  dragonPayRequest,
+  dragonPayReturn,
+  dragonPaySuccess,
 } = require("../controllers/webhooks");
 
 //Version 1.0
@@ -18,5 +21,6 @@ router.post("/v1/paymaya/checkout-success", paymayaCheckoutSuccess);
 router.post("/v1/paymaya/checkout-failure", paymayaCheckoutFailure);
 router.post("/v1/paymaya/checkout-dropout", paymayaCheckoutDropout);
 router.post("/v1/paymaya/authorized", paymayaAuthorized);
+router.post("/v1/dragonpay/callback", dragonPaySuccess);
 
 module.exports = router;

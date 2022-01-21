@@ -11,6 +11,7 @@ const {
   processPaypalPayment,
   readBySaltRefID,
   test,
+  createDragonPayRequest,
 } = require("../controllers/sale");
 
 //Version 1.0
@@ -26,6 +27,7 @@ router.post("/v1/create-checkout", createCheckout);
 
 //payment webhooks
 router.put("/v1/payment/paypal", processPaypalPayment);
+router.post("/v1/payment/dragonpay", createDragonPayRequest);
 
 //TESTS
 router.get("/v1/test", test);
