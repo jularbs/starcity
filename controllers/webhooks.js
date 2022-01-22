@@ -83,9 +83,15 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 };
 
 exports.dragonPaySuccess = async (req, res) => {
-  console.log("DRAGONPAY POSTBACK REQUEST: ", req);
-  res.setHeader("Content-Type", "text/plain");
-  res.send("result=OK");
+  console.log("DRAGONPAY POSTBACK RECIEVED...");
+
+  if (req.body.txnid && req.body.refno && req.body.status && req.body.message) {
+    console.log("UPDATING TRANSACTION...");
+    res.setHeader("Content-Type", "text/plain");
+    res.send("result=OK");
+  } else {
+    console.log("DRADONPAY REQUEST PAYLOAD EMPTY...");
+  }
 };
 
 exports.dragonPayReturn = async (req, res) => {
