@@ -83,6 +83,9 @@ app.use(morgan("dev"));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(cookieParser());
 
+//urlencoded
+app.use(express.urlencoded({ extended: true }));
+
 //use routes
 
 app.use("/api", rideCategoryRoutes);

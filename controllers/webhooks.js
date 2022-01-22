@@ -4,7 +4,6 @@ const { generateAccessPass, sendAR } = require("../controllers/sale");
 
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
-  console.log("PAYLOAD: ", req.body);
   const { status, requestReferenceNumber } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
@@ -84,12 +83,13 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 
 exports.dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY POSTBACK RECIEVED...");
-
   if (req.body.txnid && req.body.refno && req.body.status && req.body.message) {
     console.log("UPDATING TRANSACTION...");
     res.setHeader("Content-Type", "text/plain");
     res.send("result=OK");
   } else {
+    res.setHeader("Content-Type", "text/plain");
+    res.send("result=PAYLOAD_EMPTY");
     console.log("DRADONPAY REQUEST PAYLOAD EMPTY...");
   }
 };
