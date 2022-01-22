@@ -83,6 +83,7 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 
 exports.dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY POSTBACK RECIEVED...");
+  console.log("PAYLOAD BODY: ", req.body);
   if (req.body.txnid && req.body.refno && req.body.status && req.body.message) {
     console.log("UPDATING TRANSACTION...");
     res.setHeader("Content-Type", "text/plain");
