@@ -84,8 +84,40 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 exports.dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY POSTBACK RECIEVED...");
   console.log("PAYLOAD BODY: ", req.body);
+  const option = "dragonpay";
+
   if (req.body.txnid && req.body.refno && req.body.status && req.body.message) {
     console.log("UPDATING TRANSACTION...");
+    const { txnid, refno, status, message, amount, digest } = req.body;
+
+    const sale = await Sale.findOne({
+      refId: txnid,
+    }).exec();
+    const pOption = await PaymentOption.findOne({ slug: option })
+      .select("_id")
+      .exec();
+
+    sale.status = status;
+    sale.paymentDetails = {
+      option: await pOption._id,
+      referenceNumber: refno,
+      status: status,
+    };
+
+    sale.save((err, result) => {
+      res
+        .status(200)
+        .json({ status: status, message: "Paymaya payment processed" });
+
+      //send Acknowledgement receipt
+      if (status == "S" || status == "s") {
+        console.log("GENERATING ACCESS PASS");
+        generateAccessPass(result, result.cartItems);
+        console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+        sendAR(result.refId);
+      }
+    });
+
     res.setHeader("Content-Type", "text/plain");
     res.send("result=OK");
   } else {
@@ -96,6 +128,12 @@ exports.dragonPaySuccess = async (req, res) => {
 };
 
 exports.dragonPayReturn = async (req, res) => {
+  console.log("RETURN PAYLOAD: ", req.query);
+  setTimeout(function () {
+    res.render(
+      "You are now being redirected to Star City. Please wait 5 seconds."
+    );
+  }, 3000);
   res.redirect(
     `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}}`
   );
