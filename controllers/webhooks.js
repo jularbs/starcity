@@ -102,6 +102,7 @@ exports.dragonPaySuccess = async (req, res) => {
       option: await pOption._id,
       referenceNumber: refno,
       status: status,
+      amountPaid: amount,
     };
 
     sale.save((err, result) => {
