@@ -105,10 +105,6 @@ exports.dragonPaySuccess = async (req, res) => {
     };
 
     sale.save((err, result) => {
-      res
-        .status(200)
-        .json({ status: status, message: "Paymaya payment processed" });
-
       //send Acknowledgement receipt
       if (status == "S" || status == "s") {
         console.log("GENERATING ACCESS PASS");
