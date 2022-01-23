@@ -83,9 +83,7 @@ exports.paymayaCheckoutDropout = async (req, res) => {
 
 exports.dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY POSTBACK RECIEVED...");
-  console.log("PAYLOAD BODY: ", req.body);
   const option = "dragonpay";
-
   if (req.body.txnid && req.body.refno && req.body.status && req.body.message) {
     console.log("UPDATING TRANSACTION...");
     const { txnid, refno, status, message, amount, digest } = req.body;
@@ -125,7 +123,6 @@ exports.dragonPaySuccess = async (req, res) => {
 };
 
 exports.dragonPayReturn = async (req, res) => {
-  console.log("RETURN PAYLOAD: ", req.query);
   await setTimeout(function () {}, 3000);
   res.redirect(
     `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}`
