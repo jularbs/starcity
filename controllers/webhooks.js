@@ -126,11 +126,7 @@ exports.dragonPaySuccess = async (req, res) => {
 
 exports.dragonPayReturn = async (req, res) => {
   console.log("RETURN PAYLOAD: ", req.query);
-  setTimeout(function () {
-    res.render(
-      "You are now being redirected to Star City. Please wait 5 seconds."
-    );
-  }, 3000);
+  await setTimeout(function () {}, 3000);
   res.redirect(
     `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}}`
   );
