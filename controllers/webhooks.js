@@ -128,6 +128,6 @@ exports.dragonPayReturn = async (req, res) => {
   console.log("RETURN PAYLOAD: ", req.query);
   await setTimeout(function () {}, 3000);
   res.redirect(
-    `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}}`
+    `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}`
   );
 };
