@@ -28,13 +28,8 @@ const { cronSyncAP } = require("./helpers/cronjobs");
 const app = express();
 
 var allowedDomains = [
-  "http://localhost:3000",
   "http://jularbs.com:3000",
   "https://jularbs.com:3000",
-  "http://jularbs.com:3001",
-  "https://jularbs.com:3001",
-  "http://starcity-website.herokuapp.com",
-  "https://starcity-website.herokuapp.com",
   "http://starcity.com.ph",
   "https://starcity.com.ph",
   "http://www.starcity.com.ph",
