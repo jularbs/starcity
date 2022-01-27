@@ -602,4 +602,4 @@ exports.processPaypalPayment = async (req, res) => {
 };
 
 //TESTER FUNCTION
-exports.test = async (req, res) => {};
+exports.test = async (req, res) => { };
