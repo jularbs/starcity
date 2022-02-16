@@ -381,7 +381,7 @@ exports.list = (req, res) => {
       $lte: endDate,
     },
     status: {
-      $ne: "awaiting payment",
+      $nin:["awaiting payment", "P", "p"],
     },
     $or: [
       { refId: { $regex: search, $options: "i" } },
@@ -421,7 +421,7 @@ exports.list = (req, res) => {
           $lte: endDate,
         },
         status: {
-          $ne: "awaiting payment",
+          $nin: ["awaiting payment", "P", "p"],
         },
         $or: [
           { refId: { $regex: search, $options: "i" } },
