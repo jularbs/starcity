@@ -39,7 +39,10 @@ exports.cronSyncAP = async () => {
 
             connection.query(sql, [values], function (error, results, fields) {
               if (error) {
-                console.log("Failed to sync... Access Pass still in queue.");
+                console.log(
+                  "Failed to sync... Access Pass still in queue: ",
+                  q.accessPass.accessToken
+                );
                 addAuditTrailEntry({
                   action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
                   meta: error,
@@ -47,7 +50,10 @@ exports.cronSyncAP = async () => {
               } else {
                 //remove in queue;
                 AccessPassQueue.deleteOne({ _id: q._id }).exec();
-                console.log("Sync success... Removed from queue.");
+                console.log(
+                  "ACCESSPASS SUCCESS FOR ID: ",
+                  q.accessPass.accessToken
+                );
               }
             });
           });

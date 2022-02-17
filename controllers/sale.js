@@ -217,13 +217,15 @@ exports.syncAccessPass = (accessPass, RideCode) => {
         connection.query(sql, [values], function (error, results, fields) {
           if (error) {
             // PUT IN QUEUE
-            console.log("ERROR: ", error);
+            console.log("ERROR SYNCING ACCESS PASS: ", error);
             let q = new Queue();
             q.accessPass = accessPass._id;
             q.status = error.code;
             q.save((err, result) => {
               if (err) console.log(err);
             });
+          } else {
+            console.log("ACCESS PASS SYNCED: ", accessPass.accessToken);
           }
         });
       }
@@ -381,7 +383,7 @@ exports.list = (req, res) => {
       $lte: endDate,
     },
     status: {
-      $nin:["awaiting payment", "P", "p"],
+      $nin: ["awaiting payment", "P", "p"],
     },
     $or: [
       { refId: { $regex: search, $options: "i" } },
@@ -602,4 +604,4 @@ exports.processPaypalPayment = async (req, res) => {
 };
 
 //TESTER FUNCTION
-exports.test = async (req, res) => { };
+exports.test = async (req, res) => {};
