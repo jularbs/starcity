@@ -66,12 +66,12 @@ exports.generateAccessPass = (sale, accessPasses) => {
           .randomBytes(4)
           .toString("hex")}`;
 
+        finalToken.toUpperCase();
         isExisting = await AccessPass.find({
           accessToken: finalToken,
         }).exec();
       } while (isExisting.length !== 0);
 
-      finalToken = finalToken.toUpperCase();
       let base64 = await QRCode.toDataURL(finalToken, {
         version: 4,
         errorCorrectionLevel: "H",
@@ -99,10 +99,10 @@ exports.generateAccessPass = (sale, accessPasses) => {
       accessPass.QRcode = await upload;
 
       accessPass.save(async (err, result) => {
-        if (err) console.log("accesspass save failed in database");
+        if (err) console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
         this.syncAccessPass(result, ticket.itemCode);
 
-        console.log("accesspass created");
+        console.log(`ACCESS PASS ${finalToken} CREATED`);
       });
     }
   });
@@ -179,7 +179,7 @@ exports.sendAR = async (refId) => {
 };
 
 exports.syncAccessPass = (accessPass, RideCode) => {
-  console.log("Syncing Access Pass...");
+  console.log("SYNCING ACCESS PASS: ", accessPass.accessToken);
   try {
     pool.getConnection((err, connection) => {
       if (err) {
@@ -189,9 +189,12 @@ exports.syncAccessPass = (accessPass, RideCode) => {
         q.status = err.code;
         q.save((err, result) => {
           if (err) {
-            console.log(err);
+            console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
           } else {
-            console.log("Queue created");
+            console.log(
+              "QUEUE CREATED FOR ACCESS PASS: ",
+              accessPass.accessToken
+            );
           }
         });
       } else {
@@ -217,12 +220,40 @@ exports.syncAccessPass = (accessPass, RideCode) => {
         connection.query(sql, [values], function (error, results, fields) {
           if (error) {
             // PUT IN QUEUE
-            console.log("ERROR SYNCING ACCESS PASS: ", error);
+            console.log(
+              `ERROR SYNCING ACCESS PASS ${accessPass.accessToken}: `,
+              error
+            );
             let q = new Queue();
             q.accessPass = accessPass._id;
             q.status = error.code;
             q.save((err, result) => {
-              if (err) console.log(err);
+              if (err) {
+                console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
+              } else {
+                console.log(
+                  "QUEUE CREATED FOR ACCESS PASS: ",
+                  accessPass.accessToken
+                );
+              }
+            });
+          } else if (results.affectedRows < 1) {
+            console.log(
+              `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
+              accessPass.accessToken
+            );
+            let q = new Queue();
+            q.accessPass = accessPass._id;
+            q.status = error.code;
+            q.save((err, result) => {
+              if (err) {
+                console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
+              } else {
+                console.log(
+                  "QUEUE CREATED FOR ACCESS PASS: ",
+                  accessPass.accessToken
+                );
+              }
             });
           } else {
             console.log("ACCESS PASS SYNCED: ", accessPass.accessToken);
@@ -231,7 +262,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
       }
     });
   } catch (e) {
-    console.log(e);
+    console.log("ERROR IN SYNC FUNCTION", e);
   }
 };
 
@@ -604,4 +635,57 @@ exports.processPaypalPayment = async (req, res) => {
 };
 
 //TESTER FUNCTION
-exports.test = async (req, res) => {};
+exports.test = async (req, res) => {
+  // const tickets = await AccessPass.find({}).skip(0).limit(50).exec();
+
+  // tickets.map(async (t) => {
+  //   console.log("TOKEN: ", t.accessToken);
+  //   //check if in database;
+  //   try {
+  //     pool.getConnection((err, connection) => {
+  //       const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
+  //       const values = [t.accessToken];
+
+  //       connection.query(sql, [values], function (error, results, fields) {
+
+  //       });
+  //     });
+  //   } catch (e) {
+  //     console.log("ERROR: ", e);
+  //   }
+  // });
+
+  const at = "W-RAYC-EDBAE";
+  try {
+    pool.getConnection((err, connection) => {
+      // const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
+      // const values = [at];
+
+      const values = [
+        [
+          "TEST-02",
+          "Pop Tag",
+          "2021-01-01",
+          "00:00:00",
+          "Purchased",
+          "TEST",
+          "0",
+          "TEST",
+        ],
+      ];
+
+      const sql =
+        "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
+
+      connection.query(sql, [values], function (error, results, fields) {
+        console.log("ERROR: ", error);
+        // console.log("RESULTS: ", results);
+        console.log("LENGTH: ", results.affectedRows);
+      });
+    });
+  } catch (e) {
+    console.log("ERROR: ", e);
+  }
+
+  res.json({ message: "processing" });
+};
