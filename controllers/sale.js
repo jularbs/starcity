@@ -244,7 +244,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
             );
             let q = new Queue();
             q.accessPass = accessPass._id;
-            q.status = error.code;
+            q.status = "FAILED INSERT";
             q.save((err, result) => {
               if (err) {
                 console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
@@ -634,58 +634,40 @@ exports.processPaypalPayment = async (req, res) => {
   }
 };
 
+const insertAccessPass = () => {};
 //TESTER FUNCTION
 exports.test = async (req, res) => {
-  // const tickets = await AccessPass.find({}).skip(0).limit(50).exec();
+  const tickets = await AccessPass.find({}).skip(0).limit(100).exec();
 
-  // tickets.map(async (t) => {
-  //   console.log("TOKEN: ", t.accessToken);
-  //   //check if in database;
-  //   try {
-  //     pool.getConnection((err, connection) => {
-  //       const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
-  //       const values = [t.accessToken];
-
-  //       connection.query(sql, [values], function (error, results, fields) {
-
-  //       });
-  //     });
-  //   } catch (e) {
-  //     console.log("ERROR: ", e);
-  //   }
-  // });
-
-  const at = "W-RAYC-EDBAE";
-  try {
-    pool.getConnection((err, connection) => {
-      // const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
-      // const values = [at];
-
-      const values = [
-        [
-          "TEST-02",
-          "Pop Tag",
-          "2021-01-01",
-          "00:00:00",
-          "Purchased",
-          "TEST",
-          "0",
-          "TEST",
-        ],
-      ];
-
-      const sql =
-        "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
-
-      connection.query(sql, [values], function (error, results, fields) {
-        console.log("ERROR: ", error);
-        // console.log("RESULTS: ", results);
-        console.log("LENGTH: ", results.affectedRows);
+  tickets.map(async (t, i) => {
+    try {
+      await pool.getConnection(async (err, connection) => {
+        const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
+        const values = [t.accessToken];
+        if (err) {
+          console.log("PROCESSSING TOKEN: ", t.accessToken);
+          console.log("ERROR IN CONNECTION: ", err.code);
+          console.log("ADDING TO QUEUE: ", t.accessToken);
+        } else {
+          await connection.query(
+            sql,
+            [values],
+            function (error, results, fields) {
+              if (results.length > 0) {
+                console.log("PROCESSSING TOKEN: ", t.accessToken);
+                console.log("TOKEN IN DATABASE: ", results.length);
+              } else if (results.length == 0) {
+                console.log("PROCESSSING TOKEN: ", t.accessToken);
+                console.log("TOKEN NOT IN DATABASE: ", results.length);
+              }
+            }
+          );
+        }
       });
-    });
-  } catch (e) {
-    console.log("ERROR: ", e);
-  }
+    } catch (e) {
+      console.log("ERROR: ", e);
+    }
+  });
 
   res.json({ message: "processing" });
 };

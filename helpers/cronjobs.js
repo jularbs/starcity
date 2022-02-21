@@ -12,7 +12,7 @@ exports.cronSyncAP = async () => {
     try {
       pool.getConnection((err, connection) => {
         if (err) {
-          console.log("ERROR: ", err);
+          console.log("CONNECTION ERRER: ", err);
         } else {
           queues.map((q) => {
             const date = format(q.accessPass.createdAt, "yyyy-MM-dd");
@@ -39,13 +39,28 @@ exports.cronSyncAP = async () => {
 
             connection.query(sql, [values], function (error, results, fields) {
               if (error) {
-                console.log(
-                  "Failed to sync... Access Pass still in queue: ",
-                  q.accessPass.accessToken
-                );
+                console.log("FAILED TO SYNC: ", q.accessPass.accessToken);
                 addAuditTrailEntry({
                   action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
                   meta: error,
+                });
+              } else if (results.affectedRows < 1) {
+                console.log(
+                  `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
+                  accessPass.accessToken
+                );
+                let q = new Queue();
+                q.accessPass = accessPass._id;
+                q.status = "FAILED INSERT";
+                q.save((err, result) => {
+                  if (err) {
+                    console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
+                  } else {
+                    console.log(
+                      "QUEUE CREATED FOR ACCESS PASS: ",
+                      accessPass.accessToken
+                    );
+                  }
                 });
               } else {
                 //remove in queue;
