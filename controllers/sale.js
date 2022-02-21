@@ -1,6 +1,5 @@
 const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
-const PaymentOption = require("../models/paymentOption");
 const AccessPass = require("../models/accessPass");
 const AccessPassQueue = require("../models/accessPassQueue");
 const crypto = require("crypto");
@@ -8,15 +7,14 @@ const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
 const mongoose = require("mongoose");
 const { sendMail } = require("../helpers/nodemailer");
-const {
-  artemplate,
-  accessPassEmailNotification,
-} = require("../helpers/emailTemplates");
+const { accessPassEmailNotification } = require("../helpers/emailTemplates");
 const { pool } = require("../lib/mysql/connect");
 
 const { format } = require("date-fns");
 const moment = require("moment");
 const axios = require("axios");
+
+const { cronSyncAP } = require("../helpers/cronjobs");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -100,8 +98,8 @@ exports.generateAccessPass = (sale, accessPasses) => {
 
       accessPass.save(async (err, result) => {
         if (err) console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
-        this.syncAccessPass(result, ticket.itemCode);
-
+        const syncResult = await this.syncAccessPass(result, ticket.itemCode);
+        console.log(`Processing ${finalToken}: `, syncResult);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
       });
     }
@@ -143,11 +141,6 @@ exports.sendAR = async (refId) => {
     };
   });
 
-  // let options = { format: "A4" };
-  // let file = { content: artemplate(sale) };
-  // // or //
-  // const receipt = await html_to_pdf.generatePdf(file, options);
-
   const details = {
     to: sale.emailAddress,
     from: process.env.EMAIL_ADDRESS,
@@ -159,10 +152,6 @@ exports.sendAR = async (refId) => {
         filename: "healthdeclaration-form.pdf",
         path: `${process.env.DOMAIN}health-declaration-form.pdf`,
       },
-      // {
-      //   filename: "acknowledgement-receipt.pdf",
-      //   content: receipt,
-      // },
       ...APattachments,
     ],
   };
@@ -178,92 +167,71 @@ exports.sendAR = async (refId) => {
   }
 };
 
+exports.addToQueue = (accessPass, status) => {
+  let q = new AccessPassQueue();
+  q.accessPass = accessPass._id;
+  q.status = status;
+  q.save((err, result) => {
+    if (err) {
+      console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
+    } else {
+      console.log("QUEUE CREATED FOR ACCESS PASS: ", accessPass.accessToken);
+    }
+  });
+};
+
 exports.syncAccessPass = (accessPass, RideCode) => {
   console.log("SYNCING ACCESS PASS: ", accessPass.accessToken);
-  try {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        //add in queue
-        let q = new AccessPassQueue();
-        q.accessPass = accessPass._id;
-        q.status = err.code;
-        q.save((err, result) => {
-          if (err) {
-            console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
-          } else {
-            console.log(
-              "QUEUE CREATED FOR ACCESS PASS: ",
-              accessPass.accessToken
-            );
-          }
-        });
-      } else {
-        const date = format(accessPass.createdAt, "yyyy-MM-dd");
-        const time = format(accessPass.createdAt, "HH:mm:ss");
+  return new Promise((resolve, reject) => {
+    try {
+      pool.getConnection(async (err, connection) => {
+        if (err) {
+          console.log("ERROR: ", err);
+          this.addToQueue(accessPass, "Failed Connection");
+          resolve("Failed Connection, added to queue.");
+        } else {
+          const date = format(accessPass.createdAt, "yyyy-MM-dd");
+          const time = format(accessPass.createdAt, "HH:mm:ss");
 
-        const values = [
-          [
-            accessPass.accessToken,
-            "Pop Tag",
-            date,
-            time,
-            "Purchased",
-            "web",
-            "1",
-            RideCode,
-          ],
-        ];
+          const values = [
+            [
+              accessPass.accessToken,
+              "Pop Tag",
+              date,
+              time,
+              "Purchased",
+              "web",
+              "1",
+              RideCode,
+            ],
+          ];
 
-        const sql =
-          "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
+          const sql =
+            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
 
-        connection.query(sql, [values], function (error, results, fields) {
-          if (error) {
-            // PUT IN QUEUE
-            console.log(
-              `ERROR SYNCING ACCESS PASS ${accessPass.accessToken}: `,
-              error
-            );
-            let q = new Queue();
-            q.accessPass = accessPass._id;
-            q.status = error.code;
-            q.save((err, result) => {
-              if (err) {
-                console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
-              } else {
-                console.log(
-                  "QUEUE CREATED FOR ACCESS PASS: ",
-                  accessPass.accessToken
-                );
-              }
-            });
-          } else if (results.affectedRows < 1) {
-            console.log(
-              `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-              accessPass.accessToken
-            );
-            let q = new Queue();
-            q.accessPass = accessPass._id;
-            q.status = "FAILED INSERT";
-            q.save((err, result) => {
-              if (err) {
-                console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
-              } else {
-                console.log(
-                  "QUEUE CREATED FOR ACCESS PASS: ",
-                  accessPass.accessToken
-                );
-              }
-            });
-          } else {
-            console.log("ACCESS PASS SYNCED: ", accessPass.accessToken);
-          }
-        });
-      }
-    });
-  } catch (e) {
-    console.log("ERROR IN SYNC FUNCTION", e);
-  }
+          connection.query(sql, [values], function (error, results, fields) {
+            if (error) {
+              this.addToQueue(accessPass, "Failed Query");
+              resolve("Failed Query, added to queue");
+            } else if (results.affectedRows < 1) {
+              console.log(
+                `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
+                accessPass.accessToken
+              );
+              this.addToQueue(accessPass, "Failed insert");
+              resolve("Failed Insert, added to queue");
+            } else {
+              resolve(`ACCESS PASS SYNCED: ${accessPass.accessToken}`);
+            }
+          });
+
+          connection.release();
+        }
+      });
+    } catch (e) {
+      resolve("ERROR IN MYSQL.");
+    }
+  });
 };
 
 //REQUESTS
@@ -634,40 +602,98 @@ exports.processPaypalPayment = async (req, res) => {
   }
 };
 
-const insertAccessPass = () => {};
+const isSynced = (ticket) => {
+  return new Promise((resolve, reject) => {
+    pool.getConnection(async (err, connection) => {
+      if (err) {
+        reject(err);
+      } else {
+        const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
+        const values = [[ticket.accessToken]];
+
+        connection.query(sql, [values], function (error, results, fields) {
+          if (error) {
+            reject("ERROR IN QUERY: isSynced");
+          } else if (results.length > 0) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        });
+
+        connection.release();
+      }
+    });
+  });
+};
+
+const insertAccessPass = (ticket) => {
+  return new Promise((resolve, reject) => {
+    isSynced(ticket)
+      .then((syncCheck) => {
+        if (syncCheck) {
+          resolve("Already in Database");
+        } else {
+          pool.getConnection(async (err, connection) => {
+            if (err) {
+              reject(err);
+            } else {
+              const date = format(ticket.createdAt, "yyyy-MM-dd");
+              const time = format(ticket.createdAt, "HH:mm:ss");
+              const sql =
+                "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
+              const values = [
+                [
+                  ticket.accessToken,
+                  "Pop Tag",
+                  date,
+                  time,
+                  "Purchased",
+                  "web",
+                  "1",
+                  ticket.ticketId.itemCode,
+                ],
+              ];
+
+              connection.query(
+                sql,
+                [values],
+                function (error, results, fields) {
+                  if (err) {
+                    reject(error);
+                  } else if (results.affectedRows > 0) {
+                    resolve("Access Pass Synced");
+                  } else if (results.length == 0) {
+                    reject("Failed to sync");
+                  }
+                }
+              );
+
+              connection.release();
+            }
+          });
+        }
+      })
+      .catch((e) => {
+        reject(e);
+      });
+  });
+};
 //TESTER FUNCTION
 exports.test = async (req, res) => {
-  const tickets = await AccessPass.find({}).skip(0).limit(100).exec();
+  // const tickets = await AccessPass.find({})
+  //   .populate("ticketId", "itemCode")
+  //   .select("accessToken createdAt")
+  //   .sort({ createdAt: "descending" })
+  //   .exec();
 
-  tickets.map(async (t, i) => {
-    try {
-      await pool.getConnection(async (err, connection) => {
-        const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
-        const values = [t.accessToken];
-        if (err) {
-          console.log("PROCESSSING TOKEN: ", t.accessToken);
-          console.log("ERROR IN CONNECTION: ", err.code);
-          console.log("ADDING TO QUEUE: ", t.accessToken);
-        } else {
-          await connection.query(
-            sql,
-            [values],
-            function (error, results, fields) {
-              if (results.length > 0) {
-                console.log("PROCESSSING TOKEN: ", t.accessToken);
-                console.log("TOKEN IN DATABASE: ", results.length);
-              } else if (results.length == 0) {
-                console.log("PROCESSSING TOKEN: ", t.accessToken);
-                console.log("TOKEN NOT IN DATABASE: ", results.length);
-              }
-            }
-          );
-        }
-      });
-    } catch (e) {
-      console.log("ERROR: ", e);
-    }
-  });
+  // tickets.map(async (ticket) => {
+  //   const processed = await insertAccessPass(ticket);
+  //   console.log(`RESULT FOR ${ticket.accessToken}: `, processed);
+  // });
 
-  res.json({ message: "processing" });
+  // res.json({ message: "processing" });
+
+  cronSyncAP();
+  res.json("processing")
 };

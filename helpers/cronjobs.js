@@ -49,19 +49,6 @@ exports.cronSyncAP = async () => {
                   `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
                   accessPass.accessToken
                 );
-                let q = new Queue();
-                q.accessPass = accessPass._id;
-                q.status = "FAILED INSERT";
-                q.save((err, result) => {
-                  if (err) {
-                    console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
-                  } else {
-                    console.log(
-                      "QUEUE CREATED FOR ACCESS PASS: ",
-                      accessPass.accessToken
-                    );
-                  }
-                });
               } else {
                 //remove in queue;
                 AccessPassQueue.deleteOne({ _id: q._id }).exec();
