@@ -119,67 +119,69 @@ exports.resendAR = async (req, res) => {
 };
 
 exports.sendAR = async (refId) => {
-  console.log("SENDING AR FOR ", refId);
-  const sale = await Sale.findOne({ refId: refId })
-    .populate({
-      path: "cartItems",
-      populate: {
-        path: "ticketId",
-        model: "Ticket",
-        select: "name -_id",
-      },
-    })
-    .populate({
-      path: "paymentDetails",
-      populate: {
-        path: "option",
-        model: "PaymentOption",
-        select: "name -_id",
-      },
-    })
-    .exec();
+  return new Promise(async (resolve, reject) => {
+    console.log("SENDING AR FOR ", refId);
+    const sale = await Sale.findOne({ refId: refId })
+      .populate({
+        path: "cartItems",
+        populate: {
+          path: "ticketId",
+          model: "Ticket",
+          select: "name -_id",
+        },
+      })
+      .populate({
+        path: "paymentDetails",
+        populate: {
+          path: "option",
+          model: "PaymentOption",
+          select: "name -_id",
+        },
+      })
+      .exec();
 
-  const saleId = sale._id;
+    const saleId = sale._id;
 
-  const accessPasses = await AccessPass.find({ salesId: saleId })
-    .populate("ticketId", "slug")
-    .select("ticketId accessToken QRcode")
-    .exec();
+    const accessPasses = await AccessPass.find({ salesId: saleId })
+      .populate("ticketId", "slug")
+      .select("ticketId accessToken QRcode")
+      .exec();
 
-  const APattachments = accessPasses.map((item, key) => {
-    return {
-      filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-      path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
-    };
-  });
-
-  const details = {
-    to: sale.emailAddress,
-    from: process.env.EMAIL_ADDRESS,
-    subject: "Your acknowledgement receipt for your Star City ticket purchase",
-    html: accessPassEmailNotification(sale),
-    bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
-    attachments: [
-      {
-        filename: "healthdeclaration-form.pdf",
-        path: `${process.env.DOMAIN}health-declaration-form.pdf`,
-      },
-      ...APattachments,
-    ],
-  };
-
-  try {
-    sendMail(details).then((info) => {
-      console.log("EMAIL SENT SUCCESSFULLY");
-      console.log("EMAIL STACK: ", info);
-      return true;
+    const APattachments = accessPasses.map((item, key) => {
+      return {
+        filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
+        path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
+      };
     });
-    return false;
-  } catch (e) {
-    console.log("ERROR IN MAILER: ", e);
-    console.log("EMAIL SENT FAILED");
-    return false;
-  }
+
+    const details = {
+      to: sale.emailAddress,
+      from: process.env.EMAIL_ADDRESS,
+      subject:
+        "Your acknowledgement receipt for your Star City ticket purchase",
+      html: accessPassEmailNotification(sale),
+      bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
+      attachments: [
+        {
+          filename: "healthdeclaration-form.pdf",
+          path: `${process.env.DOMAIN}health-declaration-form.pdf`,
+        },
+        ...APattachments,
+      ],
+    };
+
+    try {
+      sendMail(details).then((info) => {
+        console.log("EMAIL SENT SUCCESSFULLY");
+        console.log("EMAIL STACK: ", info);
+        resolve(true);
+      });
+    } catch (e) {
+      console.log("ERROR IN MAILER: ", e);
+      console.log("EMAIL SENT FAILED");
+      resolve(false);
+    }
+  });
 };
 
 exports.addToQueue = (accessPass, status) => {
