@@ -106,6 +106,18 @@ exports.generateAccessPass = (sale, accessPasses) => {
   });
 };
 
+exports.resendAR = async (req, res) => {
+  const { refId } = req.body;
+
+  const isSent = await this.sendAR(refId);
+
+  if (isSent) {
+    res.json({ message: "E-mail resent successfully." });
+  } else {
+    res.json({ message: "E-mail failed. Please try again later." });
+  }
+};
+
 exports.sendAR = async (refId) => {
   console.log("SENDING AR FOR ", refId);
   const sale = await Sale.findOne({ refId: refId })
@@ -160,10 +172,13 @@ exports.sendAR = async (refId) => {
     sendMail(details).then((info) => {
       console.log("EMAIL SENT SUCCESSFULLY");
       console.log("EMAIL STACK: ", info);
+      return true;
     });
+    return false;
   } catch (e) {
     console.log("ERROR IN MAILER: ", e);
     console.log("EMAIL SENT FAILED");
+    return false;
   }
 };
 
@@ -695,5 +710,5 @@ exports.test = async (req, res) => {
   // res.json({ message: "processing" });
 
   cronSyncAP();
-  res.json("processing")
+  res.json("processing");
 };

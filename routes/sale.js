@@ -12,6 +12,7 @@ const {
   readBySaltRefID,
   test,
   createDragonPayRequest,
+  resendAR,
 } = require("../controllers/sale");
 
 //Version 1.0
@@ -24,6 +25,7 @@ router.get("/v1/access-pass", readBySaltRefID);
 router.get("/v1/sync", sync);
 
 router.post("/v1/create-checkout", createCheckout);
+router.post("/v1/sale/resend-email", resendAR);
 
 //payment webhooks
 router.put("/v1/payment/paypal", processPaypalPayment);
