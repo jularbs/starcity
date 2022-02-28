@@ -8,7 +8,6 @@ const { createEntry } = require("../controllers/auditTrail");
 const axios = require("axios");
 exports.signup = (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
-  console.log(req.body);
 
   if (password !== confirmPassword)
     res
@@ -179,7 +178,6 @@ exports.signin = async (req, res) => {
       });
     } else {
       //invalid token
-      console.log("CAPTCHA: ", captcha.data);
       createEntry(null, "Captcha blocked login", captcha.data, req);
 
       return res.status(400).json({
@@ -257,7 +255,6 @@ exports.registeredUsers = (req, res) => {
 
 exports.deleteUser = (req, res) => {
   const { _id } = req.body;
-  console.log(req.body);
   User.deleteOne({ _id }).exec((err, result) => {
     if (err) {
       res
