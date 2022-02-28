@@ -8,8 +8,6 @@ exports.logoUpload = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    console.log("FILES: ", files);
-    console.log("FIELD: ", fields);
     const { value } = files;
     const { name } = fields;
 
@@ -135,7 +133,6 @@ exports.read = (req, res) => {
 
 exports.list = (req, res) => {
   const { keys } = req.query;
-  console.log(keys);
   if (!keys) {
     Option.find()
       .select("name value")
