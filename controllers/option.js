@@ -132,10 +132,8 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  // res.header("Access-Control-Allow-Origin", "*");
   Option.find()
     .select("name value")
-    .where("name")
     .exec((err, options) => {
       if (err) res.status(400).json({ error: "Unable to retrieve options" });
       res.json(options);
