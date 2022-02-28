@@ -132,30 +132,14 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  const { keys } = req.query;
-  if (!keys) {
-    Option.find()
-      .select("name value")
-      .exec((err, data) => {
-        if (err) {
-          return res.status(400).json({
-            error: "error occured",
-            message: err,
-          });
-        }
-        res.json(data);
-      });
-  } else {
-    Option.find()
-      .select("name value")
-      .where("name")
-      .in(keys)
-      .exec((err, options) => {
-        if (err) res.status(400).json({ error: "Unable to retrieve options" });
-
-        res.json(options);
-      });
-  }
+  // res.header("Access-Control-Allow-Origin", "*");
+  Option.find()
+    .select("name value")
+    .where("name")
+    .exec((err, options) => {
+      if (err) res.status(400).json({ error: "Unable to retrieve options" });
+      res.json(options);
+    });
 };
 
 exports.update = async (req, res) => {

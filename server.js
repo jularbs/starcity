@@ -29,7 +29,7 @@ const app = express();
 
 var allowedDomains = [
   "http://jularbs.com:3000",
-  "https://jularbs.com:3000",
+  "https://jularbs.com:3000", 
   "http://starcity.com.ph",
   "https://starcity.com.ph",
   "http://www.starcity.com.ph",
