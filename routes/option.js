@@ -16,7 +16,6 @@ router.post("/v1/option", requireSignin, authMiddleware, create);
 router.post("/v1/logo-option", requireSignin, authMiddleware, logoUpload);
 
 router.put("/v1/option", update);
-router.get("/v1/options", list);
 router.get("/v1/option", list);
 router.get("/v1/option/:name", read);
 router.delete("/v1/option", remove);
