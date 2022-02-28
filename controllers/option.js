@@ -140,6 +140,15 @@ exports.list = (req, res) => {
     });
 };
 
+exports.listOptionsv2 = (req, res) => {
+  Option.find({})
+    .select("name value")
+    .exec((error, result) => {
+      if (error)
+        return res.status(400).json({ error: "Unable to retrieve options" });
+      return res.status(200).json(result);
+    });
+};
 exports.update = async (req, res) => {
   const { slug, name, value, meta } = req.body;
 
