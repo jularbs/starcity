@@ -100,7 +100,7 @@ app.use("/webhooks", webhookRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 
-//cron jobs
+// cron jobs
 cron.schedule("*/30 * * * *", function () {
   cronSyncAP();
 });

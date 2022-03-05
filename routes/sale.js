@@ -13,6 +13,7 @@ const {
   test,
   createDragonPayRequest,
   resendAR,
+  forceSync,
 } = require("../controllers/sale");
 
 //Version 1.0
@@ -33,5 +34,6 @@ router.post("/v1/payment/dragonpay", createDragonPayRequest);
 
 //TESTS
 router.get("/v1/test", test);
+router.get("/v1/force-sync", forceSync);
 
 module.exports = router;

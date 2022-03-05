@@ -14,6 +14,7 @@ const { format } = require("date-fns");
 const moment = require("moment");
 const axios = require("axios");
 
+const { forceSync } = require("../helpers/cronjobs");
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
@@ -696,19 +697,29 @@ const insertAccessPass = (ticket) => {
 };
 //TESTER FUNCTION
 exports.test = async (req, res) => {
+  const { skip, limit } = req.query;
+
   const tickets = await AccessPass.find({})
     .populate("ticketId", "itemCode")
     .select("accessToken createdAt")
     .sort({ createdAt: "ascending" })
-    .skip(1550)
-    .limit(50)
+    .skip(parseInt(skip))
+    .limit(parseInt(limit))
     .exec();
 
   tickets.map(async (ticket, i) => {
     const processed = await insertAccessPass(ticket);
-    console.log(`${i+1} RESULT FOR ${ticket.accessToken}: `, processed);
+    console.log(`${i + 1} RESULT FOR ${ticket.accessToken}: `, processed);
   });
 
   res.json({ message: "processing" });
+};
 
+exports.forceSync = async (req, res) => {
+  const { skip, limit } = req.query;
+  forceSync(skip, limit);
+
+  console.log("processing...");
+
+  res.json({ message: "processing" });
 };
