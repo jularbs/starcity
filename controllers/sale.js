@@ -354,7 +354,7 @@ exports.readBySaltRefID = async (req, res) => {
   const accessPasses = await AccessPass.find({
     salesId: saleDetails._id,
   })
-    .populate("ticketId", "name -_id")
+    .populate("ticketId", "name slug -_id")
     .select("ticketId QRcode accessToken -_id")
     .exec();
 
