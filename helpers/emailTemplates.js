@@ -753,9 +753,31 @@ exports.accessPassEmailNotification = (data) => {
                                         text-align: left;
                                       "
                                     >  
-                                      Please download the QR codes and 
-                                      print or save in your mobile phone for scanning 
+                                      These QR Codes are your tickets to the park and are valid until August 28, 2022. 
+                                      Please download the QR codes and print or save in your mobile phone for scanning 
                                       at the park's main entrance turnstiles. One QR code per person. 
+                                    </p>
+                                    <p
+                                      class="tw-light"
+                                      style="
+                                        margin: 0;
+                                        margin-bottom: 10px;
+                                        color: #0a0a0a;
+                                        font-family: Helvetica, Arial,
+                                          sans-serif;
+                                        font-size: 16px;
+                                        font-weight: 300;
+                                        line-height: 1.3;
+                                        margin: 0;
+                                        margin-bottom: 10px;
+                                        padding-bottom: 0;
+                                        padding-left: 0;
+                                        padding-right: 0;
+                                        padding-top: 0;
+                                        text-align: left;
+                                      "
+                                    >  
+                                      Please also print or screenshot this Acknowledgement Receipt as Star City reserves the right to demand presentation of the same before entry to the park. 
                                     </p>
                                     <p
                                       style="
@@ -964,7 +986,7 @@ exports.accessPassEmailNotification = (data) => {
                                                           text-decoration: none;
                                                         "
                                                         >CLICK HERE TO VIEW
-                                                        TICKETS
+                                                        QR CODES
                                                       </a>
                                                     </td>
                                                   </tr>
