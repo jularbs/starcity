@@ -29,13 +29,15 @@ const app = express();
 
 var allowedDomains = [
   "http://jularbs.com:3000",
-  "https://jularbs.com:3000", 
+  "https://jularbs.com:3000",
   "http://starcity.com.ph",
   "https://starcity.com.ph",
   "http://www.starcity.com.ph",
   "https://www.starcity.com.ph",
   "http://uat.starcity.com.ph",
   "https://uat.starcity.com.ph",
+  "https://test-spc.herokuapp.com",
+  "http://test-spc.herokuapp.com",
 ];
 
 app.use(
