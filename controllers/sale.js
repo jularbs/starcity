@@ -2,6 +2,7 @@ const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
 const AccessPass = require("../models/accessPass");
 const AccessPassQueue = require("../models/accessPassQueue");
+const Option = require("../models/option");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
@@ -346,7 +347,7 @@ exports.readBySaltRefID = async (req, res) => {
     salt: req.query.salt,
     refId: req.query.refid,
   })
-    .select("_id customerName emailAddress contactNumber")
+    .select("_id customerName emailAddress contactNumber expiryDate createdAt")
     .exec();
 
   if (saleDetails == null) res.json({ error: "Invalid Data" });
@@ -542,6 +543,9 @@ exports.createCheckout = async (req, res) => {
       };
     }
 
+    const expiryOption = await Option.findOne({ name: "TICKET_EXPIRY" }).exec();
+
+    sale.expiryDate = expiryOption.value;
     sale.customerName = customerName;
     sale.emailAddress = email;
     sale.refId = refID;

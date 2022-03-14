@@ -79,6 +79,7 @@ const saleSchema = new mongoose.Schema(
       status: String,
     },
     meta: Object,
+    expiryDate: String,
     id: false,
   },
   { timestamps: true, toJSON: { getters: true } }
