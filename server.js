@@ -107,7 +107,7 @@ cron.schedule("*/30 * * * *", function () {
   cronSyncAP();
 });
 
-cron.schedule("40 15 * * *", function () {
+cron.schedule("48 15 * * *", function () {
   console.log("RUN CRON");
 });
 
