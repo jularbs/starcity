@@ -107,7 +107,7 @@ cron.schedule("*/30 * * * *", function () {
   cronSyncAP();
 });
 
-cron.schedule("10 08 * * *", function () {
+cron.schedule("15 08 * * *", function () {
   console.log("RUN CRON");
   const date = moment().subtract(1, "days").format();
   const startDate = moment(date).startOf("day").utc().toISOString();
