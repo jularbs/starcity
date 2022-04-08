@@ -107,6 +107,10 @@ cron.schedule("*/30 * * * *", function () {
   cronSyncAP();
 });
 
+cron.schedule("30 15 * * *", function () {
+  console.log("CRON RUNNING");
+});
+
 //port
 const port = process.env.PORT || 8000;
 
