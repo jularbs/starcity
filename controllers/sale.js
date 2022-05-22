@@ -16,6 +16,10 @@ const moment = require("moment");
 const axios = require("axios");
 
 const { forceSync } = require("../helpers/cronjobs");
+
+const EmailQueue = require("../models/emailQueue");
+const { cronProcessEmailQueues } = require("../helpers/cronjobs");
+
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
@@ -147,12 +151,12 @@ exports.sendAR = async (refId) => {
       .select("ticketId accessToken QRcode")
       .exec();
 
-    const APattachments = accessPasses.map((item, key) => {
-      return {
-        filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-        path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
-      };
-    });
+    // const APattachments = accessPasses.map((item, key) => {
+    //   return {
+    //     filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
+    //     path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
+    //   };
+    // });
 
     const details = {
       to: sale.emailAddress,
@@ -161,20 +165,36 @@ exports.sendAR = async (refId) => {
         "Your acknowledgement receipt for your Star City ticket purchase",
       html: accessPassEmailNotification(sale),
       bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
-      attachments: [
-        // {
-        //   filename: "healthdeclaration-form.pdf",
-        //   path: `${process.env.DOMAIN}health-declaration-form.pdf`,
-        // },
-        ...APattachments,
-      ],
+      // attachments: [
+      // {
+      //   filename: "healthdeclaration-form.pdf",
+      //   path: `${process.env.DOMAIN}health-declaration-form.pdf`,
+      // },
+      // ...APattachments,
+      // ],
     };
 
     try {
       sendMail(details).then((info) => {
-        console.log("EMAIL SENT SUCCESSFULLY");
         console.log("EMAIL STACK: ", info);
-        resolve(true);
+        //check info if undefined
+        if (info === undefined) {
+          console.log("EMAIL SENT FAILED");
+          //add to email queue
+          let q = new EmailQueue();
+          q.refId = refId;
+          q.save((err, result) => {
+            if (err) {
+              console.log("ERROR IN QUEUEING EMAIL: ", err);
+            } else {
+              console.log("QUEUE CREATED FOR REF ID: ", refId);
+            }
+          });
+          resolve(false);
+        } else {
+          console.log("EMAIL SENT SUCCESSFULLY");
+          resolve(true);
+        }
       });
     } catch (e) {
       console.log("ERROR IN MAILER: ", e);
@@ -701,22 +721,7 @@ const insertAccessPass = (ticket) => {
 };
 //TESTER FUNCTION
 exports.test = async (req, res) => {
-  const { skip, limit } = req.query;
 
-  const tickets = await AccessPass.find({})
-    .populate("ticketId", "itemCode")
-    .select("accessToken createdAt")
-    .sort({ createdAt: "ascending" })
-    .skip(parseInt(skip))
-    .limit(parseInt(limit))
-    .exec();
-
-  tickets.map(async (ticket, i) => {
-    const processed = await insertAccessPass(ticket);
-    console.log(`${i + 1} RESULT FOR ${ticket.accessToken}: `, processed);
-  });
-
-  res.json({ message: "processing" });
 };
 
 exports.forceSync = async (req, res) => {
