@@ -12,13 +12,14 @@ const { accessPassEmailNotification } = require("../helpers/emailTemplates");
 const { pool } = require("../lib/mysql/connect");
 
 const { format } = require("date-fns");
+const { utcToZonedTime } = require("date-fns-tz");
+const add = require("date-fns/add");
 const moment = require("moment");
 const axios = require("axios");
 
 const { forceSync } = require("../helpers/cronjobs");
 
 const EmailQueue = require("../models/emailQueue");
-const { cronProcessEmailQueues } = require("../helpers/cronjobs");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -721,7 +722,20 @@ const insertAccessPass = (ticket) => {
 };
 //TESTER FUNCTION
 exports.test = async (req, res) => {
+  const date = new Date();
+  const result = add(date, {
+    months: 1,
+  });
+  const timeZone = "Asia/Manila";
+  const zonedDate = utcToZonedTime(result, timeZone);
+  const formatted = format(zonedDate, "MMMM dd, yyyy");
 
+  res.json({
+    date: date,
+    added: result,
+    zoned: zonedDate,
+    formatted: formatted,
+  });
 };
 
 exports.forceSync = async (req, res) => {

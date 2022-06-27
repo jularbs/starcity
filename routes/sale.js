@@ -34,7 +34,7 @@ router.put("/v1/payment/paypal", processPaypalPayment);
 router.post("/v1/payment/dragonpay", createDragonPayRequest);
 
 //TESTS
-router.get("/v1/test/:refId", test);
+router.get("/v1/test", test);
 router.get("/v1/force-sync", forceSync);
 
 module.exports = router;
