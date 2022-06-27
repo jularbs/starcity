@@ -564,9 +564,16 @@ exports.createCheckout = async (req, res) => {
       };
     }
 
-    const expiryOption = await Option.findOne({ name: "TICKET_EXPIRY" }).exec();
+    sale.expiryDate = format(
+      utcToZonedTime(
+        add(new Date(), {
+          months: 1,
+        }),
+        "Asia/Manila"
+      ),
+      "MMMM dd, yyyy"
+    );
 
-    sale.expiryDate = expiryOption.value;
     sale.customerName = customerName;
     sale.emailAddress = email;
     sale.refId = refID;
@@ -722,20 +729,7 @@ const insertAccessPass = (ticket) => {
 };
 //TESTER FUNCTION
 exports.test = async (req, res) => {
-  const date = new Date();
-  const result = add(date, {
-    months: 1,
-  });
-  const timeZone = "Asia/Manila";
-  const zonedDate = utcToZonedTime(result, timeZone);
-  const formatted = format(zonedDate, "MMMM dd, yyyy");
 
-  res.json({
-    date: date,
-    added: result,
-    zoned: zonedDate,
-    formatted: formatted,
-  });
 };
 
 exports.forceSync = async (req, res) => {
