@@ -21,6 +21,10 @@ const { forceSync } = require("../helpers/cronjobs");
 
 const EmailQueue = require("../models/emailQueue");
 
+//TEST
+const getDay = require("date-fns/getDay");
+const nextThursday = require("date-fns/nextThursday");
+
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
   return new Promise((resolve, reject) => {
@@ -111,6 +115,31 @@ exports.generateAccessPass = (sale, accessPasses) => {
   });
 };
 
+const getOpenParkExpiry = () => {
+  //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
+  const adjustDays = [1, 2, 3];
+
+  const expiryDate = utcToZonedTime(
+    add(new Date(), {
+      months: 1,
+    }),
+    "Asia/Manila"
+  );
+
+  const dayValue = getDay(expiryDate);
+
+  const inAdjustDays = adjustDays.indexOf(dayValue);
+  const shouldAdjust = inAdjustDays >= 0 ? true : false;
+  let expiry = null;
+
+  if (shouldAdjust) {
+    expiry = format(nextThursday(expiryDate), "MMMM dd, yyyy");
+  } else {
+    expiry = format(expiryDate, "MMMM dd, yyyy");
+  }
+
+  return expiry;
+};
 exports.resendAR = async (req, res) => {
   const { refId } = req.body;
 
@@ -564,16 +593,7 @@ exports.createCheckout = async (req, res) => {
       };
     }
 
-    sale.expiryDate = format(
-      utcToZonedTime(
-        add(new Date(), {
-          months: 1,
-        }),
-        "Asia/Manila"
-      ),
-      "MMMM dd, yyyy"
-    );
-
+    sale.expiryDate = getOpenParkExpiry();
     sale.customerName = customerName;
     sale.emailAddress = email;
     sale.refId = refID;
@@ -728,9 +748,7 @@ const insertAccessPass = (ticket) => {
   });
 };
 //TESTER FUNCTION
-exports.test = async (req, res) => {
-
-};
+exports.test = async (req, res) => {};
 
 exports.forceSync = async (req, res) => {
   const { skip, limit } = req.query;
