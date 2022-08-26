@@ -1,25 +1,8 @@
 const mongoose = require("mongoose");
-const { ObjectId } = mongoose.Schema;
 
 const emailQueueSchema = new mongoose.Schema(
   {
-    recepient: [
-      {
-        type: String,
-      },
-    ],
-    sender: {
-      type: String,
-    },
-    body: {
-      type: String,
-    },
-    attachments: [
-      {
-        type: Object,
-      },
-    ],
-    meta: Object,
+    refId: { type: String, required: true },
   },
   { timestamps: true }
 );

@@ -14,6 +14,7 @@ const {
   createDragonPayRequest,
   resendAR,
   forceSync,
+  sendAR
 } = require("../controllers/sale");
 
 //Version 1.0
