@@ -128,3 +128,9 @@ exports.dragonPayReturn = async (req, res) => {
     `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}`
   );
 };
+
+exports.smTicketTest = async (req, res) => {
+  res.status(200).json({
+    message: "Connection Test Success",
+  });
+};
