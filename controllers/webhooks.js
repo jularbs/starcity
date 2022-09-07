@@ -134,3 +134,23 @@ exports.smTicketTest = async (req, res) => {
     message: "Connection Test Success",
   });
 };
+
+exports.smTicketTransact = async (req, res) => {
+
+  //Create a sale transaction named under SM Ticket Outlet
+
+  //Insert Access pass to accessPass Collection then reference to Sales
+
+  //Synchronize Access Pass to Turnstile System
+
+    //if cannot synchronize queue ticket
+  res.status(200).json({
+    result: "OK"
+  })
+}
+
+exports.smTicketVoid = async (req, res) => {
+  res.status(200).json({
+    result: "OK",
+  });
+};

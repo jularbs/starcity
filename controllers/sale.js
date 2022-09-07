@@ -104,6 +104,10 @@ exports.generateAccessPass = (sale, accessPasses) => {
       accessPass.salesId = sale._id;
       accessPass.accessToken = finalToken;
       accessPass.QRcode = await upload;
+      accessPass.expiryDate = `${format(
+        new Date(sale.expiryDate),
+        "yyyy-LL-dd"
+      )} 23:59:59`;
 
       accessPass.save(async (err, result) => {
         if (err) console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
@@ -140,6 +144,7 @@ const getOpenParkExpiry = () => {
 
   return expiry;
 };
+
 exports.resendAR = async (req, res) => {
   const { refId } = req.body;
 
@@ -270,11 +275,12 @@ exports.syncAccessPass = (accessPass, RideCode) => {
               "web",
               "1",
               RideCode,
+              accessPass.expiryDate
             ],
           ];
 
           const sql =
-            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
+            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
@@ -748,7 +754,19 @@ const insertAccessPass = (ticket) => {
   });
 };
 //TESTER FUNCTION
-exports.test = async (req, res) => {};
+exports.test = async (req, res) => {
+  const sale = await Sale.findOne({ refId: "1375B6081984" }).exec();
+
+  const expiryDate = `${format(
+    new Date(sale.expiryDate),
+    "yyyy-LL-dd"
+  )} 23:59:59`;
+  res.json({
+    expiryWord: sale.expiryDate,
+    expiryDateTime: expiryDate,
+    // sale,
+  });
+};
 
 exports.forceSync = async (req, res) => {
   const { skip, limit } = req.query;

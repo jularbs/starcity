@@ -22,6 +22,7 @@ const accessPassSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    expiryDate: String,
     QRcode: Object,
     meta: Object,
   },
