@@ -136,7 +136,6 @@ exports.smTicketTest = async (req, res) => {
 };
 
 exports.smTicketTransact = async (req, res) => {
-
   //Create a sale transaction named under SM Ticket Outlet
 
   //Insert Access pass to accessPass Collection then reference to Sales
