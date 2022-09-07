@@ -275,7 +275,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
               "web",
               "1",
               RideCode,
-              accessPass.expiryDate
+              accessPass.expiryDate,
             ],
           ];
 
@@ -754,19 +754,7 @@ const insertAccessPass = (ticket) => {
   });
 };
 //TESTER FUNCTION
-exports.test = async (req, res) => {
-  const sale = await Sale.findOne({ refId: "1375B6081984" }).exec();
-
-  const expiryDate = `${format(
-    new Date(sale.expiryDate),
-    "yyyy-LL-dd"
-  )} 23:59:59`;
-  res.json({
-    expiryWord: sale.expiryDate,
-    expiryDateTime: expiryDate,
-    // sale,
-  });
-};
+exports.test = async (req, res) => {};
 
 exports.forceSync = async (req, res) => {
   const { skip, limit } = req.query;
