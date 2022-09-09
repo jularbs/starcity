@@ -144,6 +144,7 @@ exports.smTicketTest = async (req, res) => {
 };
 
 exports.smTicketExpiry = async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
   res.status(200).json({
     expiry: getOpenParkExpiry(),
   });
