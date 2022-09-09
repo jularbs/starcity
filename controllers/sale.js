@@ -598,7 +598,7 @@ exports.createCheckout = async (req, res) => {
       };
     }
 
-    sale.expiryDate = getOpenParkExpiry();
+    sale.expiryDate = this.getOpenParkExpiry();
     sale.customerName = customerName;
     sale.emailAddress = email;
     sale.refId = refID;
