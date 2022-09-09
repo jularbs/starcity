@@ -11,6 +11,9 @@ const {
   dragonPayReturn,
   dragonPaySuccess,
   smTicketTest,
+  smTicketExpiry,
+  smTicketTransact,
+  smTicketVoid,
 } = require("../controllers/webhooks");
 
 //Version 1.0
@@ -23,6 +26,10 @@ router.post("/v1/paymaya/checkout-dropout", paymayaCheckoutDropout);
 router.post("/v1/paymaya/authorized", paymayaAuthorized);
 router.post("/v1/dragonpay/callback", dragonPaySuccess);
 router.get("/v1/dragonpay/return", dragonPayReturn);
+
 router.get("/v1/smticket/test", smTicketTest);
+router.get("/v1/smticket/expiry", smTicketExpiry);
+router.post("/v1/smticket/transact", smTicketTransact);
+router.patch("/v1/smticket/void", smTicketVoid);
 
 module.exports = router;

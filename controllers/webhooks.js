@@ -1,6 +1,14 @@
 const Sale = require("../models/sale");
+const SmQueue = require("../models/smQueue");
 const PaymentOption = require("../models/paymentOption");
-const { generateAccessPass, sendAR } = require("../controllers/sale");
+const {
+  generateAccessPass,
+  sendAR,
+  getOpenParkExpiry,
+} = require("../controllers/sale");
+
+const { pool } = require("../lib/mysql/connect");
+const { format } = require("date-fns");
 
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
@@ -135,21 +143,171 @@ exports.smTicketTest = async (req, res) => {
   });
 };
 
-exports.smTicketTransact = async (req, res) => {
-  //Create a sale transaction named under SM Ticket Outlet
-
-  //Insert Access pass to accessPass Collection then reference to Sales
-
-  //Synchronize Access Pass to Turnstile System
-
-    //if cannot synchronize queue ticket
+exports.smTicketExpiry = async (req, res) => {
   res.status(200).json({
-    result: "OK"
-  })
-}
+    expiry: getOpenParkExpiry(),
+  });
+};
+
+exports.smTicketTransact = async (req, res) => {
+  console.log("PROCESSING SM TICKETS TRANSACTION...");
+
+  //SM Function
+  const addToQueue = (tokenID, rideCode, status = "for delivery") => {
+    let newQ = new SmQueue();
+    newQ.tokenID = tokenID;
+    newQ.RideCode = rideCode;
+    newQ.status = status;
+    newQ.save((err, result) => {
+      if (err) {
+        console.log("ERROR IN QUEUEING SM TICKET: ", err);
+      } else {
+        console.log("QUEUE CREATED FOR SM TICKET: ", tokenID);
+      }
+    });
+  };
+
+  //get request
+  const { token, tickets } = req.body;
+  //synchronize to Turnstile System
+  if (token == process.env.SM_TOKEN) {
+    if (tickets) {
+      tickets.map((item) => {
+        const { ticketID, ticketType } = item;
+        console.log("PROCESSING TICKET: ", ticketID, ticketType);
+
+        try {
+          pool.getConnection(async (err, connection) => {
+            if (err) {
+              addToQueue(ticketID, ticketType, "Error in mySQL Connection");
+            } else {
+              const date = format(new Date(), "yyyy-MM-dd");
+              const time = format(new Date(), "HH:mm:ss");
+              const expiry = `${format(
+                new Date(getOpenParkExpiry()),
+                "yyyy-LL-dd"
+              )} 23:59:59`;
+              const values = [
+                [
+                  ticketID,
+                  "Pop Tag",
+                  date,
+                  time,
+                  "Purchased",
+                  "smticket",
+                  "1",
+                  ticketType,
+                  expiry,
+                ],
+              ];
+              const sql =
+                "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
+
+              connection.query(
+                sql,
+                [values],
+                function (error, results, fields) {
+                  if (error) {
+                    addToQueue(ticketID, ticketType, "Error in mySQL Insert");
+                  } else if (results.affectedRows < 1) {
+                    addToQueue(
+                      ticketID,
+                      ticketType,
+                      "Error in mySQL insert, no affected rows"
+                    );
+                  } else {
+                    console.log("SM TICKET PROCESSED SUCCESS: ", ticketID);
+                  }
+                }
+              );
+              connection.release();
+            }
+          });
+        } catch (e) {
+          addToQueue(ticketID, ticketType, "Error in mySQL");
+        }
+      });
+    } else {
+      res.status(400).json({
+        status: "Invalid Transaction",
+        message:
+          "Server received empty tickets. No IDs synchronized with system",
+      });
+    }
+
+    res.status(200).json({
+      status: "Success",
+      message: "Tickets synchronized successfully",
+    });
+  } else {
+    res.status(401).json({
+      status: "Invalid Auth Token",
+      message: "Please make sure that your token in your request body is valid",
+    });
+  }
+};
 
 exports.smTicketVoid = async (req, res) => {
+  console.log("VOIDING SM TICKET TRANSACTION...");
+  const { token, tickets } = req.body;
+
+  if (token == process.env.SM_TOKEN) {
+    if (tickets) {
+      tickets.map((item) => {
+        const { ticketID } = item;
+        console.log("VOIDING TICKET: ", ticketID);
+
+        try {
+          pool.getConnection(async (err, connection) => {
+            if (err) {
+              console.log("ERROR IN MYSQL CONNECTION");
+              return res.status(500).json({
+                status: "Internal Server Error",
+                message: "Cannot connect to Turnstile System",
+              });
+            } else {
+              let sql = `UPDATE tablebarcode SET status = 0, isSnowWorld = 0 WHERE barcode_number = ?;UPDATE admission_history SET status = "Void" WHERE admission_no=?;`;
+              let values = [ticketID, ticketID];
+
+              connection.query(sql, values, function (error, results, fields) {
+                if (error) {
+                  console.log("Error on executing query...");
+                  return res.status(400).json({
+                    status: "Query Error",
+                    message: "Query Execution Failed",
+                  });
+                } else if (results.affectedRows < 1) {
+                  console.log("No affected rows");
+                } else {
+                  console.log("SM TICKET VOID SUCCESS: ", ticketID);
+                }
+              });
+              connection.release();
+            }
+          });
+        } catch (e) {
+          console.log("ERROR IN VOIDING TICKET...");
+          return res.status(500).json({
+            status: "Internal Server Error",
+            message: "Cannot connect to Turnstile System",
+          });
+        }
+      });
+    } else {
+      return res.status(400).json({
+        status: "Invalid Transaction",
+        message: "No Ticket IDs found",
+      });
+    }
+  } else {
+    return res.status(401).json({
+      status: "Invalid Auth Token",
+      message: "Please make sure that your token in your request body is valid",
+    });
+  }
+
   res.status(200).json({
-    result: "OK",
+    status: "Success",
+    message: "Tickets voided successfully",
   });
 };

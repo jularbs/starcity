@@ -118,7 +118,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
   });
 };
 
-const getOpenParkExpiry = () => {
+exports.getOpenParkExpiry = () => {
   //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
   const adjustDays = [1, 2, 3];
 
