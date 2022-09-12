@@ -137,6 +137,42 @@ exports.dragonPayReturn = async (req, res) => {
   );
 };
 
+const addToQueue = (tokenID, rideCode, status = "for delivery") => {
+  let newQ = new SmQueue();
+  newQ.tokenID = tokenID;
+  newQ.RideCode = rideCode;
+  newQ.status = status;
+  newQ.save((err, result) => {
+    if (err) {
+      console.log("ERROR IN QUEUEING SM TICKET: ", err);
+    } else {
+      console.log("QUEUE CREATED FOR SM TICKET: ", tokenID);
+    }
+  });
+};
+
+const checkExisting = (tickets) => {
+  return new Promise((resolve, reject) => {
+    const idArray = tickets.map((item) => item.ticketID);
+    pool.getConnection(async (err, connection) => {
+      if (err) {
+        reject({ status: "Connection failed" });
+      } else {
+        let sql = `SELECT * FROM admission_history WHERE admission_no IN (?) AND status="Purchased";`;
+        let values = [idArray];
+
+        connection.query(sql, values, (error, results, fields) => {
+          if (error) {
+            reject({ status: "Query failed" });
+          }
+          resolve(results);
+        });
+        connection.release();
+      }
+    });
+  });
+};
+
 exports.smTicketTest = async (req, res) => {
   res.status(200).json({
     message: "Connection Test Success",
@@ -152,94 +188,98 @@ exports.smTicketExpiry = async (req, res) => {
 
 exports.smTicketTransact = async (req, res) => {
   console.log("PROCESSING SM TICKETS TRANSACTION...");
+  const { tickets, token } = req.body;
 
-  //SM Function
-  const addToQueue = (tokenID, rideCode, status = "for delivery") => {
-    let newQ = new SmQueue();
-    newQ.tokenID = tokenID;
-    newQ.RideCode = rideCode;
-    newQ.status = status;
-    newQ.save((err, result) => {
-      if (err) {
-        console.log("ERROR IN QUEUEING SM TICKET: ", err);
-      } else {
-        console.log("QUEUE CREATED FOR SM TICKET: ", tokenID);
-      }
-    });
-  };
-
-  //get request
-  const { token, tickets } = req.body;
-  //synchronize to Turnstile System
   if (token == process.env.SM_TOKEN) {
     if (tickets) {
-      tickets.map((item) => {
-        const { ticketID, ticketType } = item;
-        console.log("PROCESSING TICKET: ", ticketID, ticketType);
+      checkExisting(tickets)
+        .then((data) => {
+          if (data.length > 0) {
+            res.status(400).json({
+              status: "TicketID already exists",
+              message: "Please provide unique IDs",
+              existingIDs: data.map((item) => item.admission_no),
+            });
+          } else {
+            tickets.map((item) => {
+              const { ticketID, ticketType } = item;
+              console.log("PROCESSING TICKET: ", ticketID, ticketType);
 
-        try {
-          pool.getConnection(async (err, connection) => {
-            if (err) {
-              addToQueue(ticketID, ticketType, "Error in mySQL Connection");
-            } else {
-              const date = format(new Date(), "yyyy-MM-dd");
-              const time = format(new Date(), "HH:mm:ss");
-              const expiry = `${format(
-                new Date(getOpenParkExpiry()),
-                "yyyy-LL-dd"
-              )} 23:59:59`;
-              const values = [
-                [
-                  ticketID,
-                  "Pop Tag",
-                  date,
-                  time,
-                  "Purchased",
-                  "smticket",
-                  "1",
-                  ticketType,
-                  expiry,
-                ],
-              ];
-              const sql =
-                "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
-
-              connection.query(
-                sql,
-                [values],
-                function (error, results, fields) {
-                  if (error) {
-                    addToQueue(ticketID, ticketType, "Error in mySQL Insert");
-                  } else if (results.affectedRows < 1) {
+              try {
+                pool.getConnection(async (err, connection) => {
+                  if (err) {
                     addToQueue(
                       ticketID,
                       ticketType,
-                      "Error in mySQL insert, no affected rows"
+                      "Error in mySQL Connection"
                     );
                   } else {
-                    console.log("SM TICKET PROCESSED SUCCESS: ", ticketID);
+                    const date = format(new Date(), "yyyy-MM-dd");
+                    const time = format(new Date(), "HH:mm:ss");
+                    const expiry = `${format(
+                      new Date(getOpenParkExpiry()),
+                      "yyyy-LL-dd"
+                    )} 23:59:59`;
+                    const values = [
+                      [
+                        ticketID,
+                        "Pop Tag",
+                        date,
+                        time,
+                        "Purchased",
+                        "smticket",
+                        "1",
+                        ticketType,
+                        expiry,
+                      ],
+                    ];
+                    const sql =
+                      "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
+
+                    connection.query(
+                      sql,
+                      [values],
+                      function (error, results, fields) {
+                        if (error) {
+                          addToQueue(
+                            ticketID,
+                            ticketType,
+                            "Error in mySQL Insert"
+                          );
+                        } else if (results.affectedRows < 1) {
+                          addToQueue(
+                            ticketID,
+                            ticketType,
+                            "Error in mySQL insert, no affected rows"
+                          );
+                        } else {
+                          console.log(
+                            "SM TICKET PROCESSED SUCCESS: ",
+                            ticketID
+                          );
+                        }
+                      }
+                    );
+                    connection.release();
                   }
-                }
-              );
-              connection.release();
-            }
-          });
-        } catch (e) {
-          addToQueue(ticketID, ticketType, "Error in mySQL");
-        }
-      });
+                });
+              } catch (e) {
+                addToQueue(ticketID, ticketType, "Error in mySQL");
+              }
+            });
+            res.status(200).json({
+              status: "Success",
+              message: "Tickets synchronized successfully",
+            });
+          }
+        })
+        .catch((error) => {});
     } else {
       res.status(400).json({
         status: "Invalid Transaction",
-        message:
-          "Server received empty tickets. No IDs synchronized with system",
+        message: "Server received empty tickets. No IDs to sync with system",
       });
     }
-
-    res.status(200).json({
-      status: "Success",
-      message: "Tickets synchronized successfully",
-    });
   } else {
     res.status(401).json({
       status: "Invalid Auth Token",
@@ -311,4 +351,8 @@ exports.smTicketVoid = async (req, res) => {
     status: "Success",
     message: "Tickets voided successfully",
   });
+};
+
+exports.smDupes = async (req, res) => {
+
 };
