@@ -175,7 +175,7 @@ const checkExisting = (tickets) => {
 
 const processTickets = (tickets) => {
   tickets.map((item) => {
-    const { ticketID, ticketType } = item;
+    const { ticketID, ticketType = "RAYC" } = item;
     console.log("PROCESSING TICKET: ", ticketID, ticketType);
 
     try {
