@@ -379,8 +379,3 @@ exports.paypalProcess = async (req, res) => {
     }
   });
 };
-
-exports.paypalTestWebhook = async (req, res) => {
-  console.log("TRIGGERING WEBHOOK: PAYPAL PROCESS");
-  console.log(req,body);
-};
