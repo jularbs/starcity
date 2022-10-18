@@ -562,6 +562,7 @@ exports.createCheckout = async (req, res) => {
   });
 
   if (!captcha.data.success) {
+    console.log("ERROR IN CAPTCHA");
     res.status(400).json({
       error: "Please prove you are not a robot by checking the checkbox below.",
     });
@@ -612,6 +613,7 @@ exports.createCheckout = async (req, res) => {
     sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
     sale.save((err, result) => {
       if (err) {
+        console.log(err);
         return res.status(400).json({
           error: "error occured",
           message: err,

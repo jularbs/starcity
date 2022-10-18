@@ -14,6 +14,7 @@ const {
   smTicketExpiry,
   smTicketTransact,
   smTicketVoid,
+  paypalProcess,
 } = require("../controllers/webhooks");
 
 //Version 1.0
@@ -31,5 +32,7 @@ router.get("/v1/smticket/test", smTicketTest);
 router.get("/v1/smticket/expiry", smTicketExpiry);
 router.post("/v1/smticket/transact", smTicketTransact);
 router.patch("/v1/smticket/void", smTicketVoid);
+
+router.put("/v1/paypal/process", paypalProcess);
 
 module.exports = router;

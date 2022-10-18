@@ -348,3 +348,39 @@ exports.smTicketVoid = async (req, res) => {
     message: "Tickets voided successfully",
   });
 };
+
+exports.paypalProcess = async (req, res) => {
+  console.log("TRIGGERING WEBHOOK: PAYPAL  PAYMENT SUCCESS");
+  const { status, refId, id } = req.body;
+  const option = "paypal";
+  const sale = await Sale.findOne({ refId: refId }).exec();
+  const pOption = await PaymentOption.findOne({ slug: option })
+    .select("_id")
+    .exec();
+
+  sale.status = status;
+  sale.paymentDetails = {
+    option: await pOption._id,
+    referenceNumber: id,
+    status: status,
+  };
+
+  sale.save((err, result) => {
+    res
+      .status(200)
+      .json({ status: status, message: "Paypal payment processed" });
+
+    //send Acknowledgement receipt
+    if (status == "COMPLETED" || status == "CAPTURE") {
+      console.log("GENERATING ACCESS PASS");
+      generateAccessPass(result, result.cartItems);
+      console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+      sendAR(result.refId);
+    }
+  });
+};
+
+exports.paypalTestWebhook = async (req, res) => {
+  console.log("TRIGGERING WEBHOOK: PAYPAL PROCESS");
+  console.log(req);
+};
