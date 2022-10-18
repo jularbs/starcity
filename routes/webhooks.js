@@ -15,6 +15,7 @@ const {
   smTicketTransact,
   smTicketVoid,
   paypalProcess,
+  paypalTestWebhook,
 } = require("../controllers/webhooks");
 
 //Version 1.0
@@ -34,5 +35,6 @@ router.post("/v1/smticket/transact", smTicketTransact);
 router.patch("/v1/smticket/void", smTicketVoid);
 
 router.put("/v1/paypal/process", paypalProcess);
+router.post("/v1/paypal/process-webhook", paypalTestWebhook);
 
 module.exports = router;
