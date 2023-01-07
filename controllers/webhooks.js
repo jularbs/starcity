@@ -385,4 +385,6 @@ exports.paypalOnApprove = async (req, res) => {
   console.log("REF ID: ", req.body.resource.purchase_units[0].reference_id);
   console.log("STATUS: ", req.body.resource.status);
   console.log("TRANSACTION NUMBER: ", req.body.resource.id);
+
+  res.status(200).json({ status: "ok" });
 };
