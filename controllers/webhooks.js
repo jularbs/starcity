@@ -390,10 +390,10 @@ exports.paypalOnApprove = async (req, res) => {
 
   //REF ID ON PAYMENT.CAPTURE.COMPLETED: req.body.resource.supplementary_data.related_ids.reference_id ??
   //REF ID ON CHECKOUT.ORDER.COMPLETED: req.body.resource.purchase_units[0].reference_id ??
-  
+
   //PSEUDO CODE
   //GET DETAILS
-  const refId = req.body.resource.purchase_units[0].reference_id;
+  const refId = req.body.resource.purchase_units[0]?.reference_id;
   const id = req.body.resource.id;
   const status = req.body.resource.status;
 
