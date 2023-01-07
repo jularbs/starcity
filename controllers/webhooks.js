@@ -350,7 +350,7 @@ exports.smTicketVoid = async (req, res) => {
 };
 
 exports.paypalProcess = async (req, res) => {
-  console.log("TRIGGERING WEBHOOK: PAYPAL  PAYMENT SUCCESS");
+  console.log("TRIGGERING WEBHOOK PAYPAL WITH STATUS ", status);
   const { status, refId, id } = req.body;
   const option = "paypal";
   const sale = await Sale.findOne({ refId: refId }).exec();
@@ -371,7 +371,7 @@ exports.paypalProcess = async (req, res) => {
       .json({ status: status, message: "Paypal payment processed" });
 
     //send Acknowledgement receipt
-    if (status == "COMPLETED" || status == "CAPTURE") {
+    if (status == "COMPLETED" || status == "CAPTURE" || status == "APPROVED") {
       console.log("GENERATING ACCESS PASS");
       generateAccessPass(result, result.cartItems);
       console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
@@ -381,10 +381,70 @@ exports.paypalProcess = async (req, res) => {
 };
 
 exports.paypalOnApprove = async (req, res) => {
-  console.log("TRIGGERING WEBHOOK: PAYPAL  PAYMENT APPROVED");
+  console.log("TRIGGERING WEBHOOK: PAYPAL PAYMENT APPROVED");
   console.log("REF ID: ", req.body.resource.purchase_units[0].reference_id);
   console.log("STATUS: ", req.body.resource.status);
   console.log("TRANSACTION NUMBER: ", req.body.resource.id);
 
-  res.status(200).json({ status: "ok" });
+  //PSEUDO CODE
+  //GET DETAILS
+  const refId = req.body.resource.purchase_units[0].reference_id;
+  const id = req.body.resource.id;
+  const status = req.body.resource.status;
+
+  //FIND SALE WITH REF ID
+  const sale = await Sale.findOne({ refId: refId }).exec();
+
+  //IF EXISTS
+  if (sale) {
+    //CHECK STATUS
+    //IF AWAITING PAYMENT
+    if (sale.status == "awaiting payment") {
+      //PROCESS SALE (GENERATE AND SEND AR)
+      const option = "paypal";
+      const pOption = await PaymentOption.findOne({ slug: option })
+        .select("_id")
+        .exec();
+
+      sale.status = status;
+      sale.paymentDetails = {
+        option: await pOption._id,
+        referenceNumber: id,
+        status: status,
+      };
+
+      //UPDATE DATA
+      sale.save((err, result) => {
+        res.status(200).json({ status: "ok" });
+        if (
+          status == "COMPLETED" ||
+          status == "CAPTURE" ||
+          status == "APPROVED"
+        ) {
+          console.log("GENERATING ACCESS PASS");
+          generateAccessPass(result, result.cartItems);
+          console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+          sendAR(result.refId);
+        }
+      });
+
+      //SEND STATUS 200
+    } else if (
+      sale.status == "COMPLETED" ||
+      sale.status == "CAPTURE" ||
+      sale.status == "APPROVED"
+    ) {
+      //IF ALREADY COMPLETED
+      res.status(200).json({ status: "ok" });
+      console.log(`REF ID ${refId} ALREADY PROCESSED`);
+    }
+
+    //IF ALREADY COMPLETED
+    //SEND STATUS 200
+  } else {
+    //NOT EXISTING
+    //SEND STATUS 200 BUT ALERT THAT REF ID NOT FOUND
+    res.status(200).json({ status: "ok" });
+    console.log(`WEBHOOK ID ${id} RECEIVED BUT REF ID ${refId} NOT FOUND`);
+  }
 };
