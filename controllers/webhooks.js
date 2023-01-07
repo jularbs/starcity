@@ -390,6 +390,9 @@ exports.paypalOnApprove = async (req, res) => {
 
   //REF ID ON PAYMENT.CAPTURE.COMPLETED: req.body.resource.supplementary_data.related_ids.reference_id ??
   //REF ID ON CHECKOUT.ORDER.COMPLETED: req.body.resource.purchase_units[0].reference_id ??
+  if (req.body.event_type == "PAYMENT.CAPTURE.COMPLETED") {
+    res.status(200).json({ status: "ok" });
+  }
 
   //PSEUDO CODE
   //GET DETAILS
