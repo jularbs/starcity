@@ -351,6 +351,7 @@ exports.smTicketVoid = async (req, res) => {
 
 exports.paypalProcess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK PAYPAL WITH STATUS ", status);
+  console.log("EVENT TYPE: ", req.body.eventType);
   const { status, refId, id } = req.body;
   const option = "paypal";
   const sale = await Sale.findOne({ refId: refId }).exec();
@@ -382,6 +383,7 @@ exports.paypalProcess = async (req, res) => {
 
 exports.paypalOnApprove = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYPAL PAYMENT APPROVED");
+  console.log("EVENT TYPE: ", req.body.event_type);
   console.log("REF ID: ", req.body.resource.purchase_units[0].reference_id);
   console.log("STATUS: ", req.body.resource.status);
   console.log("TRANSACTION NUMBER: ", req.body.resource.id);
@@ -435,12 +437,10 @@ exports.paypalOnApprove = async (req, res) => {
       sale.status == "APPROVED"
     ) {
       //IF ALREADY COMPLETED
+      //SEND STATUS 200
       res.status(200).json({ status: "ok" });
       console.log(`REF ID ${refId} ALREADY PROCESSED`);
     }
-
-    //IF ALREADY COMPLETED
-    //SEND STATUS 200
   } else {
     //NOT EXISTING
     //SEND STATUS 200 BUT ALERT THAT REF ID NOT FOUND
