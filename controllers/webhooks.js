@@ -379,3 +379,8 @@ exports.paypalProcess = async (req, res) => {
     }
   });
 };
+
+exports.paypalOnApprove = async (req, res) => {
+  console.log("TRIGGERING WEBHOOK: PAYPAL  PAYMENT APPROVED");
+  console.log("BODY: ", req.body);
+};
