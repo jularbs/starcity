@@ -384,10 +384,13 @@ exports.paypalProcess = async (req, res) => {
 exports.paypalOnApprove = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYPAL PAYMENT APPROVED");
   console.log("EVENT TYPE: ", req.body.event_type);
-  console.log("REF ID: ", req.body.resource.purchase_units[0].reference_id);
+  console.log("REF ID: ", req.body.resource.purchase_units[0]?.reference_id);
   console.log("STATUS: ", req.body.resource.status);
   console.log("TRANSACTION NUMBER: ", req.body.resource.id);
 
+  //REF ID ON PAYMENT.CAPTURE.COMPLETED: req.body.resource.supplementary_data.related_ids.reference_id ??
+  //REF ID ON CHECKOUT.ORDER.COMPLETED: req.body.resource.purchase_units[0].reference_id ??
+  
   //PSEUDO CODE
   //GET DETAILS
   const refId = req.body.resource.purchase_units[0].reference_id;
