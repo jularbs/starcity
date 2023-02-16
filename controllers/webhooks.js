@@ -350,7 +350,6 @@ exports.smTicketVoid = async (req, res) => {
 };
 
 exports.paypalProcess = async (req, res) => {
-  console.log("TRIGGERING WEBHOOK PAYPAL WITH STATUS ", status);
   console.log("EVENT TYPE: ", req.body.eventType);
   const { status, refId, id } = req.body;
   const option = "paypal";
