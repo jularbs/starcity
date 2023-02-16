@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #navigate to working directory where we have all our github files
-cd /home/spc-user/rest-api
+cd /home/ec2-user/rest-api
 
 #add npm and node to path
 export NVM_DIR="$HOME/.nvm"

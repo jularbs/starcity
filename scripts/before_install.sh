@@ -6,7 +6,7 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 npm install node
 
 #create
-DIR=/home/spc-user/rest-api
+DIR=/home/ec2-user/rest-api
 if [ -d "$DIR" ]; then
     echo "${DIR} exists"
 else
