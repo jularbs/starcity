@@ -10,6 +10,8 @@ const {
 const { pool } = require("../lib/mysql/connect");
 const { format } = require("date-fns");
 
+const { cronSyncSMTickets } = require("../helpers/cronjobs.js");
+
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
   const { status, requestReferenceNumber } = req.body;
@@ -137,11 +139,17 @@ exports.dragonPayReturn = async (req, res) => {
   );
 };
 
-const addToQueue = (tokenID, rideCode, status = "for delivery") => {
+const addToQueue = (
+  tokenID,
+  rideCode,
+  ticketExpiry,
+  status = "for delivery"
+) => {
   let newQ = new SmQueue();
   newQ.tokenID = tokenID;
   newQ.RideCode = rideCode;
   newQ.status = status;
+  newQ.ticketExpiry = ticketExpiry;
   newQ.save((err, result) => {
     if (err) {
       console.log("ERROR IN QUEUEING SM TICKET: ", err);
@@ -181,7 +189,12 @@ const processTickets = (tickets) => {
     try {
       pool.getConnection(async (err, connection) => {
         if (err) {
-          addToQueue(ticketID, ticketType, "Error in mySQL Connection");
+          addToQueue(
+            ticketID,
+            ticketType,
+            `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`,
+            "Error in mySQL Connection"
+          );
         } else {
           const date = format(new Date(), "yyyy-MM-dd");
           const time = format(new Date(), "HH:mm:ss");
@@ -207,11 +220,23 @@ const processTickets = (tickets) => {
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
-              addToQueue(ticketID, ticketType, "Error in mySQL Insert");
+              addToQueue(
+                ticketID,
+                ticketType,
+                `${format(
+                  new Date(getOpenParkExpiry()),
+                  "yyyy-LL-dd"
+                )} 23:59:59`,
+                "Error in mySQL Insert"
+              );
             } else if (results.affectedRows < 1) {
               addToQueue(
                 ticketID,
                 ticketType,
+                `${format(
+                  new Date(getOpenParkExpiry()),
+                  "yyyy-LL-dd"
+                )} 23:59:59`,
                 "Error in mySQL insert, no affected rows"
               );
             } else {
@@ -222,12 +247,19 @@ const processTickets = (tickets) => {
         }
       });
     } catch (e) {
-      addToQueue(ticketID, ticketType, "Error in mySQL");
+      addToQueue(
+        ticketID,
+        ticketType,
+        `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`,
+        "Error in mySQL"
+      );
     }
   });
 };
 
 exports.smTicketTest = async (req, res) => {
+  cronSyncSMTickets();
+
   res.status(200).json({
     message: "Connection Test Success",
   });

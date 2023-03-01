@@ -11,6 +11,9 @@ const smQueueSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+    ticketExpiry: {
+      type: String,
+    },
     RideCode: { type: String, require: true },
   },
   { timestamps: true }

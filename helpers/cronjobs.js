@@ -1,4 +1,5 @@
 const AccessPassQueue = require("../models/accessPassQueue");
+const SmQueue = require("../models/smQueue");
 const EmailQueue = require("../models/emailQueue");
 
 const { pool } = require("../lib/mysql/connect");
@@ -66,6 +67,69 @@ exports.cronSyncAP = async () => {
       });
     } catch (e) {
       console.log(e);
+    }
+  }
+};
+
+exports.cronSyncSMTickets = async () => {
+  const queues = await SmQueue.find({}).exec();
+
+  if (queues.length > 0) {
+    console.log("**** RUNNING SM TICKETES SYNC WITH TURNSTILE ****");
+    console.log("Number of Queues: ", queues.length);
+
+    try {
+      pool.getConnection((err, connection) => {
+        if (err) {
+          console.log("CONNECTION ERRER: ", err);
+          return 0;
+        }
+
+        queues.map((q) => {
+          const date = format(q.createdAt, "yyyy-MM-dd");
+          const time = format(q.createdAt, "HH:mm:ss");
+          const expiry = q.ticketExpiry;
+          const ticketType = q.Ridecode;
+          const values = [
+            [
+              q.tokenID,
+              "Pop Tag",
+              date,
+              time,
+              "Purchased",
+              "smticket",
+              "1",
+              ticketType,
+              expiry,
+            ],
+          ];
+
+          const sql =
+            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
+
+          connection.query(sql, [values], function (error, results, fields) {
+            //if Error: do not remove in queue
+            if (error) {
+              console.log("Unable to process SM Queue: ", error);
+              return 0;
+            }
+
+            if (results.affectedRows < 1) {
+              console.log("Unable to process SM Queue: no affected rows");
+              return 0;
+            }
+
+            // no error (remove from queue);
+            console.log("SM Queue Processed for tokenID: ", q.tokenID);
+            SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
+            return 1;
+          });
+        });
+      });
+    } catch (e) {
+      console.log("Error on MySQL Connection: ");
+      console.log(e);
+      return 0;
     }
   }
 };

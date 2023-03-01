@@ -24,7 +24,12 @@ const webhookRoutes = require("./routes/webhooks");
 
 var cron = require("node-cron");
 
-const { cronSyncAP, cronProcessEmailQueues } = require("./helpers/cronjobs");
+const {
+  cronSyncAP,
+  cronProcessEmailQueues,
+  cronSyncSMTickets,
+} = require("./helpers/cronjobs");
+
 const app = express();
 
 var allowedDomains = [
@@ -103,7 +108,8 @@ app.use("/webhooks", webhookRoutes);
 app.use(express.static(__dirname + "/data/img"));
 
 // cron jobs
-cron.schedule("*/30 * * * *", function () {
+cron.schedule("*/15 * * * *", function () {
+  cronSyncSMTickets();
   cronSyncAP();
 });
 
