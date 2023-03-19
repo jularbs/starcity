@@ -1,5 +1,6 @@
 const Sale = require("../models/sale");
 const SmQueue = require("../models/smQueue");
+const SmTicket = require("../models/smTickets");
 const PaymentOption = require("../models/paymentOption");
 const {
   generateAccessPass,
@@ -186,6 +187,20 @@ const processTickets = (tickets) => {
     const { ticketID, ticketType = "RAYC" } = item;
     console.log("PROCESSING TICKET: ", ticketID, ticketType);
 
+    //record new tiken
+    const newticket = new SmTicket();
+    newticket.tokenId = ticketID;
+    newticket.method = "Purchase";
+    newticket.ticketType = ticketType;
+
+    newticket.save((err) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("SM Ticket recorded: ", ticketID);
+      }
+    });
+
     try {
       pool.getConnection(async (err, connection) => {
         if (err) {
@@ -325,6 +340,19 @@ exports.smTicketVoid = async (req, res) => {
       tickets.map((item) => {
         const { ticketID } = item;
         console.log("VOIDING TICKET: ", ticketID);
+
+        //record new tiken
+        const newticket = new SmTicket();
+        newticket.tokenId = ticketID;
+        newticket.method = "Void";
+
+        newticket.save((err) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("SM Ticket voided: ", ticketID);
+          }
+        });
 
         try {
           pool.getConnection(async (err, connection) => {
