@@ -184,7 +184,7 @@ const checkExisting = (tickets) => {
 
 const processTickets = (tickets) => {
   tickets.map((item) => {
-    const { ticketID, ticketType = "RAYC" } = item;
+    const { ticketID, ticketType } = item;
     console.log("PROCESSING TICKET: ", ticketID, ticketType);
 
     //record new tiken
