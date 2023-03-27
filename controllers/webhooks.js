@@ -184,7 +184,7 @@ const checkExisting = (tickets) => {
 
 const processTickets = (tickets) => {
   tickets.map((item) => {
-    const { ticketID, ticketType } = item;
+    const { ticketID, ticketType, ticketExpiry } = item;
     console.log("PROCESSING TICKET: ", ticketID, ticketType);
 
     //record new tiken
@@ -192,6 +192,7 @@ const processTickets = (tickets) => {
     newticket.tokenId = ticketID;
     newticket.method = "Purchase";
     newticket.ticketType = ticketType;
+    newticket.ticketExpiry = ticketExpiry;
 
     newticket.save((err) => {
       if (err) {
@@ -207,16 +208,13 @@ const processTickets = (tickets) => {
           addToQueue(
             ticketID,
             ticketType,
-            `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`,
+            ticketExpiry,
             "Error in mySQL Connection"
           );
         } else {
           const date = format(new Date(), "yyyy-MM-dd");
           const time = format(new Date(), "HH:mm:ss");
-          const expiry = `${format(
-            new Date(getOpenParkExpiry()),
-            "yyyy-LL-dd"
-          )} 23:59:59`;
+          const expiry = ticketExpiry;
           const values = [
             [
               ticketID,
@@ -238,20 +236,14 @@ const processTickets = (tickets) => {
               addToQueue(
                 ticketID,
                 ticketType,
-                `${format(
-                  new Date(getOpenParkExpiry()),
-                  "yyyy-LL-dd"
-                )} 23:59:59`,
+                ticketExpiry,
                 "Error in mySQL Insert"
               );
             } else if (results.affectedRows < 1) {
               addToQueue(
                 ticketID,
                 ticketType,
-                `${format(
-                  new Date(getOpenParkExpiry()),
-                  "yyyy-LL-dd"
-                )} 23:59:59`,
+                ticketExpiry,
                 "Error in mySQL insert, no affected rows"
               );
             } else {
@@ -262,12 +254,7 @@ const processTickets = (tickets) => {
         }
       });
     } catch (e) {
-      addToQueue(
-        ticketID,
-        ticketType,
-        `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`,
-        "Error in mySQL"
-      );
+      addToQueue(ticketID, ticketType, ticketExpiry, "Error in mySQL");
     }
   });
 };

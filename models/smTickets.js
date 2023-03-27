@@ -11,6 +11,9 @@ const smTicketSchema = new mongoose.Schema(
     ticketType: {
       type: String,
     },
+    ticketExpiry: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
