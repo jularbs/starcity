@@ -215,13 +215,17 @@ const processTickets = (tickets) => {
           addToQueue(
             ticketID,
             ticketType,
-            ticketExpiry,
+            `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`, //TEMP FIX
             "Error in mySQL Connection"
           );
         } else {
           const date = format(new Date(), "yyyy-MM-dd");
           const time = format(new Date(), "HH:mm:ss");
-          const expiry = ticketExpiry;
+          const expiry = `${format(
+            new Date(getOpenParkExpiry()),
+            "yyyy-LL-dd"
+          )} 23:59:59`;
+
           const values = [
             [
               ticketID,
@@ -243,14 +247,14 @@ const processTickets = (tickets) => {
               addToQueue(
                 ticketID,
                 ticketType,
-                ticketExpiry,
+                expiry,
                 "Error in mySQL Insert"
               );
             } else if (results.affectedRows < 1) {
               addToQueue(
                 ticketID,
                 ticketType,
-                ticketExpiry,
+                expiry,
                 "Error in mySQL insert, no affected rows"
               );
             } else {
@@ -261,7 +265,7 @@ const processTickets = (tickets) => {
         }
       });
     } catch (e) {
-      addToQueue(ticketID, ticketType, ticketExpiry, "Error in mySQL");
+      addToQueue(ticketID, ticketType, expiry, "Error in mySQL");
     }
   });
 };
