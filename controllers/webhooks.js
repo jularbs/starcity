@@ -185,14 +185,21 @@ const checkExisting = (tickets) => {
 const processTickets = (tickets) => {
   tickets.map((item) => {
     const { ticketID, ticketType, ticketExpiry } = item;
-    console.log("PROCESSING TICKET: ", ticketID, ticketType);
+    console.log("PROCESSING TICKET: ", item);
 
     //record new tiken
     const newticket = new SmTicket();
     newticket.tokenId = ticketID;
     newticket.method = "Purchase";
     newticket.ticketType = ticketType;
-    newticket.ticketExpiry = ticketExpiry;
+    if (ticketExpiry) {
+      newticket.ticketExpiry = ticketExpiry;
+    } else {
+      newticket.ticketExpiry = `${format(
+        new Date(getOpenParkExpiry()),
+        "yyyy-LL-dd"
+      )} 23:59:59`;
+    }
 
     newticket.save((err) => {
       if (err) {
