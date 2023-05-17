@@ -130,8 +130,24 @@ exports.signin = async (req, res) => {
           error: "Email is not yet registered. Please create an account.",
         });
       }
+
+      if (user.mistakes > 3) {
+        return res.status(400).json({
+          error:
+            "Your account has been blocked due to many failed attempts to sign in. Please contact web administrator",
+        });
+      }
       //authenticate
       if (!user.authenticate(password)) {
+        user.mistakes = user.mistakes + 1;
+        user.save(async (err, success) => {
+          console.log("Failed log in attempt by: ", user.email);
+          console.log(
+            "Account mistake icremented due to failed login attempt: ",
+            user.email
+          );
+        });
+
         return res.status(400).json({
           error: "Email and password do not match.",
         });
@@ -156,6 +172,16 @@ exports.signin = async (req, res) => {
           department,
         },
       });
+
+      user.mistakes = 0;
+      user.save(async (err, success) => {
+        console.log("Failed log in attempt by: ", user.email);
+        console.log(
+          "Account mistake icremented due to failed login attempt: ",
+          user.email
+        );
+      });
+
       createEntry(user.name, "Logged in to system", { email: email }, req);
     });
   } else {
