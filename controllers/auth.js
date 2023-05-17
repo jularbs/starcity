@@ -112,79 +112,60 @@ exports.processApproval = async (req, res) => {
 exports.signin = async (req, res) => {
   const { email, password, token } = req.body;
   //check if superadmin
-  if (
-    email == process.env.SUPER_ADMIN_UN &&
-    password == process.env.SUPER_ADMIN_PW
-  ) {
-    const saToken = jwt.sign({ _id: email }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+  const captcha = await axios({
+    method: "POST",
+    url: "https://www.google.com/recaptcha/api/siteverify",
+    params: {
+      secret: process.env.RECAPTCHA_SECRET_KEY,
+      response: token,
+    },
+  });
+
+  if (captcha.data.success) {
+    //valid token
+    //check if user exists
+    User.findOne({ email }).exec((err, user) => {
+      if (err || !user) {
+        return res.status(400).json({
+          error: "Email is not yet registered. Please create an account.",
+        });
+      }
+      //authenticate
+      if (!user.authenticate(password)) {
+        return res.status(400).json({
+          error: "Email and password do not match.",
+        });
+      }
+      if (!user.status) {
+        return res.status(400).json({
+          error: "Account is not yet approved.",
+        });
+      }
+      //generate JWT
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+      res.cookie("token", token, { expiresIn: "7d" });
+      const { _id, name, email, department } = user;
+      res.json({
+        token,
+        user: {
+          _id,
+          name,
+          email,
+          department,
+        },
+      });
+      createEntry(user.name, "Logged in to system", { email: email }, req);
     });
-    res.cookie("token", saToken, { expiresIn: "7d" });
-    res.json({
-      token: saToken,
-      user: {
-        name: "superadmin",
-        email: "superadmin",
-      },
-    });
-    createEntry("superadmin", "Logged in to system", { email: email }, req);
   } else {
-    //check if token is valid
-    const captcha = await axios({
-      method: "POST",
-      url: "https://www.google.com/recaptcha/api/siteverify",
-      params: {
-        secret: process.env.RECAPTCHA_SECRET_KEY,
-        response: token,
-      },
+    //invalid token
+    createEntry(null, "Captcha blocked login", captcha.data, req);
+
+    return res.status(400).json({
+      error:
+        "Bad Request due to robot test. Please try again or contact support.",
     });
-
-    if (captcha.data.success) {
-      //valid token
-      //check if user exists
-      User.findOne({ email }).exec((err, user) => {
-        if (err || !user) {
-          return res.status(400).json({
-            error: "Email is not yet registered. Please create an account.",
-          });
-        }
-        //authenticate
-        if (!user.authenticate(password)) {
-          return res.status(400).json({
-            error: "Email and password do not match.",
-          });
-        }
-        if (!user.status) {
-          return res.status(400).json({
-            error: "Account is not yet approved.",
-          });
-        }
-        //generate JWT
-        const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-          expiresIn: "7d",
-        });
-        res.cookie("token", token, { expiresIn: "7d" });
-        const { _id, name, email, department } = user;
-        res.json({
-          token,
-          user: {
-            _id,
-            name,
-            email,
-            department,
-          },
-        });
-        createEntry(user.name, "Logged in to system", { email: email }, req);
-      });
-    } else {
-      //invalid token
-      createEntry(null, "Captcha blocked login", captcha.data, req);
-
-      return res.status(400).json({
-        error:
-          "Bad Request due to robot test. Please try again or contact support.",
-      });
-    }
   }
 };
 
