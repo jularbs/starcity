@@ -10,7 +10,7 @@ exports.signup = (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
 
   if (password !== confirmPassword)
-    res
+    return res
       .status(400)
       .json({ error: "Password and Confirm Password should match" });
 
@@ -46,7 +46,7 @@ exports.signup = (req, res) => {
         });
       }
 
-      res.json({
+      return res.json({
         success:
           "Signup Success! Please wait for your acccount to be processed.",
       });
