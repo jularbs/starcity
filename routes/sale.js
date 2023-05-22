@@ -28,7 +28,7 @@ router.get("/v1/access-pass", readBySaltRefID);
 router.get("/v1/sync", sync);
 
 router.post("/v1/create-checkout", createCheckout);
-router.post("/v1/sale/resend-email", resendAR);
+router.post("/v1/sale/resend-email", requireSignin, authMiddleware, resendAR);
 
 //payment webhooks
 router.put("/v1/payment/paypal", processPaypalPayment);
