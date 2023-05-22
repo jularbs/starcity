@@ -215,8 +215,12 @@ const processTickets = (tickets) => {
           addToQueue(
             ticketID,
             ticketType,
-            `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`, //TEMP FIX
-            "Error in mySQL Connection"
+            ticketExpiry
+              ? ticketExpiry
+              : `${format(
+                  new Date(getOpenParkExpiry()),
+                  "yyyy-LL-dd"
+                )} 23:59:59`
           );
         } else {
           const date = format(new Date(), "yyyy-MM-dd");
@@ -259,7 +263,14 @@ const processTickets = (tickets) => {
         }
       });
     } catch (e) {
-      addToQueue(ticketID, ticketType, expiry, "Error in mySQL");
+      addToQueue(
+        ticketID,
+        ticketType,
+        ticketExpiry
+          ? ticketExpiry
+          : `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`,
+        "Error in mySQL"
+      );
     }
   });
 };
