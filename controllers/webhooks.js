@@ -221,10 +221,9 @@ const processTickets = (tickets) => {
         } else {
           const date = format(new Date(), "yyyy-MM-dd");
           const time = format(new Date(), "HH:mm:ss");
-          const expiry = `${format(
-            new Date(getOpenParkExpiry()),
-            "yyyy-LL-dd"
-          )} 23:59:59`;
+          const expiry = ticketExpiry
+            ? ticketExpiry
+            : `${format(new Date(getOpenParkExpiry()), "yyyy-LL-dd")} 23:59:59`;
 
           const values = [
             [
@@ -244,12 +243,7 @@ const processTickets = (tickets) => {
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
-              addToQueue(
-                ticketID,
-                ticketType,
-                expiry,
-                "Error in mySQL Insert"
-              );
+              addToQueue(ticketID, ticketType, expiry, "Error in mySQL Insert");
             } else if (results.affectedRows < 1) {
               addToQueue(
                 ticketID,
