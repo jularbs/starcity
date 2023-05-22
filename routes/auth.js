@@ -25,8 +25,13 @@ router.post(
 );
 
 router.get("/v1/signout", signout);
-router.get("/v1/pending-users", pendingUsers);
-router.get("/v1/registered-users", registeredUsers);
+router.get("/v1/pending-users", requireSignin, authMiddleware, pendingUsers);
+router.get(
+  "/v1/registered-users",
+  requireSignin,
+  authMiddleware,
+  registeredUsers
+);
 
 router.put(
   "/v1/process-approval",
@@ -36,7 +41,6 @@ router.put(
 );
 
 router.delete("/v1/delete-user", requireSignin, authMiddleware, deleteUser);
-router.post("/v1/audit-trail/list", requireSignin, authMiddleware, 
-list);
+router.post("/v1/audit-trail/list", requireSignin, authMiddleware, list);
 
 module.exports = router;
