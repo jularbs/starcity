@@ -15,6 +15,7 @@ const { cronSyncSMTickets } = require("../helpers/cronjobs.js");
 
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
+  console.log("PAYMAYA PAYLOAD: ", req.body);
   const { status, requestReferenceNumber } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
@@ -102,6 +103,7 @@ exports.dragonPaySuccess = async (req, res) => {
     const sale = await Sale.findOne({
       refId: txnid,
     }).exec();
+
     const pOption = await PaymentOption.findOne({ slug: option })
       .select("_id")
       .exec();
