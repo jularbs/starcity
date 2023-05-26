@@ -77,7 +77,7 @@ mongoose
     useFindAndModify: false,
     useUnifiedTopology: true,
   })
-  .then(() => console.log(`DB connected at ${cmsDatabase}`))
+  .then(() => console.log(`DB connected`))
   .catch((error) => console.log("Error in connecting to DB: " + error));
 
 //middlewares
