@@ -299,6 +299,10 @@ exports.authMiddleware = (req, res, next) => {
   }
 };
 
+exports.validateToken = (req, res) => {
+  return res.json({ message: "VALID" });
+};
+
 // exports.adminMiddleware = (req, res, next) => {
 //   const adminUserId = req.user._id;
 //   User.findById({

@@ -11,6 +11,7 @@ const {
   changePassword,
   requireSignin,
   authMiddleware,
+  validateToken
 } = require("../controllers/auth.js");
 
 const { list } = require("../controllers/auditTrail");
@@ -32,6 +33,8 @@ router.get(
   authMiddleware,
   registeredUsers
 );
+
+router.get("/v1/validate-token", requireSignin, authMiddleware, validateToken);
 
 router.put(
   "/v1/process-approval",
