@@ -175,11 +175,8 @@ exports.signin = async (req, res) => {
 
       user.mistakes = 0;
       user.save(async (err, success) => {
-        console.log("Failed log in attempt by: ", user.email);
-        console.log(
-          "Account mistake icremented due to failed login attempt: ",
-          user.email
-        );
+        console.log("Success log in attempt by: ", user.email);
+        console.log("Mistakes Reset");
       });
 
       createEntry(user.name, "Logged in to system", { email: email }, req);
