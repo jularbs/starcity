@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema(
       default: "moderator",
       require: true,
     },
+    mistakes: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

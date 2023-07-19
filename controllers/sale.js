@@ -2,7 +2,6 @@ const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
 const AccessPass = require("../models/accessPass");
 const AccessPassQueue = require("../models/accessPassQueue");
-const Option = require("../models/option");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
@@ -104,6 +103,10 @@ exports.generateAccessPass = (sale, accessPasses) => {
       accessPass.salesId = sale._id;
       accessPass.accessToken = finalToken;
       accessPass.QRcode = await upload;
+      accessPass.expiryDate = `${format(
+        new Date(sale.expiryDate),
+        "yyyy-LL-dd"
+      )} 23:59:59`;
 
       accessPass.save(async (err, result) => {
         if (err) console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
@@ -115,7 +118,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
   });
 };
 
-const getOpenParkExpiry = () => {
+exports.getOpenParkExpiry = () => {
   //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
   const adjustDays = [1, 2, 3];
 
@@ -140,6 +143,7 @@ const getOpenParkExpiry = () => {
 
   return expiry;
 };
+
 exports.resendAR = async (req, res) => {
   const { refId } = req.body;
 
@@ -270,11 +274,12 @@ exports.syncAccessPass = (accessPass, RideCode) => {
               "web",
               "1",
               RideCode,
+              accessPass.expiryDate,
             ],
           ];
 
           const sql =
-            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
+            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
@@ -557,6 +562,7 @@ exports.createCheckout = async (req, res) => {
   });
 
   if (!captcha.data.success) {
+    console.log("ERROR IN CAPTCHA");
     res.status(400).json({
       error: "Please prove you are not a robot by checking the checkbox below.",
     });
@@ -593,7 +599,7 @@ exports.createCheckout = async (req, res) => {
       };
     }
 
-    sale.expiryDate = getOpenParkExpiry();
+    sale.expiryDate = this.getOpenParkExpiry();
     sale.customerName = customerName;
     sale.emailAddress = email;
     sale.refId = refID;
@@ -607,6 +613,7 @@ exports.createCheckout = async (req, res) => {
     sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
     sale.save((err, result) => {
       if (err) {
+        console.log(err);
         return res.status(400).json({
           error: "error occured",
           message: err,
@@ -670,86 +677,27 @@ exports.processPaypalPayment = async (req, res) => {
   }
 };
 
-const isSynced = (ticket) => {
-  return new Promise((resolve, reject) => {
-    pool.getConnection(async (err, connection) => {
-      if (err) {
-        reject(err);
-      } else {
-        const sql = "SELECT * FROM admission_history WHERE admission_no = ?;";
-        const values = [[ticket.accessToken]];
-
-        connection.query(sql, [values], function (error, results, fields) {
-          if (error) {
-            reject("ERROR IN QUERY: isSynced");
-          } else if (results.length > 0) {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-        });
-
-        connection.release();
-      }
-    });
-  });
-};
-
-const insertAccessPass = (ticket) => {
-  return new Promise((resolve, reject) => {
-    isSynced(ticket)
-      .then((syncCheck) => {
-        if (syncCheck) {
-          resolve("Already in Database");
-        } else {
-          pool.getConnection(async (err, connection) => {
-            if (err) {
-              reject(err);
-            } else {
-              const date = format(ticket.createdAt, "yyyy-MM-dd");
-              const time = format(ticket.createdAt, "HH:mm:ss");
-              const sql =
-                "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
-              const values = [
-                [
-                  ticket.accessToken,
-                  "Pop Tag",
-                  date,
-                  time,
-                  "Purchased",
-                  "web",
-                  "1",
-                  ticket.ticketId.itemCode,
-                ],
-              ];
-
-              connection.query(
-                sql,
-                [values],
-                function (error, results, fields) {
-                  if (err) {
-                    reject(error);
-                  } else if (results.affectedRows > 0) {
-                    resolve("Access Pass Synced");
-                  } else if (results.length == 0) {
-                    reject("Failed to sync");
-                  }
-                }
-              );
-
-              connection.release();
-            }
-          });
-        }
-      })
-      .catch((e) => {
-        reject(e);
-      });
-  });
-};
-
 //TESTER FUNCTION
 exports.test = async (req, res) => {};
+
+exports.cleanUp = async (req, res) => {
+  let previous2Months = new Date();
+  previous2Months.setDate(previous2Months.getDate() - 30);
+
+  let query = await Sale.deleteMany(
+    {
+      createdAt: { $lte: previous2Months },
+      status: "awaiting payment",
+    },
+    function (err) {
+      if (err) {
+        res.send(err);
+      } else {
+        res.send("deleted");
+      }
+    }
+  );
+};
 
 exports.forceSync = async (req, res) => {
   const { skip, limit } = req.query;
