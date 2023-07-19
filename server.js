@@ -37,6 +37,8 @@ var allowedDomains = [
   "https://localhost:3003",
   "http://starcity.com.ph",
   "https://starcity.com.ph",
+  "http://web.starcity.com.ph",
+  "https://web.starcity.com.ph",
   "http://www.starcity.com.ph",
   "https://www.starcity.com.ph",
   "http://uat.starcity.com.ph",
