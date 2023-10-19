@@ -33,8 +33,8 @@ const {
 const app = express();
 
 var allowedDomains = [
-  "http://localhost:3003",
-  "https://localhost:3003",
+  "http://localhost:3000",
+  "https://localhost:3000",
   "http://starcity.com.ph",
   "https://starcity.com.ph",
   "http://web.starcity.com.ph",

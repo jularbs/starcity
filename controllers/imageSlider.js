@@ -16,7 +16,7 @@ exports.create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { name, startDate, endDate } = fields;
+    const { order, name, startDate, endDate } = fields;
     const { image } = files;
 
     if (!name || !name.length) {
@@ -56,6 +56,7 @@ exports.create = (req, res) => {
       );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let is = new ImageSlider();
+        is.order = order;
         is.name = name;
         is.slug = slug;
         is.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
@@ -108,9 +109,10 @@ exports.update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
-    const { name, startDate, endDate, slug } = fields;
+    const { order, name, startDate, endDate, slug } = fields;
     const { image } = files;
     let is = await ImageSlider.findOne({ slug: slug }).exec();
+    is.order = order;
     is.name = name;
     is.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
     is.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
