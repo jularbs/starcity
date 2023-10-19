@@ -677,33 +677,35 @@ exports.processPaypalPayment = async (req, res) => {
   }
 };
 
-//TESTER FUNCTION
-exports.test = async (req, res) => {};
-
+//HELPER FUNCTIONS
 exports.cleanUp = async (req, res) => {
   let previous2Months = new Date();
-  previous2Months.setDate(previous2Months.getDate() - 30);
+  previous2Months.setDate(previous2Months.getDate() - 90);
 
-  let query = await Sale.deleteMany(
+  const accessPassCount = await AccessPass.countDocuments({
+    createdAt: { $lte: previous2Months },
+  });
+
+  const saleCount = await Sale.countDocuments({
+    createdAt: { $lte: previous2Months },
+  });
+
+  const deleteAccessPass = await AccessPass.deleteMany(
     {
       createdAt: { $lte: previous2Months },
-      status: "awaiting payment",
     },
-    function (err) {
-      if (err) {
-        res.send(err);
-      } else {
-        res.send("deleted");
-      }
-    }
+    function (err) {}
   );
-};
 
-exports.forceSync = async (req, res) => {
-  const { skip, limit } = req.query;
-  forceSync(skip, limit);
+  const deleteSalesData = await Sale.deleteMany(
+    {
+      createdAt: { $lte: previous2Months },
+    },
+    function (err) {}
+  );
 
-  console.log("processing...");
-
-  res.json({ message: "processing" });
+  res.json({
+    AccessPassDeletedCount: accessPassCount,
+    saleDeletedCount: saleCount,
+  });
 };
