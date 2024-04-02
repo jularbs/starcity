@@ -1,3 +1,5 @@
+const AccessPassQueue = require("../models/accessPassQueue");
+
 exports.smartTrim = (str, length, delim, appendix) => {
   if (str.length <= length) return str;
 
@@ -9,4 +11,17 @@ exports.smartTrim = (str, length, delim, appendix) => {
   if (trimmedStr) trimmedStr += appendix;
 
   return trimmedStr;
+};
+
+exports.addToQueue = (accessPass, status) => {
+  let q = new AccessPassQueue();
+  q.accessPass = accessPass._id;
+  q.status = status;
+  q.save((err, result) => {
+    if (err) {
+      console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
+    } else {
+      console.log("QUEUE CREATED FOR ACCESS PASS: ", accessPass.accessToken);
+    }
+  });
 };

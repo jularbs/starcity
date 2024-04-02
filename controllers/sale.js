@@ -1,7 +1,6 @@
 const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
 const AccessPass = require("../models/accessPass");
-const AccessPassQueue = require("../models/accessPassQueue");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
@@ -16,8 +15,8 @@ const add = require("date-fns/add");
 const moment = require("moment");
 const axios = require("axios");
 
-const { forceSyn, cronSyncAP } = require("../helpers/cronjobs");
-
+const { cronSyncAP } = require("../helpers/cronjobs");
+const { addToQueue } = require("../helpers/commonFunctions")
 const EmailQueue = require("../models/emailQueue");
 
 //TEST
@@ -238,19 +237,6 @@ exports.sendAR = async (refId) => {
   });
 };
 
-exports.addToQueue = (accessPass, status) => {
-  let q = new AccessPassQueue();
-  q.accessPass = accessPass._id;
-  q.status = status;
-  q.save((err, result) => {
-    if (err) {
-      console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
-    } else {
-      console.log("QUEUE CREATED FOR ACCESS PASS: ", accessPass.accessToken);
-    }
-  });
-};
-
 exports.syncAccessPass = (accessPass, RideCode) => {
   console.log("SYNCING ACCESS PASS: ", accessPass.accessToken);
   return new Promise((resolve, reject) => {
@@ -258,7 +244,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
       pool.getConnection(async (err, connection) => {
         if (err) {
           console.log("ERROR: ", err);
-          this.addToQueue(accessPass, "Failed Connection");
+          addToQueue(accessPass, "Failed Connection");
           resolve("Failed Connection, added to queue.");
         } else {
           const date = format(accessPass.createdAt, "yyyy-MM-dd");
@@ -285,14 +271,14 @@ exports.syncAccessPass = (accessPass, RideCode) => {
             if (error) {
               console.log("UNABLE TO SYNC ACCESSPASS: ", accessPass.accessToken);
               console.log("ERROR MESSAGE: ", error);
-              this.addToQueue(accessPass, "Failed Query");
+              addToQueue(accessPass, "Failed Query");
               resolve("Failed Query, added to queue");
             } else if (results.affectedRows < 1) {
               console.log(
                 `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
                 accessPass.accessToken
               );
-              this.addToQueue(accessPass, "Failed insert");
+              addToQueue(accessPass, "Failed insert");
               resolve("Failed Insert, added to queue");
             } else {
               resolve(`ACCESS PASS SYNCED: ${accessPass.accessToken}`);
