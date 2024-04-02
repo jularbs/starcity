@@ -283,6 +283,8 @@ exports.syncAccessPass = (accessPass, RideCode) => {
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
+              console.log("UNABLE TO SYNC ACCESSPASS: ", accessPass.accessToken);
+              console.log("ERROR MESSAGE: ", error);
               this.addToQueue(accessPass, "Failed Query");
               resolve("Failed Query, added to queue");
             } else if (results.affectedRows < 1) {
@@ -333,7 +335,7 @@ exports.sync = async (req, res) => {
       await Sale.updateMany(
         { status: "for sync" },
         { status: "synced undelivered" },
-        () => {}
+        () => { }
       );
 
       res.json(data);
@@ -694,14 +696,14 @@ exports.cleanUp = async (req, res) => {
     {
       createdAt: { $lte: previous2Months },
     },
-    function (err) {}
+    function (err) { }
   );
 
   const deleteSalesData = await Sale.deleteMany(
     {
       createdAt: { $lte: previous2Months },
     },
-    function (err) {}
+    function (err) { }
   );
 
   res.json({
