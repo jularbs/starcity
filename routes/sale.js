@@ -13,6 +13,7 @@ const {
   createDragonPayRequest,
   resendAR,
   cleanUp,
+  syncAP,
 } = require("../controllers/sale");
 
 const { requireSignin, authMiddleware } = require("../controllers/auth");
@@ -35,5 +36,6 @@ router.post("/v1/payment/dragonpay", createDragonPayRequest);
 
 //Helper Functions
 router.get("/v1/clean-up", requireSignin, authMiddleware, cleanUp);
+router.get("/v1/sync-ap", syncAP);
 
 module.exports = router;

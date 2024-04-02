@@ -16,7 +16,7 @@ const add = require("date-fns/add");
 const moment = require("moment");
 const axios = require("axios");
 
-const { forceSync } = require("../helpers/cronjobs");
+const { forceSyn, cronSyncAP } = require("../helpers/cronjobs");
 
 const EmailQueue = require("../models/emailQueue");
 
@@ -707,5 +707,13 @@ exports.cleanUp = async (req, res) => {
   res.json({
     AccessPassDeletedCount: accessPassCount,
     saleDeletedCount: saleCount,
+  });
+};
+
+exports.syncAP = async (req, res) => {
+  cronSyncAP();
+
+  res.json({
+    message: "done",
   });
 };
