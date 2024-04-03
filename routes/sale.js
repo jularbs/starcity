@@ -14,6 +14,8 @@ const {
   resendAR,
   cleanUp,
   syncAP,
+  regenerateAccessPass,
+  resyncSaleByRefId
 } = require("../controllers/sale");
 
 const { requireSignin, authMiddleware } = require("../controllers/auth");
@@ -37,5 +39,6 @@ router.post("/v1/payment/dragonpay", createDragonPayRequest);
 //Helper Functions
 router.get("/v1/clean-up", requireSignin, authMiddleware, cleanUp);
 router.get("/v1/sync-ap", syncAP);
-
+router.get("/v1/regenerate-sale/:id", requireSignin, authMiddleware, regenerateAccessPass)
+router.get("/v1/resync-sale/:id", requireSignin, authMiddleware, resyncSaleByRefId);
 module.exports = router;

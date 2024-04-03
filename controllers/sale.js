@@ -705,3 +705,45 @@ exports.syncAP = async (req, res) => {
     message: "done",
   });
 };
+
+exports.regenerateAccessPass = async (req, res) => {
+  console.log("Regenerating Access Passes for sale with Reference Number: ", req.params.id);
+  if (req.params.id) {
+    const sale = await Sale.findOne({ refId: req.params.id }).exec();
+    if (sale) {
+      console.log("REMOVING OLD ACCESS PASS");
+      await AccessPass.deleteMany({ salesId: sale._id }).exec();
+      console.log("GENERATING NEW ACCESS PASS");
+      this.generateAccessPass(sale, sale.cartItems);
+      return res.json({ status: "Success", action: "Access Passes Regenerated" })
+    } else {
+      return res.json({ status: "404", message: "Sale transaction not found" })
+    }
+  } else {
+    return res.json({ status: "404", message: "Reference ID not found" })
+  }
+}
+
+exports.resyncSaleByRefId = async (req, res) => {
+  console.log("Resyncing Access Passes for sale with Reference Number: ", req.params.id);
+
+  if (req.params.id) {
+    const sale = await Sale.findOne({ refId: req.params.id }).exec();
+    if (sale) {
+      console.log("Getting Access Passes...");
+      const accesspasses = await AccessPass.find({ salesId: sale._id }).exec();
+      accesspasses.map(async (ap) => {
+        //get ticketDetails
+        const ticket = await Ticket.findOne({
+          _id: ap.ticketId,
+        }).exec();
+        const syncResult = await this.syncAccessPass(ap, ticket.itemCode);
+        console.log(syncResult);
+      });
+      return res.json({ status: "Success", action: "Sale Resynced" })
+    } else {
+      return res.json({ status: "404", message: "Sale transaction not found" })
+    }
+  }
+  return res.json({ status: "404", message: "Reference ID not found" })
+}
