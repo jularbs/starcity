@@ -693,6 +693,7 @@ exports.cleanUp = async (req, res) => {
   );
 
   res.json({
+    date: format(previous2Months, "PPpp"),
     AccessPassDeletedCount: accessPassCount,
     saleDeletedCount: saleCount,
   });
