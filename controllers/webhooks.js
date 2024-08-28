@@ -546,13 +546,13 @@ exports.bpiTransact = async (req, res) => {
         generateAccessPass(result, result.cartItems);
         console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
         sendAR(result.refId);
-        res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
+        return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
 
       });
       //SEND STATUS 200
     } else {
       console.log(`BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`);
-
+      return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
     }
 
   } else {
