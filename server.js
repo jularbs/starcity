@@ -28,6 +28,7 @@ const {
   cronSyncAP,
   cronProcessEmailQueues,
   cronSyncSMTickets,
+  dbcleanup
 } = require("./helpers/cronjobs");
 
 const app = express();
@@ -117,6 +118,10 @@ cron.schedule("*/15 * * * *", function () {
 
 cron.schedule("*/5 * * * *", function () {
   cronProcessEmailQueues();
+});
+
+cron.schedule("0 0 * * *", function () {
+  dbcleanup();
 });
 
 //port
