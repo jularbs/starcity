@@ -524,38 +524,45 @@ exports.bpiTransact = async (req, res) => {
   console.log(`PROCESSING BPI TRANSACTION...`);
   const { transactionReference, confirmationNumber } = req.query;
 
-  const sale = await Sale.findOne({ refId: transactionReference }).exec();
-  if (sale) {
-    if (sale.status == "awaiting payment") {
-      //PROCESS SALE (GENERATE AND SEND AR)
-      const option = "bpi";
-      const pOption = await PaymentOption.findOne({ slug: option })
-        .select("_id")
-        .exec();
+  if (confirmationNumber !== "undefined") {
+    const sale = await Sale.findOne({ refId: transactionReference }).exec();
+    if (sale) {
+      if (sale.status == "awaiting payment") {
+        //PROCESS SALE (GENERATE AND SEND AR)
+        const option = "bpi";
+        const pOption = await PaymentOption.findOne({ slug: option })
+          .select("_id")
+          .exec();
 
-      sale.status = "success";
-      sale.paymentDetails = {
-        option: await pOption._id,
-        referenceNumber: confirmationNumber,
-        status: "success",
-      };
+        sale.status = "success";
+        sale.paymentDetails = {
+          option: await pOption._id,
+          referenceNumber: confirmationNumber,
+          status: "success",
+        };
 
-      //UPDATE DATA
-      sale.save((err, result) => {
-        console.log("GENERATING ACCESS PASS");
-        generateAccessPass(result, result.cartItems);
-        console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
-        sendAR(result.refId);
-        return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
+        //UPDATE DATA
+        sale.save((err, result) => {
+          console.log("GENERATING ACCESS PASS");
+          generateAccessPass(result, result.cartItems);
+          console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+          sendAR(result.refId);
+          return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
 
-      });
-      //SEND STATUS 200
+        });
+        //SEND STATUS 200
+      } else {
+        console.log(`BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`);
+        return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
+      }
+
     } else {
-      console.log(`BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`);
-      return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
+      console.log(`BPI: Reference ID ${transactionReference} NOT FOUND...`);
     }
-
   } else {
-    console.log(`BPI: Reference ID ${transactionReference} NOT FOUND...`);
+    console.log(`BPI: Reference ID ${transactionReference} NOT CONFIRMED`);
+    return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
+
   }
+
 }
