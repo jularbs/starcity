@@ -28,7 +28,8 @@ const {
   cronSyncAP,
   cronProcessEmailQueues,
   cronSyncSMTickets,
-  dbcleanup
+  dbcleanup,
+  generateDailyReport
 } = require("./helpers/cronjobs");
 
 const app = express();
@@ -122,6 +123,10 @@ cron.schedule("*/5 * * * *", function () {
 
 cron.schedule("0 0 * * *", function () {
   dbcleanup();
+});
+
+cron.schedule("5 0 * * *", function () {
+  generateDailyReport()
 });
 
 //port

@@ -262,7 +262,7 @@ exports.dbcleanup = async () => {
 }
 
 exports.generateDailyReport = async () => {
-  console.log("Generating Daily Report: ", info);
+  console.log("Generating Daily Report");
 
   //set date range to be covered
   const start = startOfYesterday();
