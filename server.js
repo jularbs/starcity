@@ -125,7 +125,7 @@ cron.schedule("0 0 * * *", function () {
   dbcleanup();
 });
 
-cron.schedule("5 0 * * *", function () {
+cron.schedule("5 16 * * *", function () { //UTC for 00:05
   generateDailyReport()
 });
 

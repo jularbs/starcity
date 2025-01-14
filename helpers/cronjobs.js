@@ -13,6 +13,7 @@ const startOfYesterday = require('date-fns/startOfYesterday')
 const endOfYesterday = require('date-fns/endOfYesterday')
 const { sendMail } = require("../helpers/nodemailer");
 const { convertArrayToCSV } = require('convert-array-to-csv');
+const { zonedTimeToUtc, utcToZonedTime } = require("date-fns-tz");
 
 const sale = require("../controllers/sale");
 
@@ -264,9 +265,19 @@ exports.dbcleanup = async () => {
 exports.generateDailyReport = async () => {
   console.log("Generating Daily Report");
 
+  const datetime = new Date().toISOString().split('T')[0];
+
+  // const formattedDatetime = format(datetime, "yyyy-MM-dd");
+
+  const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila')
+  const formattedStartTime = format(start, "PPp")
+
+  const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila')
+  const formattedEndTime = format(end, "PPp")
+
   //set date range to be covered
-  const start = startOfYesterday();
-  const end = endOfYesterday();
+  // const start = startOfYesterday();
+  // const end = endOfYesterday();
 
   //get sales data in date range
   const salesData = await Sale.find({
@@ -319,7 +330,7 @@ exports.generateDailyReport = async () => {
     .exec();
 
   let paymentsArray = paymentsData.map((po, key) => {
-    return { id: po._id, name: po.name, qty: 0 }
+    return { id: po._id, name: po.name, qty: 0, amount: 0 }
   })
 
   const dataArray = salesData.map((data, key) => {
@@ -330,10 +341,11 @@ exports.generateDailyReport = async () => {
     const paymentOptionIndex = paymentsArray.findIndex(obj => obj.name == data.paymentDetails?.option?.name);
     if (paymentOptionIndex !== -1) {
       paymentsArray[paymentOptionIndex].qty += 1;
+      paymentsArray[paymentOptionIndex].amount += data.orderTotal;
     }
 
     return {
-      confirmationTime: format(data.updatedAt, "PPpp"),
+      confirmationTime: format(utcToZonedTime(data.updatedAt, "Asia/Manila"), "PPp"),
       customerName: data.customerName,
       transactionNumber: data.refId,
       paymentGateway: data.paymentDetails?.option?.name,
@@ -357,20 +369,42 @@ exports.generateDailyReport = async () => {
   const salesDataCSV = convertArrayToCSV(dataArray);
 
   const details = {
-    to: "ralphjularbal@yahoo.com",
+    to: process.env.REPORTS_RECIPIENT,
     from: process.env.EMAIL_ADDRESS,
     subject:
       `Sales Summary for ${format(start, "yyyy-MM-dd")}`,
     html: `
-    <h1>Sales Summary for ${format(start, "PPp")} - ${format(end, "p")}</h1>
+    <h1>Sales Summary for ${formattedStartTime} - ${formattedEndTime}</h1>
     <p>Total Number of Transactions: ${numOfTransaction}</p>
     <p>Total Price of Transactions: ₱${parseFloat(totalTransactionPrice).toFixed(2)}</p>
     <p>Total Number of Tickets Sold: ${ticketsSold}</p>
 
-    <h4>Tickets Summary</h4>
+    <h2>Tickets Summary</h2>
     ${ticketsArray.map((row => { return `<p>${row.name}: ${row.qty}</p>` })).join('')}
-    <h4>Payment Channel Summary</h4>
-    ${paymentsArray.map((row => { return `<p>${row.name}: ${row.qty}</p>` })).join('')}
+    <h2>Payment Channel Summary</h2>
+    ${paymentsArray.map(((row) => {
+      const ticketCounter = ticketsData.map((ticket, key) => {
+        return { name: ticket.name, qty: 0 }
+      })
+
+      salesData.map((data) => {
+        if (data.paymentDetails?.option?.name === row.name) {
+          data.cartItems.map((ticket) => {
+            const ticketIndex = ticketCounter.findIndex(obj => obj.name == ticket.ticketId?.name);
+            if (ticketIndex !== -1) {
+              ticketCounter[ticketIndex].qty += ticket.qty;
+            }
+          })
+        }
+      })
+
+      return `<h4>${row.name}</h4>
+              <p style="margin-left: 20px">Transactions: ${row.qty}</p>
+              <p style="margin-left: 20px">Amount: ₱${parseFloat(row.amount).toFixed(2)}</p>
+              ${ticketCounter.map((counter) => {
+        return `<p style="margin-left: 20px">${counter.name}: ${counter.qty}</p>`;
+      }).join('')}`
+    })).join('')}
     `,
     attachments: [{
       filename: `Daily Sales Data - ${format(start, "PP")}.csv`,
