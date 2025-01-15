@@ -265,9 +265,8 @@ exports.dbcleanup = async () => {
 exports.generateDailyReport = async () => {
   console.log("Generating Daily Report");
 
+  //Works only when server is UTC set.
   const datetime = new Date().toISOString().split('T')[0];
-
-  // const formattedDatetime = format(datetime, "yyyy-MM-dd");
 
   const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila')
   const formattedStartTime = format(start, "PPp")
@@ -275,6 +274,7 @@ exports.generateDailyReport = async () => {
   const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila')
   const formattedEndTime = format(end, "PPp")
 
+  //Works only when server is PHT set.
   //set date range to be covered
   // const start = startOfYesterday();
   // const end = endOfYesterday();
@@ -372,9 +372,9 @@ exports.generateDailyReport = async () => {
     to: process.env.REPORTS_RECIPIENT,
     from: process.env.EMAIL_ADDRESS,
     subject:
-      `Sales Summary for ${format(start, "yyyy-MM-dd")}`,
+      `Sales Summary for ${datetime}`,
     html: `
-    <h1>Sales Summary for ${formattedStartTime} - ${formattedEndTime}</h1>
+    <h1>Sales Summary for ${format(utcToZonedTime(start, "Asia/Manila"), "PPp")} - ${format(utcToZonedTime(end, "Asia/Manila"), "PPp")} </h1>
     <p>Total Number of Transactions: ${numOfTransaction}</p>
     <p>Total Price of Transactions: ₱${parseFloat(totalTransactionPrice).toFixed(2)}</p>
     <p>Total Number of Tickets Sold: ${ticketsSold}</p>
