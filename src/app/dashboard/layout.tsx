@@ -1,5 +1,5 @@
 import { AuthProvider } from "@/components/AuthProvider"
-import BreadcrumbsComponent from "@/components/BreadcrumbsComponent"
+import BreadcrumbsComponent from "@/components/Navigation/BreadcrumbsComponent"
 import { NavigationSidebar } from "@/components/Navigation/NavigationSidebar"
 import { Separator } from "@/components/ui/separator"
 import {
