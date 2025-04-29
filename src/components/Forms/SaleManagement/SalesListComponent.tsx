@@ -1,3 +1,4 @@
+//TODOS: Resend Email Function
 //TODOS: Zoned Time for timestamps
 //TODOS: Use ISO format on Dates for requests
 //TODOS: Filter function?
@@ -12,7 +13,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
     Pagination,
     PaginationContent,
@@ -21,7 +27,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ChartNoAxesColumn, CircleDollarSign, LoaderCircle, Tickets, UserCircle } from "lucide-react";
+import { ChartNoAxesColumn, CircleDollarSign, DownloadIcon, LoaderCircle, Tickets, UserCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
@@ -161,24 +167,6 @@ const SalesListComponent = () => {
                                 }
                             }} />
                     </PaginationItem>
-                    {/* <PaginationItem className="hidden">
-                        <PaginationLink href="#">1</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem className="hidden">
-                        <PaginationLink href="#">2</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem className="hidden">
-                        <PaginationLink href="#">3</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem>
-                        <PaginationEllipsis />
-                    </PaginationItem>
-                    <PaginationItem className="hidden">
-                        <PaginationLink href="#">11</PaginationLink>
-                    </PaginationItem>
-                    <PaginationItem className="hidden">
-                        <PaginationLink href="#">12</PaginationLink>
-                    </PaginationItem> */}
                     <PaginationItem>
                         <PaginationNext href="#"
                             onClick={() => {
@@ -351,6 +339,19 @@ const SalesListComponent = () => {
                         setStartDate(dateFilter!.from)
                         setEndDate(dateFilter!.to)
                     }}>Apply Date</Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button size="icon" variant="outline">
+                                    <DownloadIcon />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Download to CSV</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
                 </div>
             </CardHeader>
             <CardContent className="p-0 grow-1">

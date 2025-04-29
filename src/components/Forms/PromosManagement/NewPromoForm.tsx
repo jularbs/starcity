@@ -39,11 +39,13 @@ import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format, addDays } from "date-fns"
 import { createPromo } from "@/actions/promo"
+import { getCookie } from "typescript-cookie"
 
 export function NewPromoForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+    const token = getCookie("token");
     //Fetch all payment options
     const { data: paymentOptions, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         { url: "v1/payment-option" },
@@ -110,7 +112,7 @@ export function NewPromoForm({
             formData.set("endDate", values.dateRange.to.toUTCString());
             formData.set("paymentOptions", JSON.stringify(values.paymentOptions));
 
-            const response = await createPromo(formData);
+            const response = await createPromo({ data: formData, token: token });
             if (response) {
                 setLoading(false);
                 setMessage({ error: "", success: response.success });
@@ -127,7 +129,7 @@ export function NewPromoForm({
                     },
                     paymentOptions: []
                 },);
-                mutate({ url: "v1/promo" });
+                mutate({ url: "v1/promo", token });
             }
 
         } catch (err) {

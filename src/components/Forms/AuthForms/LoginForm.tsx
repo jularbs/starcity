@@ -25,11 +25,14 @@ import { setCookie } from 'typescript-cookie'
 import { redirect } from "next/navigation"
 import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { AlertError } from "@/components/AlertError"
-
+import { useLocalStorage } from 'usehooks-ts'
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+
+  //Local Storage
+  const [, setValue] = useLocalStorage<Record<string, string> | undefined>('user', {})
 
   //Component States
   const [loading, setLoading] = useState(false)
@@ -48,14 +51,12 @@ export function LoginForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "ralphjularbal@yahoo.com",
-      password: "St@rc!ty2023!",
+      email: "",
+      password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    console.log(values)
     setLoading(true)
     try {
       const auth = await SignIn({
@@ -64,13 +65,15 @@ export function LoginForm({
       setLoading(false);
 
       //set cookie
-      setCookie('token', auth.token, { expires: 7 })
-      console.log("Auth", auth);
+      setCookie('token', auth.token, { expires: 7, path: "/" })
+
+      //set user info to local storage
+      setValue(auth.user);
+
       redirect("/dashboard");
     } catch (err) {
       console.log("Error: ", err)
       setLoading(false);
-
       if (isRedirectError(err)) {
         throw err
       }

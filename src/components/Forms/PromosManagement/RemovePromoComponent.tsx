@@ -7,15 +7,17 @@ import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
 import { toast } from "sonner";
+import { getCookie } from "typescript-cookie";
 
 const RemovePromoComponent = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
+    const token = getCookie("token");
     const [loading, setLoading] = useState(false)
 
     const handleDelete = () => {
         setLoading(true);
-        removePromo({ id }).then((response) => {
+        removePromo({ id, token }).then((response) => {
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -27,7 +29,7 @@ const RemovePromoComponent = ({ id = "", open, onOpenChange }:
                 description: response.success,
                 duration: 5000
             });
-            mutate({ url: "v1/promo" });
+            mutate({ url: "v1/promo", token: token });
         }).catch(() => {
             setLoading(false);
             toast.success("Invalid Request!", {

@@ -22,3 +22,14 @@ export function obscureEmail(email: string): string {
     name[name.length - 1]
   }${domain ? `@${domain}` : ""}`;
 }
+
+export function unslugify(slug: string): string {
+  return slug.split("-").join(" ").split("_").join(" ");
+}
+
+export function getInitials(name: string): string {
+  const names = name.split(" ").splice(0, 2);
+  const initials = names.map((item) => item[0]);
+
+  return initials.join("");
+}

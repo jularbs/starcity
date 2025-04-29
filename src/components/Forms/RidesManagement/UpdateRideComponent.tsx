@@ -99,15 +99,6 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
             setLoading(false);
             onOpenChange(false);
             mutate({ url: "v1/ride" });
-            form.reset({
-                slug: "",
-                categoryId: "",
-                name: "",
-                description: "",
-                status: "",
-                heightRequirements: "",
-                image: undefined
-            },);
             toast.success("Success!", {
                 style: {
                     background: "rgb(56, 142, 60)",
@@ -131,8 +122,6 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                 duration: 5000
             });
         })
-
-
     }
 
     const showCategories = () => {
@@ -143,7 +132,6 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
             })
         }
     }
-
 
     useEffect(() => {
         if (!isLoading)
@@ -157,6 +145,22 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                 setPreviewImage(data.media?.location);
             }
     }, [data, isLoading, form])
+
+
+    useEffect(() => {
+        if (!open) {
+            setPreviewImage("");
+            form.reset({
+                slug: "",
+                categoryId: "",
+                name: "",
+                description: "",
+                status: "",
+                heightRequirements: "",
+                image: undefined
+            },);
+        }
+    }, [open, form])
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -301,7 +305,7 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                                 )}
                             />
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" type="button">
+                                <Button variant="outline" type="button" onClick={() => { onOpenChange(false) }}>
                                     Cancel
                                 </Button>
                                 <Button type="submit">

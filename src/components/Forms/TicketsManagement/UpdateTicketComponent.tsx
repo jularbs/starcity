@@ -103,6 +103,19 @@ const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
             }
     }, [ticketData, isTicketLoading, form])
 
+    useEffect(() => {
+        if (!open) {
+            form.reset({
+                _id: "",
+                name: "",
+                code: "",
+                price: undefined,
+                shortDescription: "",
+                details: "",
+            },);
+        }
+    }, [open, form])
+
     return <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[100vh] overflow-y-auto">
             <DialogHeader>

@@ -1,6 +1,6 @@
 "use client"
 import { toast } from "sonner"
-import { fetcher } from "@/actions/swr"
+import { fetcherWithToken } from "@/actions/swr"
 import { togglePromo } from "@/actions/promo";
 import useSWR, { mutate } from "swr"
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,10 @@ import { useState } from "react";
 import UpdatePromoComponent from "./UpdatePromoComponent";
 import ReadPromoComponent from "./ReadPromoComponent";
 import RemovePromoComponent from "./RemovePromoComponent";
+import { getCookie } from "typescript-cookie";
 
 export function PromoListComponent() {
+    const token = getCookie("token")
     const [statusLoading, setStatusLoading] = useState("");
 
     const [updateOpen, setUpdateOpen] = useState(false)
@@ -32,8 +34,8 @@ export function PromoListComponent() {
     const [currentId, setCurrentId] = useState("");
 
     const { data, isLoading } = useSWR(
-        { url: "v1/promo" },
-        fetcher
+        { url: "v1/promo", token },
+        fetcherWithToken
     );
 
     const showLoading = () => {
@@ -62,7 +64,7 @@ export function PromoListComponent() {
 
     const toggleStatus = (id: string) => {
         setStatusLoading(id)
-        togglePromo({ id }).then(data => {
+        togglePromo({ id, token }).then(data => {
             setStatusLoading("")
             toast.success("Success!", {
                 style: {
@@ -74,7 +76,7 @@ export function PromoListComponent() {
                 duration: 5000
             });
             //update list
-            mutate({ url: "v1/promo" })
+            mutate({ url: "v1/promo", token })
         }).catch(e => {
             setStatusLoading("")
             toast.error("Invalid Request", {
