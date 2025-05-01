@@ -34,8 +34,7 @@ import { AlertSuccess } from "@/components/AlertSuccess"
 
 import { fetcher } from "@/actions/swr"
 import useSWR, { mutate } from "swr";
-import { Popover } from "@/components/ui/popover"
-import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format, addDays } from "date-fns"
 import { createPromo } from "@/actions/promo"

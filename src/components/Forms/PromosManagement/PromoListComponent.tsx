@@ -45,7 +45,7 @@ export function PromoListComponent() {
                     <div className="w-40 h-6 rounded-lg bg-muted animate-pulse" />
                 </TableCell>
                 <TableCell>
-
+                    <div className="w-40 h-6 rounded-lg bg-muted animate-pulse" />
                 </TableCell>
                 <TableCell>
                     <div className="h-6 rounded-lg w-60 bg-muted animate-pulse" />

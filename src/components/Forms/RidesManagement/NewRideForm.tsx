@@ -65,20 +65,11 @@ export function NewRideForm({
         status: z.string().min(1, { message: "Status required" }),
         heightRequirements: z.string().min(1, { message: "Height Requirements required" }),
         categoryId: z.string().min(1, { message: "Category required" }),
-        // image: z.union([
-        //     z.instanceof(File, { message: "Image is required" })
-        //         .refine(file => !file || file.size !== 0 || file.size <= 5000000, { message: "Max image size exceeded (5MB)" }),
-        //     z.string().optional() // to hold default image
-        // ])
-        //     .refine(value => value instanceof File || typeof value === "string", {
-        //         message: "Image is required"
-        //     })
         image: z.instanceof(File, { message: "Image is required" })
             .refine(file => ACCEPTED_IMAGE_TYPES.includes(file.type), {
                 message: '.jpg, .jpeg, .png and .webp files are accepted.',
             })
             .refine(file => !file || file.size !== 0 || file.size <= 5000000, { message: "Max image size exceeded (5MB)" })
-
     })
 
     const form = useForm<z.infer<typeof formSchema>>({

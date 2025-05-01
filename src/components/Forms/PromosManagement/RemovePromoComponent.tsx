@@ -30,15 +30,14 @@ const RemovePromoComponent = ({ id = "", open, onOpenChange }:
                 duration: 5000
             });
             mutate({ url: "v1/promo", token: token });
-        }).catch(() => {
+        }).catch((err) => {
             setLoading(false);
-            toast.success("Invalid Request!", {
+            toast.error("Invalid Request!", {
                 style: {
-                    background: "rgb(56, 142, 60)",
+                    background: "rgba(220, 46, 46, 1)",
                     color: "white",
                     border: "none"
                 },
-                //@ts-expect-error error var unknown
                 description: err.error,
                 duration: 5000
             });

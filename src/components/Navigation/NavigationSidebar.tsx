@@ -70,7 +70,7 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <a href="http://localhost:3000/" target="_blank">
+              <a href={process.env.NEXT_PUBLIC_WEB_DOMAIN} target="_blank">
                 <SidebarMenuButton tooltip="Homepage">
                   <Home />
                   <span>Ecommerce Homepage</span>
