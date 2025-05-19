@@ -2,19 +2,19 @@ const express = require("express");
 const router = express.Router();
 const {
   signup,
-  pendingUsers,
-  processApproval,
   signin,
   signout,
-  registeredUsers,
-  deleteUser,
   changePassword,
   requireSignin,
   authMiddleware,
-  validateToken
+  validateToken,
+  read,
+  update,
+  list,
+  remove
 } = require("../controllers/auth.js");
 
-const { list } = require("../controllers/auditTrail");
+const { list: audit } = require("../controllers/auditTrail");
 
 router.post("/v1/signup", signup);
 router.post("/v1/signin", signin);
@@ -26,24 +26,15 @@ router.post(
 );
 
 router.get("/v1/signout", signout);
-router.get("/v1/pending-users", requireSignin, authMiddleware, pendingUsers);
-router.get(
-  "/v1/registered-users",
-  requireSignin,
-  authMiddleware,
-  registeredUsers
-);
 
 router.get("/v1/validate-token", requireSignin, authMiddleware, validateToken);
 
-router.put(
-  "/v1/process-approval",
-  requireSignin,
-  authMiddleware,
-  processApproval
-);
+router.get("/v1/audit-trail", requireSignin, authMiddleware, audit);
 
-router.delete("/v1/delete-user", requireSignin, authMiddleware, deleteUser);
-router.post("/v1/audit-trail/list", requireSignin, authMiddleware, list);
+router.delete("/v1/user/:id", requireSignin, authMiddleware, remove);
+router.get("/v1/user/:id", requireSignin, authMiddleware, read);
+router.get("/v1/user", requireSignin, authMiddleware, list);
+router.patch("/v1/user", requireSignin, authMiddleware, update);
+
 
 module.exports = router;
