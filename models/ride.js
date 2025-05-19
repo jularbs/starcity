@@ -25,7 +25,7 @@ const rideSchema = new mongoose.Schema(
       required: true,
     },
     media: {
-      Bucket: String,
+      bucket: String,
       location: String,
       key: String,
     },
