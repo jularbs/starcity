@@ -31,6 +31,7 @@
 
   .rideDetails {
     color: white;
+    position: relative;
 
     &.active {
       .spacer {
@@ -47,6 +48,7 @@
       transition: height 0.3s ease;
     }
     .details {
+      position: relative;
       padding: 10px 15px;
       background-color: rgba(0, 0, 0, 0.66);
       .name {

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/carousel";
 import Image from "next/image";
 import Autoplay from "embla-carousel-autoplay";
+import { getImageSource } from "@/lib/utils";
 
 const ImageSlider = ({ data }) => {
   const showImageSlider = () => {
@@ -22,7 +23,7 @@ const ImageSlider = ({ data }) => {
         return (
           <CarouselItem key={key}>
             <Image
-              src={item.image.location}
+              src={getImageSource(item.image)}
               width={1800}
               height={675}
               alt={`banner-${item._id}`}

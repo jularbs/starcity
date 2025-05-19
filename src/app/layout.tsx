@@ -1,3 +1,4 @@
+// TODOS: Show Favicon
 // TODOS: add google analytics
 // TODOS: Post Viewer
 import type { Metadata } from "next";

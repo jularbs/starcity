@@ -1,4 +1,5 @@
 //TODOS: Paypal not working as of the moment due to update of package
+//TODOS: Convert form to React Hook Form - ZOD
 "use client";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import { applyPromoCode } from "@/actions/promo";
 
 //Paypal
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { processPaypalPayment } from "@/actions/sale";
 
 //Paymaya
 import paymaya from "paymaya-js-sdk";
@@ -34,8 +36,12 @@ import { Input } from "./ui/input";
 import { fetcher } from "@/actions/fetcher";
 import { createCheckout, createDragonPayCheckout } from "@/actions/sale";
 
+import { useRouter } from "next/navigation";
+
 //Forms
 const TicketPortal = ({ open, onOpenChange }) => {
+  const router = useRouter();
+
   //Data Fetch
   paymaya.init(
     process.env.NEXT_PUBLIC_PAYMAYA_PK,
@@ -72,11 +78,11 @@ const TicketPortal = ({ open, onOpenChange }) => {
   });
 
   const [personalDetails, setPersonalDetails] = useState({
-    firstName: "Ralph",
-    lastName: "Jularbal",
-    email: "ralphjularbal@yahoo.com",
-    confirmEmail: "ralphjularbal@yahoo.com",
-    contactNumber: "09178657533",
+    firstName: "",
+    lastName: "",
+    email: "",
+    confirmEmail: "",
+    contactNumber: "",
   });
 
   const [cartItems, setCartItems] = useState("");
@@ -335,7 +341,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
               </div>
             </>
           )}
-
+          {process.env.NEXT_PUBLIC_WEBHOOKS_ENDPOINT}
           <div className="my-2 text-lg font-bold text-right text-black">
             Amount Due: ₱{(computeTotal() - discount).toFixed(2)}
           </div>
@@ -501,7 +507,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
       contactNumber: personalDetails.contactNumber,
     };
 
-    const checkout = createCheckout({
+    const checkout = await createCheckout({
       cartItems: items,
       ...buyerDetails,
       token: captchaToken.token,
@@ -550,21 +556,15 @@ const TicketPortal = ({ open, onOpenChange }) => {
           id: details.id,
           status: details.status,
           refId: details.purchase_units[0].reference_id,
-          eventType: details.event_type,
+          eventType: details.intent,
         };
+
         await processPaypalPayment(paypalResponse);
         return paypalResponse;
       })
       .then((data) => {
-        setActive(false);
-        router.push(
-          {
-            pathname: "/",
-            query: { refid: data.refId, payment: "true" },
-          },
-          undefined,
-          { shallow: true }
-        );
+        onOpenChange(false);
+        router.push(`/?refid=${data.refId}&payment=true`);
       })
       .catch((err) => {
         console.log("Error in Paypal: ", err);

@@ -3,7 +3,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-import { showPHdate } from "@/lib/utils";
+import { getImageSource, showPHdate } from "@/lib/utils";
 import Image from "next/image";
 import { ChevronLeft, LoaderCircle } from "lucide-react";
 
@@ -56,7 +56,7 @@ const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
           not buy from other sources.
         </div>
         <Image
-          src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/media?key=${singleTicket.QRcode.key}&bucket=${singleTicket.QRcode.bucket}`}
+          src={getImageSource(singleTicket.QRcode)}
           width={300}
           height={300}
           alt={`qrcode-${singleTicket.accessToken}`}

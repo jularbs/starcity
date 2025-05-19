@@ -2,18 +2,15 @@ import Link from "next/link"
 import Image from "next/image";
 import ShopButton from "../ShopButton";
 import ClientMobileNavigation from "./ClientMobileNavigation";
-import { getOptionByName } from "@/actions/option"
 
 const ClientNavigation = async () => {
-    const logo = await getOptionByName({ name: "LOGO_OPTION" });
-
     return <>
         <div className="relative flex h-navbar-height bg-white justify-between z-50">
             <Link href="/">
                 <div>
-                    {logo.value && <Image
-                        src={logo.value}
-                        width={100}
+                    <Image
+                        src={'/logo-slogan.png'}
+                        width={150}
                         className="ml-4
                             mt-4
                             w-[110px]
@@ -21,9 +18,9 @@ const ClientNavigation = async () => {
                             lg:w-[150px]
                             lg:mt-4"
                         priority
-                        height={100}
+                        height={150}
                         alt="Star City Logo"
-                    />}
+                    />
                 </div></Link>
 
             <div className="flex items-center">

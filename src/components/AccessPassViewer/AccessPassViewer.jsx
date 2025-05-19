@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { showPHdate } from "@/lib/utils";
+import { getImageSource, showPHdate } from "@/lib/utils";
 const AccessPassViewer = ({ accessPasses, details }) => {
   const [filtered, setFiltered] = useState([]);
   const searchParams = useSearchParams();
@@ -54,7 +54,7 @@ const AccessPassViewer = ({ accessPasses, details }) => {
         </div>
         <Image
           className="mx-auto"
-          src={`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/media?key=${accesspass.QRcode.key}&bucket=${accesspass.QRcode.bucket}`}
+          src={getImageSource(accesspass.QRcode)}
           width={350}
           height={350}
           alt={`qrcode-${accesspass.accessToken}`}
