@@ -10,15 +10,7 @@ exports.getMedia = async (req, res) => {
     res.send(data.Body);
     return;
   } catch (err) {
-    //If multiple usedbucket on dev
-    try {
-      const data = await getObjectFromS3(key, "starcitywebsite");
-      res.setHeader("Content-Type", data.ContentType);
-      res.send(data.Body);
-      return;
-    } catch (err) {
-      return res.status(400).json({ error: "Media not found" })
-    }
+    return res.status(400).json({ error: "Media not found" })
   }
 };
 
