@@ -524,7 +524,7 @@ exports.bpiTransact = async (req, res) => {
   console.log(`PROCESSING BPI TRANSACTION...`);
   const { transactionReference, confirmationNumber, statusCode } = req.query;
 
-  if (confirmationNumber !== "undefined" && statusCode === "1") {
+  if (confirmationNumber !== "undefined" && statusCode == "1") {
     const sale = await Sale.findOne({ refId: transactionReference }).exec();
     if (sale) {
       if (sale.status == "awaiting payment") {
