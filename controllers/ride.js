@@ -1,7 +1,7 @@
 const Ride = require("../models/ride");
 const formidable = require("formidable");
 const slugify = require("slugify");
-const { uploadTos3withKey } = require("../helpers/s3uploader.js");
+const { uploadFile } = require("../helpers/s3uploader.js");
 const { createEntry } = require("../controllers/auditTrail");
 exports.create = (req, res) => {
   const form = formidable({ multiples: true });
@@ -24,9 +24,10 @@ exports.create = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadTos3withKey(
+      const imageInfo = await uploadFile(
         image,
-        `ride/${year}/${month}/${slug}`
+        `ride/${year}/${month}/${slug}`,
+        600
       );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         let ride = new Ride();
@@ -48,7 +49,7 @@ exports.create = (req, res) => {
           const r = await result
             .populate("rideCategoryId", "name")
             .execPopulate();
-          res.status(200).json(r);
+          res.status(200).json({ data: r, success: "Ride added successfully" });
 
           createEntry(req.profile.name, `Create new ride`, { result }, req);
         });
@@ -65,7 +66,7 @@ exports.create = (req, res) => {
 
 exports.read = (req, res) => {
   Ride.findOne({ slug: req.params.slug })
-    .select("name description slug status heightRequirements")
+    .select("name description slug status heightRequirements media")
     .populate("rideCategoryId", "name")
     .exec((err, data) => {
       if (err) {
@@ -102,48 +103,56 @@ exports.update = async (req, res) => {
 
     const ride = await Ride.findOne({ slug: slug }).exec();
 
-    if (image) {
-      if (image.size > 1000000) {
-        return res.status(400).json({
-          error: "Image too large. ( > 1MB ).",
-        });
+    if (ride) {
+      if (image) {
+        if (image.size > 1000000) {
+          return res.status(400).json({
+            error: "Image too large. ( > 1MB ).",
+          });
+        }
+
+        var date = new Date();
+        var month = date.getUTCMonth() + 1; //months from 1-12
+        var year = date.getUTCFullYear();
+
+        const imageInfo = await uploadFile(
+          image,
+          `ride/${year}/${month}/${slug}`
+        );
+        ride.media = imageInfo;
       }
 
-      var date = new Date();
-      var month = date.getUTCMonth() + 1; //months from 1-12
-      var year = date.getUTCFullYear();
+      ride.name = name;
+      ride.description = description;
+      ride.status = status;
+      ride.heightRequirements = heightRequirements;
+      ride.rideCategoryId = categoryId;
 
-      const imageInfo = await uploadTos3withKey(
-        image,
-        `ride/${year}/${month}/${slug}`
-      );
-      ride.media = imageInfo;
+      ride.save(async (err, result) => {
+        if (err) {
+          return res.status(400).json({
+            error: "Unable to update ride/attraction. Please try again later.",
+            message: err,
+          });
+        }
+        const r = await result
+          .populate("rideCategoryId", "name _id")
+          .execPopulate();
+        createEntry(req.profile.name, `Updated ride ${r.name}`, {}, req);
+
+        return res.json({ result: r, success: "Ride/Attraction updated successfully!" });
+      });
+    } else {
+      return res.status(400).json({
+        error: "Ride/Attraction not found. Please try refreshing the page to try again.",
+        message: err,
+      });
     }
-
-    ride.name = name;
-    ride.description = description;
-    ride.status = status;
-    ride.heightRequirements = heightRequirements;
-    ride.rideCategoryId = categoryId;
-
-    ride.save(async (err, result) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      const r = await result
-        .populate("rideCategoryId", "name _id")
-        .execPopulate();
-      res.json({ result: r, status: "success" });
-      createEntry(req.profile.name, `Updated ride ${r.name}`, {}, req);
-    });
   });
 };
 
 exports.remove = async (req, res) => {
-  const { slug } = req.body;
+  const { slug } = req.params;
 
   Ride.findOneAndDelete({ slug }).exec(async (err, result) => {
     if (err) {
@@ -153,8 +162,9 @@ exports.remove = async (req, res) => {
       });
     }
 
-    //TODO: DELETE IMAGE
-    res.json({ success: "Ride deleted successfully" });
     createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);
+
+    //TODO: DELETE IMAGE
+    return res.json({ success: "Ride deleted successfully" });
   });
 };
