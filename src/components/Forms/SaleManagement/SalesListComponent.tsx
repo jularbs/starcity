@@ -122,7 +122,7 @@ const SalesListComponent = () => {
                     <TableCell>{format(new Date(item.createdAt), "PPP p")}</TableCell>
                     <TableCell>
                         <div className="flex justify-end gap-2">
-                            <a target="_blank" href={`${process.env.NEXT_PUBLIC_DOMAIN}/accesspass?s=${item.salt}&r=${item.refId}`}>
+                            <a target="_blank" href={`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/accesspass?s=${item.salt}&r=${item.refId}`}>
                                 <Button className="text-xs rounded-sm h-7">View Tickets</Button>
                             </a>
 
