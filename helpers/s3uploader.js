@@ -1,32 +1,14 @@
 const fs = require("fs");
 const AWS = require("aws-sdk");
+const { nanoid } = require("nanoid");
+const sharp = require("sharp");
+const path = require("path");
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_S3_PUBLICKEY,
   secretAccessKey: process.env.AWS_S3_SECRETKEY,
 });
 
-exports.uploadBufferPNG = (buffer, folder) => {
-  return new Promise((resolve, reject) => {
-    s3.upload(
-      {
-        Bucket: process.env.AWS_S3_BUCKETNAME,
-        Key: `${folder}`, // type is not required
-        Body: buffer,
-        ACL: "public-read",
-        ContentType: `image/png`, // required. Notice the back ticks
-      },
-      (err, data) => {
-        if (err) return reject(err);
-        return resolve({
-          location: data.Location,
-          bucket: data.Bucket,
-          key: data.Key,
-        });
-      }
-    );
-  });
-};
 exports.uploadBase64 = (base64, folder) => {
   return new Promise((resolve, reject) => {
     const base64Data = new Buffer.from(
@@ -116,3 +98,82 @@ exports.getObjectFromS3 = async (key, bucket) => {
 
   return res;
 };
+
+//V2
+exports.isValidImage = (file) => {
+  const fileType = file["type"];
+  const validImageTypes = [
+    "image/gif",
+    "image/avif",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/tiff",
+  ];
+
+  if (!validImageTypes.includes(fileType)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+exports.uploadFile = async (file, folder, width = 1600) => {
+  return new Promise(async (resolve, reject) => {
+    if (!this.isValidImage(file)) {
+      //Upload non image file
+      const ext = path.extname(file.name);
+      s3.upload(
+        {
+          Key: `${folder}/${nanoid()}${ext}`,
+          Bucket: process.env.AWS_S3_BUCKETNAME,
+          Body: fs.readFileSync(file.path),
+          ContentType: file.type,
+        },
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          return resolve({
+            location: data.Location,
+            bucket: data.Bucket,
+            key: data.Key,
+            type: file.type,
+          });
+        }
+      );
+    } else {
+      //process image
+      const fileBuffer = fs.readFileSync(file.path);
+      const metadata = await sharp(fileBuffer).metadata();
+      const resizeWidth = metadata.width < width ? metadata.width : width;
+      const image = await sharp(fileBuffer)
+        .resize({ width: resizeWidth })
+        .avif({ quality: 90 })
+        .toBuffer();
+
+      s3.upload(
+        {
+          Key: `${folder}/${nanoid()}.avif`,
+          Bucket: process.env.AWS_S3_BUCKETNAME,
+          Body: image,
+          ContentType: "image/avif",
+        },
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          return resolve({
+            location: data.Location,
+            bucket: data.Bucket,
+            key: data.Key,
+            type: "image/avif",
+          });
+        }
+      );
+    }
+  })
+
+}
