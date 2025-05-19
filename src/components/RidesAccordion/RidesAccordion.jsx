@@ -24,7 +24,7 @@ const RidesAccordion = ({ className, rides, title }) => {
             setActive(index);
           }}
         >
-          <img
+          <Image
             src={getImageSource(data.media)}
             width={600}
             height={600}

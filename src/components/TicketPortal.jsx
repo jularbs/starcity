@@ -158,7 +158,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
   const showStep1 = () => {
     return (
       <div>
-        <img
+        <Image
           src="/tickets-placeholder.png"
           width={300}
           height={125}

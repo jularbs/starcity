@@ -55,7 +55,7 @@ const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
           Warning: Only QR codes purchased at www.starcity.com.ph are valid. Do
           not buy from other sources.
         </div>
-        <img
+        <Image
           src={getImageSource(singleTicket.QRcode)}
           width={300}
           height={300}

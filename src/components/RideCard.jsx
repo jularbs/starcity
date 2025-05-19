@@ -17,7 +17,7 @@ const RideCard = ({ data, id }) => {
     <Dialog key={id}>
       <DialogTrigger>
         <div className="relative aspect-[3/2] cursor-pointer">
-          <img
+          <Image
             src={getImageSource(data.media)}
             width={600}
             height={300}
@@ -41,7 +41,7 @@ const RideCard = ({ data, id }) => {
         <DialogHeader>
           <DialogDescription className="text-black p-0" asChild>
             <div>
-              <img
+              <Image
                 src={getImageSource(data.media)}
                 alt={data.name}
                 width={600}

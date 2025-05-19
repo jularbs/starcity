@@ -22,7 +22,7 @@ const ImageSlider = ({ data }) => {
       .map((item, key) => {
         return (
           <CarouselItem key={key}>
-            <img
+            <Image
               src={getImageSource(item.image)}
               width={1800}
               height={675}
