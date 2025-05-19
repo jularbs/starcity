@@ -522,9 +522,9 @@ exports.paypalOnApprove = async (req, res) => {
 
 exports.bpiTransact = async (req, res) => {
   console.log(`PROCESSING BPI TRANSACTION...`);
-  const { transactionReference, confirmationNumber } = req.query;
+  const { transactionReference, confirmationNumber, statusCode } = req.query;
 
-  if (confirmationNumber !== "undefined") {
+  if (confirmationNumber !== "undefined" && statusCode === "1") {
     const sale = await Sale.findOne({ refId: transactionReference }).exec();
     if (sale) {
       if (sale.status == "awaiting payment") {
