@@ -341,7 +341,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
               </div>
             </>
           )}
-          {process.env.NEXT_PUBLIC_WEBHOOKS_ENDPOINT}
           <div className="my-2 text-lg font-bold text-right text-black">
             Amount Due: ₱{(computeTotal() - discount).toFixed(2)}
           </div>
