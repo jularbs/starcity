@@ -555,7 +555,6 @@ exports.bpiTransact = async (req, res) => {
         console.log(`BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`);
         return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
       }
-
     } else {
       console.log(`BPI: Reference ID ${transactionReference} NOT FOUND...`);
     }
