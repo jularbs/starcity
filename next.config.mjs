@@ -88,7 +88,25 @@ const nextConfig = {
       },
     ],
   },
-  cacheMaxMemorySize: 1024 * 1000,
+  cacheMaxMemorySize: 1024 * 256,
+  async redirects() {
+    return [
+      {
+        // does not add /docs since basePath: false is set
+        source: '/auth/:path',
+        destination: 'https://manage.starcity.com.ph/auth/:path',
+        basePath: false,
+        permanent: true,
+      },
+      {
+        // does not add /docs since basePath: false is set
+        source: '/admin/:path',
+        destination: 'https://manage.starcity.com.ph/dashboard',
+        basePath: false,
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;
