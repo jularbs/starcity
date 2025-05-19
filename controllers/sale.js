@@ -22,6 +22,7 @@ const EmailQueue = require("../models/emailQueue");
 //TEST
 const getDay = require("date-fns/getDay");
 const nextThursday = require("date-fns/nextThursday");
+const { processPromo } = require("./promo");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -393,7 +394,8 @@ exports.readBySaltRefID = async (req, res) => {
     .select("_id customerName emailAddress contactNumber expiryDate createdAt")
     .exec();
 
-  if (saleDetails == null) res.json({ error: "Invalid Data" });
+  if (saleDetails == null)
+    return res.status(400).json({ error: "Invalid Data" });
 
   const accessPasses = await AccessPass.find({
     salesId: saleDetails._id,
@@ -430,11 +432,14 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  const { skip, limit, start, end, search } = req.query;
+  const { skip = 0, limit = 10, start, end, search = "" } = req.query;
 
   //check UTC Formatting when in server
-  const startDate = moment(start).startOf("day").toISOString();
-  const endDate = moment(end).endOf("day").toISOString();
+  const startDate = moment(start).toISOString();
+  const endDate = moment(end).toISOString();
+
+  console.log("Start Date: ", startDate);
+  console.log("End Date: ", endDate);
 
   Sale.find({
     createdAt: {
@@ -537,6 +542,7 @@ exports.createCheckout = async (req, res) => {
     contactNumber,
     paymentDetails,
     token,
+    promoCode
   } = req.body;
 
   //CHECK RECAPTCHA
@@ -551,66 +557,73 @@ exports.createCheckout = async (req, res) => {
 
   if (!captcha.data.success) {
     console.log("ERROR IN CAPTCHA");
-    res.status(400).json({
+    return res.status(400).json({
       error: "Please prove you are not a robot by checking the checkbox below.",
     });
-  } else {
-    let isExisting = [];
-    let refID = "";
+  }
 
-    do {
-      refID = crypto.randomBytes(6).toString("hex").toUpperCase();
-      isExisting = await Sale.find({ refId: refID }).exec();
-    } while (isExisting.length !== 0);
+  let isExisting = [];
+  let refID = "";
 
-    let sale = new Sale();
+  do {
+    refID = crypto.randomBytes(6).toString("hex").toUpperCase();
+    isExisting = await Sale.find({ refId: refID }).exec();
+  } while (isExisting.length !== 0);
 
-    //error when only 1 item in cart
-    const items = await Promise.all(
-      cartItems.map(async (item) => {
-        const price = await this.getCurrentTicketPrice({
-          ticketId: item._id,
-        });
-        return {
-          ticketId: item._id,
-          qty: item.qty,
-          priceAcquired: price.price,
-        };
-      })
-    );
+  let sale = new Sale();
 
-    if (paymentDetails) {
-      sale.paymentDetails = {
-        option: "",
-        referenceNumber: "",
-        status: "",
+  //error when only 1 item in cart
+  const items = await Promise.all(
+    cartItems.map(async (item) => {
+      const price = await this.getCurrentTicketPrice({
+        ticketId: item._id,
+      });
+      return {
+        ticketId: item._id,
+        qty: item.qty,
+        priceAcquired: price.price,
       };
+    })
+  );
+
+  if (paymentDetails) {
+    sale.paymentDetails = {
+      option: "",
+      referenceNumber: "",
+      status: "",
+    };
+  }
+
+  sale.expiryDate = this.getOpenParkExpiry();
+  sale.customerName = customerName;
+  sale.emailAddress = email;
+  sale.refId = refID;
+  sale.contactNumber = contactNumber;
+  sale.cartItems = items;
+  sale.status = "awaiting payment";
+
+  let transactionAmount = items.reduce((sum, item) => {
+    return sum + item.qty * item.priceAcquired;
+  }, 0);
+
+  const promo = await processPromo(promoCode, transactionAmount);
+  sale.promoCode = promo.promoCode;
+  sale.discount = promo.discount;
+
+  sale.orderTotal = transactionAmount - sale.discount;
+
+  sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
+  sale.save((err, result) => {
+    if (err) {
+      console.log(err);
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
     }
 
-    sale.expiryDate = this.getOpenParkExpiry();
-    sale.customerName = customerName;
-    sale.emailAddress = email;
-    sale.refId = refID;
-    sale.contactNumber = contactNumber;
-    sale.cartItems = items;
-    sale.status = "awaiting payment";
-    sale.orderTotal = items.reduce((sum, item) => {
-      return sum + item.qty * item.priceAcquired;
-    }, 0);
-
-    sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
-    sale.save((err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-
-      res.json(result);
-    });
-  }
+    res.json(result);
+  });
 };
 
 exports.createDragonPayRequest = async (req, res) => {

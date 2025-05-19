@@ -78,6 +78,15 @@ const saleSchema = new mongoose.Schema(
       referenceNumber: String,
       status: String,
     },
+    promoCode: {
+      type: ObjectId,
+      ref: "Promo",
+      default: null
+    },
+    discount: {
+      type: Decimal128,
+      default: null
+    },
     meta: Object,
     expiryDate: String,
     id: false,
