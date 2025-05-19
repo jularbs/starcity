@@ -30,7 +30,7 @@ const ImageSliderListComponent = () => {
 
     const [statusLoading, setStatusLoading] = useState("");
     const [imageOpen, setImageOpen] = useState(false);
-    const [selectedImage, setSelectedImage] = useState("")
+    const [selectedImage, setSelectedImage] = useState({})
 
     const [updateOpen, setUpdateOpen] = useState(false);
     const [removeOpen, setRemoveOpen] = useState(false);
@@ -121,7 +121,7 @@ const ImageSliderListComponent = () => {
                         <div className="flex gap-2 justify-end">
                             <Button size="icon" variant="outline"
                                 onClick={() => {
-                                    setSelectedImage(item.image?.location)
+                                    setSelectedImage(item.image)
                                     setImageOpen(true)
                                 }}
                             ><ImageIcon /></Button>
@@ -147,7 +147,7 @@ const ImageSliderListComponent = () => {
     return <>
         <UpdateImageSliderComponent slug={selectedSlug} open={updateOpen} onOpenChange={setUpdateOpen} />
         <RemoveImageSliderComponent slug={selectedSlug} open={removeOpen} onOpenChange={setRemoveOpen} />
-        <ImageSliderImageComponent image={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
+        <ImageSliderImageComponent media={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
         <Card className="p-0 !gap-0">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Image Sliders</div>

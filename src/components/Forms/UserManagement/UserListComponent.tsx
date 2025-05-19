@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import RemoveUserComponent from "./RemoveUserComponent";
 import UpdateUserComponent from "./UpdateUserComponent";
+import { Edit, Trash } from "lucide-react";
 
 const UserListComponent = () => {
     const token = getCookie("token")
@@ -76,16 +77,17 @@ const UserListComponent = () => {
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                            <Button onClick={() => {
-                                setCurrentId(item._id);
-                                setUpdateOpen(true);
-                            }}>Update User</Button>
-                            <Button variant="destructive"
+                            <Button size="icon"
+                                onClick={() => {
+                                    setCurrentId(item._id);
+                                    setUpdateOpen(true);
+                                }}><Edit /></Button>
+                            <Button variant="destructive" size="icon"
                                 onClick={() => {
                                     setCurrentId(item._id);
                                     setRemoveOpen(true);
                                 }}
-                            >Remove User</Button>
+                            ><Trash /></Button>
                         </div>
                     </TableCell>
                 </TableRow>

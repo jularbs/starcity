@@ -38,7 +38,7 @@ const RideListComponent = () => {
     const [removeOpen, setRemoveOpen] = useState(false);
 
     const [selectedCategory, setSelectedCategory] = useState({ name: "All Attractions", id: "" })
-    const [selectedImage, setSelectedImage] = useState("")
+    const [selectedImage, setSelectedImage] = useState({})
 
     const showData = () => {
         if (data && !isLoading) {
@@ -61,7 +61,7 @@ const RideListComponent = () => {
                     <TableCell className="justify-end flex gap-2 pr-4">
                         <Button className="size-6" variant="outline"
                             onClick={() => {
-                                setSelectedImage(item.media?.location)
+                                setSelectedImage(item.media)
                                 setImageOpen(true)
                             }}>
                             <ImageIcon />
@@ -118,7 +118,7 @@ const RideListComponent = () => {
     }
 
     return <>
-        <RideImageComponent image={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
+        <RideImageComponent media={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
         <RemoveRideComponent slug={currentSlug} open={removeOpen} onOpenChange={setRemoveOpen} />
         <UpdateRideComponent slug={currentSlug} open={updateOpen} onOpenChange={setUpdateOpen} />
         <Card className="p-0 !gap-0">

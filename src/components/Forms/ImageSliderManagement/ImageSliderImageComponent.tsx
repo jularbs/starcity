@@ -1,9 +1,11 @@
 "use client";
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
+import { getImageSource } from "@/lib/utils";
 import Image from "next/image";
+// import Image from "next/image";
 
-const ImageSliderImageComponent = ({ image = "", open, onOpenChange }:
-    { image: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const ImageSliderImageComponent = ({ media, open, onOpenChange }:
+    { media: Record<string, string>, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     return <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[100vh] overflow-y-auto p-0 border-0 gap-0">
@@ -13,12 +15,12 @@ const ImageSliderImageComponent = ({ image = "", open, onOpenChange }:
                 </DialogTitle>
             </DialogHeader>
             <div className="min-h-[200px]">
-                {image && <Image
+                {media && <Image
                     alt="Image Slider Item"
                     width={600}
                     height={200}
                     className="w-auto"
-                    src={image}
+                    src={getImageSource(media)}
                 />}
             </div>
         </DialogContent>

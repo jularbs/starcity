@@ -24,15 +24,15 @@ import { fetcher } from "@/actions/swr"
 import useSWR, { mutate } from "swr";
 import { Input } from "@/components/ui/input";
 import { LoaderCircle, CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getImageSource } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar"
 
 import { toast } from "sonner";
-import Image from "next/image";
 import { getCookie } from "typescript-cookie";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
 import { format } from "date-fns";
 import { updateImageSlider } from "@/actions/image-slider";
+import Image from "next/image";
 
 const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
@@ -44,7 +44,7 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
     );
 
     const [loading, setLoading] = useState(false)
-    const [previewImage, setPreviewImage] = useState("");
+    const [previewImage, setPreviewImage] = useState({});
 
     const formSchema = z.object({
         slug: z.string().min(1, { message: "Slug required" }),
@@ -143,7 +143,7 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
                 form.setValue("name", data.name);
                 form.setValue("order", data.order);
                 form.setValue("dateRange", { from: new Date(data.startDate), to: new Date(data.endDate) })
-                setPreviewImage(data.image?.location);
+                setPreviewImage(data.image);
             }
     }, [data, isLoading, form])
 
@@ -193,7 +193,7 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
                                                 onChange={(e) => {
                                                     const reader = new FileReader();
                                                     reader.onloadend = () => {
-                                                        setPreviewImage(reader.result as string)
+                                                        setPreviewImage({ location: reader.result as string })
                                                         field.onChange(e.target.files?.[0]);
                                                     };
                                                     reader.readAsDataURL(e.target.files![0]);
@@ -201,7 +201,7 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
                                             />
                                         </FormControl>
                                         <FormMessage className="text-xs font-light" />
-                                        {previewImage && <div className="flex justify-center"><Image src={previewImage} width={300} height={200} alt="Ride Image" /></div>}
+                                        {previewImage && <div className="flex justify-center"><Image src={getImageSource(previewImage)} width={300} height={200} alt="Ride Image" /></div>}
                                     </FormItem>
                                 )}
                             />

@@ -7,7 +7,6 @@ import {
   ShoppingCart,
   StickyNote,
   Rocket,
-  ImageIcon,
   ImagesIcon,
   Settings,
   Users,
@@ -267,14 +266,6 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
                 <SidebarMenuButton tooltip="Image Slider">
                   <ImagesIcon />
                   <span>Image Slider</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/dashboard/banner-management">
-                <SidebarMenuButton tooltip="Banner Management">
-                  <ImageIcon />
-                  <span>Banner Management</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>

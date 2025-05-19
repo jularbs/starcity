@@ -1,5 +1,5 @@
 //TODOS: refactor editor on change to only on submit. https://blog.richardchou.dev/tinymce-and-react-hook-form-integration-40999e4f0b85
-//TODOS: handle file upload on Editor @ lib/tinymce
+//TODOS: Show loading during uploading
 "use client";
 import { fetcher } from "@/actions/swr";
 import { Button } from "@/components/ui/button";

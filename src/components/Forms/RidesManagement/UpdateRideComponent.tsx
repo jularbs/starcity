@@ -29,13 +29,14 @@ import { fetcher } from "@/actions/swr"
 import useSWR, { mutate } from "swr";
 import { Input } from "@/components/ui/input";
 import { LoaderCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getImageSource } from "@/lib/utils";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
-import Image from "next/image";
+// import Image from "next/image";
 import { getCookie } from "typescript-cookie";
 import { updateRide } from "@/actions/ride";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
+import Image from "next/image";
 
 const UpdateRideComponent = ({ slug, open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
@@ -49,7 +50,7 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
     const { data: categoriesData, isLoading: isCategoriesLoading } = useSWR({ url: "v1/ride-categories" }, fetcher)
 
     const [loading, setLoading] = useState(false)
-    const [previewImage, setPreviewImage] = useState("");
+    const [previewImage, setPreviewImage] = useState({});
 
     const formSchema = z.object({
         name: z.string().min(1, { message: "Ride/Attraction name required" }),
@@ -142,7 +143,7 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                 form.setValue("status", data.status);
                 form.setValue("heightRequirements", data.heightRequirements);
                 form.setValue("description", data.description);
-                setPreviewImage(data.media?.location);
+                setPreviewImage(data.media);
             }
     }, [data, isLoading, form])
 
@@ -191,7 +192,7 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                                                 onChange={(e) => {
                                                     const reader = new FileReader();
                                                     reader.onloadend = () => {
-                                                        setPreviewImage(reader.result as string)
+                                                        setPreviewImage({ location: reader.result as string })
                                                         field.onChange(e.target.files?.[0]);
                                                     };
                                                     reader.readAsDataURL(e.target.files![0]);
@@ -199,7 +200,7 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                                             />
                                         </FormControl>
                                         <FormMessage className="text-xs font-light" />
-                                        {previewImage && <div className="flex justify-center"><Image src={previewImage} width={300} height={200} alt="Ride Image" /></div>}
+                                        {previewImage && <div className="flex justify-center"><Image src={getImageSource(previewImage)} width={300} height={200} alt="Ride Image" /></div>}
                                     </FormItem>
                                 )}
                             />

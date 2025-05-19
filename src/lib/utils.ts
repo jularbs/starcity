@@ -33,3 +33,20 @@ export function getInitials(name: string): string {
 
   return initials.join("");
 }
+
+export function getImageSource(media: {
+  key?: string;
+  bucket?: string;
+  location?: string;
+}): string {
+  if (media?.key && media?.bucket) {
+    return `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/media?key=${media.key}&bucket=${media.bucket}`;
+  }
+
+  //Ride model doesnt have bucket
+  if (media?.key) {
+    return `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/media?key=${media.key}`;
+  }
+
+  return media.location!;
+}

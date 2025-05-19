@@ -214,7 +214,7 @@ export function NewImageSliderForm({
                                     name="dateRange"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel><span className="text-primary">Promo Duration</span></FormLabel>
+                                            <FormLabel><span className="text-primary">Display Duration</span></FormLabel>
                                             <FormMessage className="text-xs font-light" />
                                             <Popover>
                                                 <PopoverTrigger asChild>
