@@ -52,6 +52,12 @@ const userSchema = new mongoose.Schema(
       default: "moderator",
       require: true,
     },
+    deletedAt: {
+      type: Date,
+    },
+    lastLogin: {
+      type: Date,
+    },
     mistakes: {
       type: Number,
       default: 0,
@@ -59,6 +65,18 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre('find', function () {
+  this.where({ deletedAt: null });
+});
+
+userSchema.pre('findOne', function () {
+  this.where({ deletedAt: null });
+});
+
+userSchema.pre('countDocuments', function () {
+  this.where({ deletedAt: null });
+});
 
 userSchema
   .virtual("password")
