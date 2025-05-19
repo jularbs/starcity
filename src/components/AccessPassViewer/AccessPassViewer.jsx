@@ -52,7 +52,7 @@ const AccessPassViewer = ({ accessPasses, details }) => {
           Warning: Only QR codes purchased at www.starcity.com.ph are valid. Do
           not buy from other sources.
         </div>
-        <Image
+        <img
           className="mx-auto"
           src={getImageSource(accesspass.QRcode)}
           width={350}
