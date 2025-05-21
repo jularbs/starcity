@@ -18,3 +18,5 @@ User-agent: *
 Disallow: /
 Disallow: /auth
 Disallow: /admin
+
+Sitemap: https://starcity.com.ph/sitemap.xml
