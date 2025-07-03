@@ -522,10 +522,10 @@ exports.paypalOnApprove = async (req, res) => {
 
 exports.bpiTransact = async (req, res) => {
   console.log(`PROCESSING BPI TRANSACTION...`);
-  const { transactionReference, confirmationNumber, statusCode } = req.query;
+  const { transactionReference, confirmationNumber, merchantTransactionReference, transactionStatus } = req.query;
 
-  if (confirmationNumber !== "undefined" && statusCode == "1") {
-    const sale = await Sale.findOne({ refId: transactionReference }).exec();
+  if (merchantTransactionReference && transactionStatus) {
+    const sale = await Sale.findOne({ refId: merchantTransactionReference }).exec();
     if (sale) {
       if (sale.status == "awaiting payment") {
         //PROCESS SALE (GENERATE AND SEND AR)
@@ -534,21 +534,22 @@ exports.bpiTransact = async (req, res) => {
           .select("_id")
           .exec();
 
-        sale.status = "success";
+        sale.status = transactionStatus;
         sale.paymentDetails = {
           option: await pOption._id,
           referenceNumber: confirmationNumber,
-          status: "success",
+          status: transactionStatus,
         };
 
         //UPDATE DATA
         sale.save((err, result) => {
-          console.log("GENERATING ACCESS PASS");
-          generateAccessPass(result, result.cartItems);
-          console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
-          sendAR(result.refId);
-          return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
-
+          if (transactionStatus == "SUCCESSFUL") {
+            console.log("GENERATING ACCESS PASS");
+            generateAccessPass(result, result.cartItems);
+            console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+            sendAR(result.refId);
+            return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
+          }
         });
         //SEND STATUS 200
       } else {
