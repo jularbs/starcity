@@ -21,7 +21,7 @@ const ConfirmationModal = () => {
   const refid = searchParams.get("refid");
   const payment = searchParams.get("payment");
 
-  const statusConstants = ["success", "PAYMENT_SUCCESS", "S", "s", "COMPLETED"];
+  const statusConstants = ["success", "PAYMENT_SUCCESS", "S", "s", "COMPLETED", "SUCCESSFUL"];
 
   const isSuccess = (value) => {
     const filtered = statusConstants.filter((item) => item == value);
