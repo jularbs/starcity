@@ -524,7 +524,8 @@ exports.bpiTransact = async (req, res) => {
   console.log(`PROCESSING BPI TRANSACTION...`);
   const { transactionReference, confirmationNumber, merchantTransactionReference, transactionStatus } = req.query;
 
-  if (merchantTransactionReference && transactionStatus) {
+  // /webhooks/v1/bpi?transactionReference=DDD69E7E36D9&confirmationNumber=undefined&transactionStatus=INCOMPLETE&statusCode=0&merchantTransactionReference=DDD69E7E36D9
+  if (merchantTransactionReference && transactionStatus && transactionStatus == "SUCCESSFUL") {
     const sale = await Sale.findOne({ refId: merchantTransactionReference }).exec();
     if (sale) {
       if (sale.status == "awaiting payment") {
