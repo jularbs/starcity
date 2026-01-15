@@ -37,26 +37,18 @@ import { fetcher } from "@/actions/fetcher";
 import { createCheckout, createDragonPayCheckout } from "@/actions/sale";
 
 import { useRouter } from "next/navigation";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 //Forms
 const TicketPortal = ({ open, onOpenChange }) => {
   const router = useRouter();
 
   //Data Fetch
-  paymaya.init(
-    process.env.NEXT_PUBLIC_PAYMAYA_PK,
-    process.env.NEXT_PUBLIC_PAYMAYA_ENV === "0" ? false : true
-  );
+  paymaya.init(process.env.NEXT_PUBLIC_PAYMAYA_PK, process.env.NEXT_PUBLIC_PAYMAYA_ENV === "0" ? false : true);
 
-  const { data: paymentOptions } = useSWR(
-    { url: "v1/payment-option" },
-    fetcher
-  );
+  const { data: paymentOptions } = useSWR({ url: "v1/payment-option" }, fetcher);
   const { data: ticketData } = useSWR({ url: "v1/ticket" }, fetcher);
-  const { data: ticketFooterData } = useSWR(
-    { name: "TICKETS_FOOTER" },
-    getOptionByName
-  );
+  const { data: ticketFooterData } = useSWR({ name: "TICKETS_FOOTER" }, getOptionByName);
 
   //States
   const [loading, setLoading] = useState({
@@ -119,8 +111,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
   }, [ticketData]);
 
   useEffect(() => {
-    if (paymentOptions && paymentOptions.length > 0)
-      setAvailablePaymentOptions(paymentOptions);
+    if (paymentOptions && paymentOptions.length > 0) setAvailablePaymentOptions(paymentOptions);
   }, [paymentOptions]);
 
   useEffect(() => {
@@ -140,10 +131,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
     return cartItems.map((item, index) => {
       if (item.qty > 0)
         return (
-          <div
-            className="flex justify-between text-base text-black"
-            key={index}
-          >
+          <div className="flex justify-between text-base text-black" key={index}>
             <div>
               {item.qty} x {item.name}
             </div>
@@ -178,13 +166,11 @@ const TicketPortal = ({ open, onOpenChange }) => {
           {ticketFooterData && (
             <div
               className="mt-4 text-xs text-neutral-500"
-              dangerouslySetInnerHTML={{ __html: ticketFooterData.value }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(ticketFooterData.value) }}
             />
           )}
           {validation.cartItems && (
-            <div className="text-xs font-medium text-right text-red-600">
-              {validation.cartItems}
-            </div>
+            <div className="text-xs font-medium text-right text-red-600">{validation.cartItems}</div>
           )}
         </div>
       </div>
@@ -195,21 +181,14 @@ const TicketPortal = ({ open, onOpenChange }) => {
     return (
       <div>
         <div className="p-4 text-black">
-          <div className="mb-5 text-2xl text-center font-sigmar-one">
-            Buy Tickets
-          </div>
+          <div className="mb-5 text-2xl text-center font-sigmar-one">Buy Tickets</div>
           {/* form */}
           <div>
             <div className="mb-3">
-              <Label
-                htmlFor="firstName"
-                className="mb-1 text-xs font-bold text-neutral-700"
-              >
+              <Label htmlFor="firstName" className="mb-1 text-xs font-bold text-neutral-700">
                 First Name
                 {validation.firstName && (
-                  <span className="text-xs font-medium text-right text-red-600">
-                    {validation.firstName}
-                  </span>
+                  <span className="text-xs font-medium text-right text-red-600">{validation.firstName}</span>
                 )}
               </Label>
               <Input
@@ -222,15 +201,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
               />
             </div>
             <div className="mb-3">
-              <Label
-                htmlFor="lastName"
-                className="mb-1 text-xs font-bold text-neutral-700"
-              >
+              <Label htmlFor="lastName" className="mb-1 text-xs font-bold text-neutral-700">
                 Last Name
                 {validation.lastName && (
-                  <span className="text-xs font-medium text-right text-red-600">
-                    {validation.lastName}
-                  </span>
+                  <span className="text-xs font-medium text-right text-red-600">{validation.lastName}</span>
                 )}
               </Label>
               <Input
@@ -243,15 +217,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
               />
             </div>
             <div className="mb-3">
-              <Label
-                htmlFor="contactNumber"
-                className="mb-1 text-xs font-bold text-neutral-700"
-              >
+              <Label htmlFor="contactNumber" className="mb-1 text-xs font-bold text-neutral-700">
                 Contact Number
                 {validation.contactNumber && (
-                  <span className="text-xs font-medium text-right text-red-600">
-                    {validation.contactNumber}
-                  </span>
+                  <span className="text-xs font-medium text-right text-red-600">{validation.contactNumber}</span>
                 )}
               </Label>
               <Input
@@ -259,22 +228,15 @@ const TicketPortal = ({ open, onOpenChange }) => {
                 id="contactNumber"
                 placeholder="Contact Number"
                 onChange={handleDetails("contactNumber")}
-                className={`${
-                  validation.contactNumber ? "border-red-500" : ""
-                }`}
+                className={`${validation.contactNumber ? "border-red-500" : ""}`}
                 value={personalDetails.contactNumber}
               />
             </div>
             <div className="mb-3">
-              <Label
-                htmlFor="email"
-                className="mb-1 text-xs font-bold text-neutral-700"
-              >
+              <Label htmlFor="email" className="mb-1 text-xs font-bold text-neutral-700">
                 Email Address
                 {validation.emailAddress && (
-                  <span className="text-xs font-medium text-right text-red-600">
-                    {validation.emailAddress}
-                  </span>
+                  <span className="text-xs font-medium text-right text-red-600">{validation.emailAddress}</span>
                 )}
               </Label>
               <Input
@@ -287,15 +249,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
               />
             </div>
             <div className="mb-3">
-              <Label
-                htmlFor="confirmEmail"
-                className="mb-1 text-xs font-bold text-neutral-700"
-              >
+              <Label htmlFor="confirmEmail" className="mb-1 text-xs font-bold text-neutral-700">
                 Confirm Email Address
                 {validation.confirmEmail && (
-                  <span className="text-xs font-medium text-right text-red-600">
-                    {validation.confirmEmail}
-                  </span>
+                  <span className="text-xs font-medium text-right text-red-600">{validation.confirmEmail}</span>
                 )}
               </Label>
               <Input
@@ -308,8 +265,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
                 value={personalDetails.confirmEmail}
               />
               <Label className="pl-2 mt-1 text-xs font-light">
-                Please note that QR link will be sent on your provided email
-                address
+                Please note that QR link will be sent on your provided email address
               </Label>
             </div>
           </div>
@@ -321,24 +277,16 @@ const TicketPortal = ({ open, onOpenChange }) => {
   const showStep3 = () => {
     return (
       <div className="p-4">
-        <div className="mb-1 text-2xl text-center text-black font-sigmar-one">
-          Buy Tickets
-        </div>
+        <div className="mb-1 text-2xl text-center text-black font-sigmar-one">Buy Tickets</div>
         <div>
-          <div className="mb-4 text-lg font-bold text-center text-black">
-            Cart Summary
-          </div>
+          <div className="mb-4 text-lg font-bold text-center text-black">Cart Summary</div>
           <div className="my-3">{showCartSummary()}</div>
           <div className="w-40 h-[1px] bg-black my-2 ml-auto"></div>
 
           {discount > 0 && (
             <>
-              <div className="text-sm text-right text-black">
-                Total: ₱{computeTotal().toFixed(2)}
-              </div>
-              <div className="text-sm text-right text-red-500">
-                Promo Discount: - ₱{discount.toFixed(2)}
-              </div>
+              <div className="text-sm text-right text-black">Total: ₱{computeTotal().toFixed(2)}</div>
+              <div className="text-sm text-right text-red-500">Promo Discount: - ₱{discount.toFixed(2)}</div>
             </>
           )}
           <div className="my-2 text-lg font-bold text-right text-black">
@@ -347,17 +295,9 @@ const TicketPortal = ({ open, onOpenChange }) => {
         </div>
         {showPromoCodeForm()}
         <div className="m-3 mx-auto text-center recatpcha-wrapper">
-          {message.error && (
-            <div className="px-2 mb-2 text-xs text-red-600">
-              {message.error}
-            </div>
-          )}
+          {message.error && <div className="px-2 mb-2 text-xs text-red-600">{message.error}</div>}
 
-          {message.success && (
-            <div className="px-2 mb-2 text-xs text-black">
-              {message.success}
-            </div>
-          )}
+          {message.success && <div className="px-2 mb-2 text-xs text-black">{message.success}</div>}
 
           <ReCaptchaV2
             ref={recaptchaRef}
@@ -368,9 +308,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
         </div>
         <div className="mt-4">
           {/* Paypal  */}
-          {availablePaymentOptions
-            .filter((po) => po.status == true)
-            .filter((po) => po.slug == "paypal").length == 1 && (
+          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "paypal").length ==
+            1 && (
             <PayPalScriptProvider
               options={{
                 clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
@@ -395,54 +334,34 @@ const TicketPortal = ({ open, onOpenChange }) => {
           )}
 
           {/* Paymaya */}
-          {availablePaymentOptions
-            .filter((po) => po.status == true)
-            .filter((po) => po.slug == "paymaya").length == 1 && (
-            <Button
-              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
-              onClick={handleCheckout("paymaya")}
-            >
+          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "paymaya").length ==
+            1 && (
+            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("paymaya")}>
               Pay with Paymaya, Visa, Mastercard
               {loading["paymaya"] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
 
           {/* Dragonpay */}
-          {availablePaymentOptions
-            .filter((po) => po.status == true)
-            .filter((po) => po.slug == "dragonpay").length == 1 && (
-            <Button
-              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
-              onClick={handleCheckout("dragonpay")}
-            >
+          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "dragonpay").length ==
+            1 && (
+            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("dragonpay")}>
               Pay with Dragonpay
-              {loading["dragonpay"] && (
-                <LoaderCircle className="animate-spin" />
-              )}
+              {loading["dragonpay"] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
 
           {/* Gcash */}
-          {availablePaymentOptions
-            .filter((po) => po.status == true)
-            .filter((po) => po.slug == "gcash").length == 1 && (
-            <Button
-              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
-              onClick={handleCheckout("paymaya")}
-            >
+          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "gcash").length == 1 && (
+            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("paymaya")}>
               Pay with Gcash
               {loading["gcash"] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
 
           {/* BPI */}
-          {availablePaymentOptions
-            .filter((po) => po.status == true)
-            .filter((po) => po.slug == "bpi").length == 1 && (
-            <Button
-              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
-              onClick={handleCheckout("bpi")}
-            >
+          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "bpi").length == 1 && (
+            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("bpi")}>
               Pay with BPI Checkout
               {loading["bpi"] && <LoaderCircle className="animate-spin" />}
             </Button>
@@ -460,9 +379,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           return (
             <div className="mb-3" key={index}>
               <div className="mb-1 text-2xl font-sigmar-one">{ticket.name}</div>
-              <div className="mb-3 text-sm font-light">
-                {ticket.description}
-              </div>
+              <div className="mb-3 text-sm font-light">{ticket.description}</div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Button
@@ -472,9 +389,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
                     <Minus />
                   </Button>
 
-                  <div className="mx-3 text-xl text-center w-[30px]">
-                    {ticket.qty}
-                  </div>
+                  <div className="mx-3 text-xl text-center w-[30px]">{ticket.qty}</div>
                   <Button
                     className="w-[1rem] h-[1rem] bg-white shadow-none text-black m-2 hover:text-white cursor-pointer"
                     onClick={() => handleAddItem(ticket)}
@@ -541,8 +456,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
       console.log(err);
       setMessage({
         success: "",
-        error:
-          "Selected payment method not available. Please try another payment method.",
+        error: "Selected payment method not available. Please try another payment method.",
       });
     }
   };
@@ -606,11 +520,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
       <div className="text-left">
         <Label className="mb-1 ml-1 font-bold text-black">
           Promo Code
-          {validation.promoCode && (
-            <span className="text-xs font-light text-red-600">
-              {validation.promoCode}
-            </span>
-          )}
+          {validation.promoCode && <span className="text-xs font-light text-red-600">{validation.promoCode}</span>}
         </Label>
         {appliedCode == "" ? (
           <div className="flex items-center w-full space-x-2">
@@ -628,10 +538,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
             </Button>
           </div>
         ) : (
-          <div
-            className="flex items-center ml-2 text-black"
-            onClick={handleRemovePromoCode}
-          >
+          <div className="flex items-center ml-2 text-black" onClick={handleRemovePromoCode}>
             <X className="w-[18px] mr-1" />
             <span className="text-sm uppercase">{appliedCode}</span>
           </div>
@@ -859,10 +766,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           personalDetails.contactNumber !== "" &&
           validateEmail(personalDetails.email) &&
           validateMobileNumber(personalDetails.contactNumber) &&
-          validateEmailConfirmation(
-            personalDetails.confirmEmail,
-            personalDetails.email
-          )
+          validateEmailConfirmation(personalDetails.confirmEmail, personalDetails.email)
         ) {
           setCurrentStep(currentStep + 1);
           setValidation({
@@ -876,10 +780,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
         } else {
           setValidation({
             ...validation,
-            firstName:
-              personalDetails.firstName == "" ? "First Name is required" : "",
-            lastName:
-              personalDetails.lastName == "" ? "Last Name is required" : "",
+            firstName: personalDetails.firstName == "" ? "First Name is required" : "",
+            lastName: personalDetails.lastName == "" ? "Last Name is required" : "",
             emailAddress:
               personalDetails.email == ""
                 ? "Email Address is required"
@@ -895,10 +797,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
             confirmEmail:
               personalDetails.confirmEmail == ""
                 ? "Confirm Email Address is required"
-                : validateEmailConfirmation(
-                    personalDetails.confirmEmail,
-                    personalDetails.email
-                  )
+                : validateEmailConfirmation(personalDetails.confirmEmail, personalDetails.email)
                 ? ""
                 : "Email confirmation is incorrect.",
           });

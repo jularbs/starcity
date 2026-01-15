@@ -15,6 +15,7 @@ import { ReactNode } from "react";
 import useSWR from "swr";
 import { useState } from "react";
 import TicketPortal from "./TicketPortal";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const ShopButton = ({ children }: { children: ReactNode }) => {
     //TODOS: Error handling and loading state on consent clause
@@ -37,7 +38,7 @@ const ShopButton = ({ children }: { children: ReactNode }) => {
                     <DialogHeader >
                         <DialogDescription asChild className="max-h-[75vh] overflow-y-scroll px-4 overscroll-y-none">
                             {consentClause &&
-                                <div className="consent-clause-container" dangerouslySetInnerHTML={{ __html: consentClause.value }} />
+                                <div className="consent-clause-container" dangerouslySetInnerHTML={{ __html: sanitizeHtml(consentClause.value) }} />
                             }
                         </DialogDescription>
                     </DialogHeader>
