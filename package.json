@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "engines": {
+    "npm": ">=10.0.0 <11.0.0",
+    "node": ">=22.0.0 <23.0.0"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@paypal/react-paypal-js": "^8.8.3",
