@@ -1,7 +1,6 @@
 const Sale = require("../models/sale");
 const Ticket = require("../models/ticket");
 const AccessPass = require("../models/accessPass");
-const AccessPassQueue = require("../models/accessPassQueue");
 const crypto = require("crypto");
 const QRCode = require("qrcode");
 const { uploadBase64 } = require("../helpers/s3uploader");
@@ -16,13 +15,14 @@ const add = require("date-fns/add");
 const moment = require("moment");
 const axios = require("axios");
 
-const { forceSync } = require("../helpers/cronjobs");
-
+const { cronSyncAP } = require("../helpers/cronjobs");
+const { addToQueue } = require("../helpers/commonFunctions")
 const EmailQueue = require("../models/emailQueue");
 
 //TEST
 const getDay = require("date-fns/getDay");
 const nextThursday = require("date-fns/nextThursday");
+const { processPromo } = require("./promo");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
@@ -238,19 +238,6 @@ exports.sendAR = async (refId) => {
   });
 };
 
-exports.addToQueue = (accessPass, status) => {
-  let q = new AccessPassQueue();
-  q.accessPass = accessPass._id;
-  q.status = status;
-  q.save((err, result) => {
-    if (err) {
-      console.log("ERROR IN QUEUEING ACCESS PASS: ", err);
-    } else {
-      console.log("QUEUE CREATED FOR ACCESS PASS: ", accessPass.accessToken);
-    }
-  });
-};
-
 exports.syncAccessPass = (accessPass, RideCode) => {
   console.log("SYNCING ACCESS PASS: ", accessPass.accessToken);
   return new Promise((resolve, reject) => {
@@ -258,7 +245,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
       pool.getConnection(async (err, connection) => {
         if (err) {
           console.log("ERROR: ", err);
-          this.addToQueue(accessPass, "Failed Connection");
+          addToQueue(accessPass, "Failed Connection");
           resolve("Failed Connection, added to queue.");
         } else {
           const date = format(accessPass.createdAt, "yyyy-MM-dd");
@@ -283,14 +270,16 @@ exports.syncAccessPass = (accessPass, RideCode) => {
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
-              this.addToQueue(accessPass, "Failed Query");
+              console.log("UNABLE TO SYNC ACCESSPASS: ", accessPass.accessToken);
+              console.log("ERROR MESSAGE: ", error);
+              addToQueue(accessPass, "Failed Query");
               resolve("Failed Query, added to queue");
             } else if (results.affectedRows < 1) {
               console.log(
                 `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
                 accessPass.accessToken
               );
-              this.addToQueue(accessPass, "Failed insert");
+              addToQueue(accessPass, "Failed insert");
               resolve("Failed Insert, added to queue");
             } else {
               resolve(`ACCESS PASS SYNCED: ${accessPass.accessToken}`);
@@ -333,7 +322,7 @@ exports.sync = async (req, res) => {
       await Sale.updateMany(
         { status: "for sync" },
         { status: "synced undelivered" },
-        () => {}
+        () => { }
       );
 
       res.json(data);
@@ -405,7 +394,8 @@ exports.readBySaltRefID = async (req, res) => {
     .select("_id customerName emailAddress contactNumber expiryDate createdAt")
     .exec();
 
-  if (saleDetails == null) res.json({ error: "Invalid Data" });
+  if (saleDetails == null)
+    return res.status(400).json({ error: "Invalid Data" });
 
   const accessPasses = await AccessPass.find({
     salesId: saleDetails._id,
@@ -442,11 +432,14 @@ exports.read = (req, res) => {
 };
 
 exports.list = (req, res) => {
-  const { skip, limit, start, end, search } = req.query;
+  const { skip = 0, limit = 10, start, end, search = "" } = req.query;
 
   //check UTC Formatting when in server
-  const startDate = moment(start).startOf("day").toISOString();
-  const endDate = moment(end).endOf("day").toISOString();
+  const startDate = moment(start).toISOString();
+  const endDate = moment(end).toISOString();
+
+  console.log("Start Date: ", startDate);
+  console.log("End Date: ", endDate);
 
   Sale.find({
     createdAt: {
@@ -549,6 +542,7 @@ exports.createCheckout = async (req, res) => {
     contactNumber,
     paymentDetails,
     token,
+    promoCode
   } = req.body;
 
   //CHECK RECAPTCHA
@@ -563,66 +557,73 @@ exports.createCheckout = async (req, res) => {
 
   if (!captcha.data.success) {
     console.log("ERROR IN CAPTCHA");
-    res.status(400).json({
+    return res.status(400).json({
       error: "Please prove you are not a robot by checking the checkbox below.",
     });
-  } else {
-    let isExisting = [];
-    let refID = "";
+  }
 
-    do {
-      refID = crypto.randomBytes(6).toString("hex").toUpperCase();
-      isExisting = await Sale.find({ refId: refID }).exec();
-    } while (isExisting.length !== 0);
+  let isExisting = [];
+  let refID = "";
 
-    let sale = new Sale();
+  do {
+    refID = crypto.randomBytes(6).toString("hex").toUpperCase();
+    isExisting = await Sale.find({ refId: refID }).exec();
+  } while (isExisting.length !== 0);
 
-    //error when only 1 item in cart
-    const items = await Promise.all(
-      cartItems.map(async (item) => {
-        const price = await this.getCurrentTicketPrice({
-          ticketId: item._id,
-        });
-        return {
-          ticketId: item._id,
-          qty: item.qty,
-          priceAcquired: price.price,
-        };
-      })
-    );
+  let sale = new Sale();
 
-    if (paymentDetails) {
-      sale.paymentDetails = {
-        option: "",
-        referenceNumber: "",
-        status: "",
+  //error when only 1 item in cart
+  const items = await Promise.all(
+    cartItems.map(async (item) => {
+      const price = await this.getCurrentTicketPrice({
+        ticketId: item._id,
+      });
+      return {
+        ticketId: item._id,
+        qty: item.qty,
+        priceAcquired: price.price,
       };
+    })
+  );
+
+  if (paymentDetails) {
+    sale.paymentDetails = {
+      option: "",
+      referenceNumber: "",
+      status: "",
+    };
+  }
+
+  sale.expiryDate = this.getOpenParkExpiry();
+  sale.customerName = customerName;
+  sale.emailAddress = email;
+  sale.refId = refID;
+  sale.contactNumber = contactNumber;
+  sale.cartItems = items;
+  sale.status = "awaiting payment";
+
+  let transactionAmount = items.reduce((sum, item) => {
+    return sum + item.qty * item.priceAcquired;
+  }, 0);
+
+  const promo = await processPromo(promoCode, transactionAmount);
+  sale.promoCode = promo.promoCode;
+  sale.discount = promo.discount;
+
+  sale.orderTotal = transactionAmount - sale.discount;
+
+  sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
+  sale.save((err, result) => {
+    if (err) {
+      console.log(err);
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
     }
 
-    sale.expiryDate = this.getOpenParkExpiry();
-    sale.customerName = customerName;
-    sale.emailAddress = email;
-    sale.refId = refID;
-    sale.contactNumber = contactNumber;
-    sale.cartItems = items;
-    sale.status = "awaiting payment";
-    sale.orderTotal = items.reduce((sum, item) => {
-      return sum + item.qty * item.priceAcquired;
-    }, 0);
-
-    sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
-    sale.save((err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-
-      res.json(result);
-    });
-  }
+    res.json(result);
+  });
 };
 
 exports.createDragonPayRequest = async (req, res) => {
@@ -677,33 +678,86 @@ exports.processPaypalPayment = async (req, res) => {
   }
 };
 
-//TESTER FUNCTION
-exports.test = async (req, res) => {};
-
+//HELPER FUNCTIONS
 exports.cleanUp = async (req, res) => {
   let previous2Months = new Date();
-  previous2Months.setDate(previous2Months.getDate() - 30);
+  previous2Months.setDate(previous2Months.getDate() - 90);
 
-  let query = await Sale.deleteMany(
+  const accessPassCount = await AccessPass.countDocuments({
+    createdAt: { $lte: previous2Months },
+  });
+
+  const saleCount = await Sale.countDocuments({
+    createdAt: { $lte: previous2Months },
+  });
+
+  const deleteAccessPass = await AccessPass.deleteMany(
     {
       createdAt: { $lte: previous2Months },
-      status: "awaiting payment",
     },
-    function (err) {
-      if (err) {
-        res.send(err);
-      } else {
-        res.send("deleted");
-      }
-    }
+    function (err) { }
   );
+
+  const deleteSalesData = await Sale.deleteMany(
+    {
+      createdAt: { $lte: previous2Months },
+    },
+    function (err) { }
+  );
+
+  res.json({
+    date: format(previous2Months, "PPpp"),
+    AccessPassDeletedCount: accessPassCount,
+    saleDeletedCount: saleCount,
+  });
 };
 
-exports.forceSync = async (req, res) => {
-  const { skip, limit } = req.query;
-  forceSync(skip, limit);
+exports.syncAP = async (req, res) => {
+  cronSyncAP();
 
-  console.log("processing...");
-
-  res.json({ message: "processing" });
+  res.json({
+    message: "done",
+  });
 };
+
+exports.regenerateAccessPass = async (req, res) => {
+  console.log("Regenerating Access Passes for sale with Reference Number: ", req.params.id);
+  if (req.params.id) {
+    const sale = await Sale.findOne({ refId: req.params.id }).exec();
+    if (sale) {
+      console.log("REMOVING OLD ACCESS PASS");
+      await AccessPass.deleteMany({ salesId: sale._id }).exec();
+      console.log("GENERATING NEW ACCESS PASS");
+      this.generateAccessPass(sale, sale.cartItems);
+      return res.json({ status: "Success", action: "Access Passes Regenerated" })
+    } else {
+      return res.json({ status: "404", message: "Sale transaction not found" })
+    }
+  } else {
+    return res.json({ status: "404", message: "Reference ID not found" })
+  }
+}
+
+exports.resyncSaleByRefId = async (req, res) => {
+  console.log("Resyncing Access Passes for sale with Reference Number: ", req.params.id);
+
+  if (req.params.id) {
+    const sale = await Sale.findOne({ refId: req.params.id }).exec();
+    if (sale) {
+      console.log("Getting Access Passes...");
+      const accesspasses = await AccessPass.find({ salesId: sale._id }).exec();
+      accesspasses.map(async (ap) => {
+        //get ticketDetails
+        const ticket = await Ticket.findOne({
+          _id: ap.ticketId,
+        }).exec();
+        const syncResult = await this.syncAccessPass(ap, ticket.itemCode);
+        console.log(syncResult);
+      });
+      return res.json({ status: "Success", action: "Sale Resynced" })
+    } else {
+      return res.json({ status: "404", message: "Sale transaction not found" })
+    }
+  }
+  return res.json({ status: "404", message: "Reference ID not found" })
+}

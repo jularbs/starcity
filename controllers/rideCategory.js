@@ -22,8 +22,8 @@ exports.create = (req, res) => {
       });
     }
 
-    res.json(result);
     createEntry(req.profile.name, `Created new Ride Category`, result, req);
+    return res.json({ data: result, success: "Ride Category added successfully!" });
   });
 };
 

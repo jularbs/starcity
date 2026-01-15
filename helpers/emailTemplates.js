@@ -559,9 +559,9 @@ exports.accessPassEmailNotification = (data) => {
                                         text-align: left;
                                       "
                                     >  
-                                      These QR Codes are your tickets to the park and are valid until ${
+                                      These QR Codes are your tickets to the park and are <strong>valid until ${
                                         data.expiryDate
-                                      }. 
+                                      }.</strong> 
                                       Please download the QR codes and print or save in your mobile phone for scanning 
                                       at the park's main entrance turnstiles. One QR code per person. 
                                     </p>
@@ -586,6 +586,28 @@ exports.accessPassEmailNotification = (data) => {
                                       "
                                     >  
                                       Please also print or screenshot this Acknowledgement Receipt as Star City reserves the right to demand presentation of the same before entry to the park. 
+                                    </p>
+                                    <p
+                                      class="tw-light"
+                                      style="
+                                        margin: 0;
+                                        margin-bottom: 10px;
+                                        color: #CC0000;
+                                        font-family: Helvetica, Arial,
+                                          sans-serif;
+                                        font-size: 16px;
+                                        font-weight: 700;
+                                        line-height: 1.3;
+                                        margin: 0;
+                                        margin-bottom: 10px;
+                                        padding-bottom: 0;
+                                        padding-left: 0;
+                                        padding-right: 0;
+                                        padding-top: 0;
+                                        text-align: left;
+                                      "
+                                    >
+                                      Please visit our website <a href="http://www.starcity.com.ph" target="_blank">http://www.starcity.com.ph</a> and social media pages (Facebook and Instagram) for park operation schedule or updates on the day of your intended visit.
                                     </p>
                                     <p
                                       style="

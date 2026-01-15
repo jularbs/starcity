@@ -1,10 +1,20 @@
 const AccessPassQueue = require("../models/accessPassQueue");
 const SmQueue = require("../models/smQueue");
 const EmailQueue = require("../models/emailQueue");
+const Sale = require("../models/sale");
+const AccessPass = require("../models/accessPass");
+const PaymentOption = require("../models/paymentOption");
+const Ticket = require("../models/ticket");
 
 const { pool } = require("../lib/mysql/connect");
 const { addAuditTrailEntry } = require("../helpers/auditTrailHandler");
 const { format } = require("date-fns");
+const startOfYesterday = require('date-fns/startOfYesterday')
+const endOfYesterday = require('date-fns/endOfYesterday')
+const { sendMail } = require("../helpers/nodemailer");
+const { convertArrayToCSV } = require('convert-array-to-csv');
+const { zonedTimeToUtc, utcToZonedTime } = require("date-fns-tz");
+
 const sale = require("../controllers/sale");
 
 exports.cronSyncAP = async () => {
@@ -218,3 +228,202 @@ exports.cronProcessEmailQueues = async () => {
     });
   }
 };
+
+exports.dbcleanup = async () => {
+  let previous2Months = new Date();
+  previous2Months.setDate(previous2Months.getDate() - parseInt(process.env.DATA_RETENTION_DAYS));
+
+  console.log("**** CLEANING UP DATABASE ****");
+
+  // const accessPassCount = await AccessPass.countDocuments({
+  //   createdAt: { $lte: previous2Months },
+  // });
+
+  const saleCount = await Sale.countDocuments({
+    createdAt: { $lte: previous2Months },
+  });
+
+  // const deleteAccessPass = await AccessPass.deleteMany(
+  //   {
+  //     createdAt: { $lte: previous2Months },
+  //   },
+  //   function (err) { }
+  // );
+
+  const deleteSalesData = await Sale.deleteMany(
+    {
+      createdAt: { $lte: previous2Months },
+    },
+    function (err) { }
+  );
+
+  console.log("Database clean up: Removing data before -", format(previous2Months, "PPpp"));
+  // console.log("Database clean up: Deleted Access Pass -", accessPassCount);
+  console.log("Database clean up: Deleted Sales Data -", saleCount);
+}
+
+exports.generateDailyReport = async () => {
+  console.log("Generating Daily Report");
+
+  //Works only when server is UTC set.
+  const datetime = new Date().toISOString().split('T')[0];
+
+  const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila')
+  const formattedStartTime = format(start, "PPp")
+
+  const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila')
+  const formattedEndTime = format(end, "PPp")
+
+  //Works only when server is PHT set.
+  //set date range to be covered
+  // const start = startOfYesterday();
+  // const end = endOfYesterday();
+
+  //get sales data in date range
+  const salesData = await Sale.find({
+    status: {
+      $nin: ["awaiting payment", "P", "p"],
+    },
+    updatedAt: {
+      $gte: start,
+      $lte: end,
+    }
+  })
+    .select('updatedAt customerName emailAddress contactNumber refId contactnumber orderTotal paymentDetails cartItems')
+    .populate({
+      path: "cartItems",
+      populate: {
+        path: "ticketId",
+        model: "Ticket",
+        select: "name price",
+      },
+    })
+    .populate({
+      path: "paymentDetails",
+      populate: {
+        path: "option",
+        model: "PaymentOption",
+        select: "name",
+      },
+    })
+    .exec();
+
+  //Initialize Summary Values
+  let numOfTransaction = 0;
+  let totalTransactionPrice = 0;
+  let ticketsSold = 0;
+
+  //Initialize Tickets Summary Values
+  const ticketsData = await Ticket.find({
+  })
+    .select('name')
+    .exec();
+
+  let ticketsArray = ticketsData.map((ticket, key) => {
+    return { id: ticket._id, name: ticket.name, qty: 0 }
+  })
+
+  //Initialize Payment Details Summary
+  const paymentsData = await PaymentOption.find({
+  })
+    .select('name')
+    .exec();
+
+  let paymentsArray = paymentsData.map((po, key) => {
+    return { id: po._id, name: po.name, qty: 0, amount: 0 }
+  })
+
+  const dataArray = salesData.map((data, key) => {
+    numOfTransaction += 1;
+    totalTransactionPrice += data.orderTotal;
+
+    //update payment option counter
+    const paymentOptionIndex = paymentsArray.findIndex(obj => obj.name == data.paymentDetails?.option?.name);
+    if (paymentOptionIndex !== -1) {
+      paymentsArray[paymentOptionIndex].qty += 1;
+      paymentsArray[paymentOptionIndex].amount += data.orderTotal;
+    }
+
+    return {
+      confirmationTime: format(utcToZonedTime(data.updatedAt, "Asia/Manila"), "PPp"),
+      customerName: data.customerName,
+      transactionNumber: data.refId,
+      paymentGateway: data.paymentDetails?.option?.name,
+      ticketType: `${convertArrayToCSV(data.cartItems.map((ticket, key) => {
+        ticketsSold += ticket.qty;
+
+        //update tickets counter
+        const ticketIndex = ticketsArray.findIndex(obj => obj.name == ticket.ticketId?.name);
+        if (ticketIndex !== -1) {
+          ticketsArray[ticketIndex].qty += ticket.qty;
+        }
+
+        return [ticket.ticketId?.name, ticket.qty, ticket.ticketId?.price]
+      }))}\n`,
+      price: parseFloat(data.orderTotal).toFixed(2),
+      emailAddress: data.emailAddress,
+      mobileNumber: data.contactNumber
+    }
+  })
+
+  const salesDataCSV = convertArrayToCSV(dataArray);
+
+  const details = {
+    to: process.env.REPORTS_RECIPIENT,
+    from: process.env.EMAIL_ADDRESS,
+    subject:
+      `Sales Summary for ${datetime}`,
+    html: `
+    <h1>Sales Summary for ${format(utcToZonedTime(start, "Asia/Manila"), "PPp")} - ${format(utcToZonedTime(end, "Asia/Manila"), "PPp")} </h1>
+    <p>Total Number of Transactions: ${numOfTransaction}</p>
+    <p>Total Price of Transactions: ₱${parseFloat(totalTransactionPrice).toFixed(2)}</p>
+    <p>Total Number of Tickets Sold: ${ticketsSold}</p>
+
+    <h2>Tickets Summary</h2>
+    ${ticketsArray.map((row => { return `<p>${row.name}: ${row.qty}</p>` })).join('')}
+    <h2>Payment Channel Summary</h2>
+    ${paymentsArray.map(((row) => {
+      const ticketCounter = ticketsData.map((ticket, key) => {
+        return { name: ticket.name, qty: 0 }
+      })
+
+      salesData.map((data) => {
+        if (data.paymentDetails?.option?.name === row.name) {
+          data.cartItems.map((ticket) => {
+            const ticketIndex = ticketCounter.findIndex(obj => obj.name == ticket.ticketId?.name);
+            if (ticketIndex !== -1) {
+              ticketCounter[ticketIndex].qty += ticket.qty;
+            }
+          })
+        }
+      })
+
+      return `<h4>${row.name}</h4>
+              <p style="margin-left: 20px">Transactions: ${row.qty}</p>
+              <p style="margin-left: 20px">Amount: ₱${parseFloat(row.amount).toFixed(2)}</p>
+              ${ticketCounter.map((counter) => {
+        return `<p style="margin-left: 20px">${counter.name}: ${counter.qty}</p>`;
+      }).join('')}`
+    })).join('')}
+    `,
+    attachments: [{
+      filename: `Daily Sales Data - ${format(start, "PP")}.csv`,
+      content: salesDataCSV   // attaching csv in the content
+    }],
+  };
+
+  try {
+    sendMail(details).then((info) => {
+      console.log("Email Report Info: ", info);
+      //check info if undefined
+      if (info === undefined) {
+        //create email queue
+      } else {
+        console.log("Daily Report Sent");
+      }
+    });
+  } catch (e) {
+    console.log(e);
+    console.log("Failed trying to send daily report")
+  }
+}

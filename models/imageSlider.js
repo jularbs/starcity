@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const imageSliderSchema = new mongoose.Schema(
   {
+    order: {
+      type: Number,
+      default: 1,
+    },
     name: {
       type: String,
     },

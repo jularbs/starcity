@@ -16,6 +16,7 @@ const {
   smTicketVoid,
   paypalProcess,
   paypalOnApprove,
+  bpiTransact,
 } = require("../controllers/webhooks");
 
 //Version 1.0
@@ -37,4 +38,5 @@ router.patch("/v1/smticket/void", smTicketVoid);
 router.put("/v1/paypal/process", paypalProcess);
 router.post("/v1/paypal/approved", paypalOnApprove);
 
+router.get("/v1/bpi", bpiTransact)
 module.exports = router;

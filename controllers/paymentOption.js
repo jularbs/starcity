@@ -113,13 +113,15 @@ exports.toggleStatus = async (req, res) => {
   paymentOption.status = !paymentOption.status;
 
   paymentOption.save((err, result) => {
-    if (err) res.json({ error: "Unable to toggle payment option status." });
-    res.json({ result });
+    if (err) return res.status(400).json({ error: "Unable to toggle payment option status." });
+
     createEntry(
       req.profile.name,
       `Toggled Payment Option ${paymentOption.name}`,
       {},
       req
     );
+    return res.json({ data: result, success: "Payment Option toggled successfully!" });
+
   });
 };

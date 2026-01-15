@@ -4,8 +4,8 @@ const { smartTrim } = require("../helpers/commonFunctions");
 const { stripHtml } = require("string-strip-html");
 const formidable = require("formidable");
 const {
-  uploadTos3withKey,
   deleteObjectFromS3,
+  uploadFile,
 } = require("../helpers/s3uploader");
 
 const { createEntry } = require("../controllers/auditTrail");
@@ -42,7 +42,7 @@ exports.create = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadTos3withKey(
+      const imageInfo = await uploadFile(
         image,
         `post/${year}/${month}/${slug}`
       );
@@ -59,7 +59,7 @@ exports.create = (req, res) => {
         post.save((err, result) => {
           if (err) {
             res.json({
-              erorr: "Failed to save post. Please try again later.",
+              error: "Failed to save post. Please try again later.",
             });
           }
           res.json(result);
@@ -116,7 +116,7 @@ exports.update = async (req, res) => {
       var date = new Date();
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
-      const imageInfo = await uploadTos3withKey(
+      const imageInfo = await uploadFile(
         image,
         `post/${year}/${month}/${slug}`
       );
@@ -183,7 +183,7 @@ exports.uploadImage = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadTos3withKey(
+      const imageInfo = await uploadFile(
         files.photo,
         `attachments/${year}/${month}`
       );

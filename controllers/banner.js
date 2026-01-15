@@ -3,8 +3,7 @@ const Banner = require("../models/banner");
 const slugify = require("slugify");
 const formidable = require("formidable");
 const {
-  uploadTos3withKey,
-  deleteObjectFromS3,
+  uploadFile,
 } = require("../helpers/s3uploader");
 
 const { createEntry } = require("../controllers/auditTrail");
@@ -49,7 +48,7 @@ exports.create = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadTos3withKey(
+      const imageInfo = await uploadFile(
         image,
         `banners/${year}/${month}/${slug}`
       );
@@ -68,7 +67,7 @@ exports.create = (req, res) => {
           if (err) {
             console.log(err);
             res.status(400).json({
-              erorr: "Failed to add banner. Please try again later.",
+              error: "Failed to add banner. Please try again later.",
             });
           }
           res.json(result);
@@ -139,7 +138,7 @@ exports.update = async (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadTos3withKey(
+      const imageInfo = await uploadFile(
         image,
         `banners/${year}/${month}/${slug}`
       );
@@ -155,7 +154,7 @@ exports.update = async (req, res) => {
     b.save((err, result) => {
       if (err) {
         res.status(400).json({
-          erorr: "Failed to add banner. Please try again later.",
+          error: "Failed to add banner. Please try again later.",
         });
       }
       res.json(result);

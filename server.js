@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
+
 require("dotenv").config();
 
 //routes
@@ -21,32 +22,13 @@ const bannerRoutes = require("./routes/banner");
 const healthDeclarationRoutes = require("./routes/healthDeclaration");
 const mediaRoutes = require("./routes/media");
 const webhookRoutes = require("./routes/webhooks");
+const promoRoutes = require("./routes/promo");
 
 var cron = require("node-cron");
 
-const {
-  cronSyncAP,
-  cronProcessEmailQueues,
-  cronSyncSMTickets,
-} = require("./helpers/cronjobs");
-
 const app = express();
 
-var allowedDomains = [
-  "http://localhost:3003",
-  "https://localhost:3003",
-  "http://starcity.com.ph",
-  "https://starcity.com.ph",
-  "http://web.starcity.com.ph",
-  "https://web.starcity.com.ph",
-  "http://www.starcity.com.ph",
-  "https://www.starcity.com.ph",
-  "http://uat.starcity.com.ph",
-  "https://uat.starcity.com.ph",
-  "https://test-spc.herokuapp.com",
-  "http://test-spc.herokuapp.com",
-];
-
+var allowedDomains = JSON.parse(process.env.CORS_DOMAINS);
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -64,16 +46,8 @@ app.use(
   })
 );
 
-//DATABASE CONNECTIONS
-let cmsDatabase = "";
-if (process.env.NODE_ENV === "production") {
-  cmsDatabase = process.env.DATABASE_PROD;
-} else {
-  cmsDatabase = process.env.DATABASE_DEV;
-}
-
 mongoose
-  .connect(cmsDatabase, {
+  .connect(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
@@ -91,7 +65,6 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 //use routes
-
 app.use("/api", rideCategoryRoutes);
 app.use("/api", rideRoutes);
 app.use("/api", ticketRoutes);
@@ -105,21 +78,49 @@ app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
 app.use("/api", healthDeclarationRoutes);
 app.use("/api", mediaRoutes);
+app.use("/api", promoRoutes);
 app.use("/webhooks", webhookRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 
+const {
+  cronSyncAP,
+  cronProcessEmailQueues,
+  cronSyncSMTickets,
+  dbcleanup,
+  generateDailyReport
+} = require("./helpers/cronjobs");
+
 // cron jobs
 cron.schedule("*/15 * * * *", function () {
-  cronSyncSMTickets();
-  cronSyncAP();
+  //Execute only on production
+  if (process.env.NODE_ENV == "production") {
+    cronSyncSMTickets();
+    cronSyncAP();
+  }
 });
 
 cron.schedule("*/5 * * * *", function () {
-  cronProcessEmailQueues();
+  //Execute only on production
+  if (process.env.NODE_ENV == "production") {
+    cronProcessEmailQueues();
+  }
 });
 
-//port
+cron.schedule("0 0 * * *", function () {
+  //Execute only on production
+  if (process.env.NODE_ENV == "production") {
+    dbcleanup();
+  }
+});
+
+cron.schedule("5 16 * * *", function () { //UTC for 00:05
+  //Execute only on production
+  if (process.env.NODE_ENV == "production") {
+    generateDailyReport();
+  }
+});
+
 const port = process.env.PORT || 8000;
 
 app.listen(port, () => {

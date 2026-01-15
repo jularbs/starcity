@@ -1,7 +1,7 @@
 const slugify = require("slugify");
 const Option = require("../models/option");
 const { createEntry } = require("../controllers/auditTrail");
-const { uploadTos3withKey } = require("../helpers/s3uploader");
+const { uploadFile } = require("../helpers/s3uploader");
 const formidable = require("formidable");
 
 exports.logoUpload = async (req, res) => {
@@ -11,12 +11,13 @@ exports.logoUpload = async (req, res) => {
     const { value } = files;
     const { name } = fields;
 
-    const imageInfo = await uploadTos3withKey(value, `logo-image`);
+    const imageInfo = await uploadFile(value, `logo-image`);
     let option = await Option.findOne({ name }).exec();
 
     if (option) {
       option.name = name;
       option.value = imageInfo.location;
+      option.meta = imageInfo;
 
       option.save((err, result) => {
         if (err) {
@@ -30,7 +31,7 @@ exports.logoUpload = async (req, res) => {
         createEntry(
           req.profile.name,
           `Option ${name} updated`,
-          { value: imageInfo.location },
+          imageInfo,
           req
         );
       });
@@ -64,7 +65,7 @@ exports.logoUpload = async (req, res) => {
 
 exports.create = async (req, res) => {
   const { name, value, meta } = req.body;
-
+  console.log("Req: ", req.body);
   let option = await Option.findOne({ name }).exec();
 
   if (option) {
@@ -75,11 +76,10 @@ exports.create = async (req, res) => {
     option.save((err, result) => {
       if (err) {
         return res.status(400).json({
-          error: "error occured",
+          error: "Unable to save option. Please try again later.",
           message: err,
         });
       }
-      res.json({ result, status: "success" });
 
       createEntry(
         req.profile.name,
@@ -87,6 +87,9 @@ exports.create = async (req, res) => {
         { value: req.value },
         req
       );
+      return res.json({ result, success: "Option has been updated successfully!" });
+
+
     });
   } else {
     const slug = slugify(name).toLowerCase();
@@ -101,10 +104,9 @@ exports.create = async (req, res) => {
     newOption.save((err, result) => {
       if (err) {
         return res.status(400).json({
-          error: "error occured",
+          error: "Unable to save option. Please try again later.",
         });
       }
-      res.json(result);
       createEntry(
         req.profile.name,
         `Option ${name} created`,
@@ -113,6 +115,7 @@ exports.create = async (req, res) => {
         },
         req
       );
+      return res.json({ result, success: "Option has been updated successfully!" });
     });
   }
 };
@@ -149,6 +152,7 @@ exports.listOptionsv2 = (req, res) => {
       return res.status(200).json(result);
     });
 };
+
 exports.update = async (req, res) => {
   const { slug, name, value, meta } = req.body;
 

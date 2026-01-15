@@ -136,7 +136,7 @@ exports.dragonPaySuccess = async (req, res) => {
 };
 
 exports.dragonPayReturn = async (req, res) => {
-  await setTimeout(function () {}, 3000);
+  await setTimeout(function () { }, 3000);
   res.redirect(
     `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}`
   );
@@ -220,9 +220,9 @@ const processTickets = (tickets) => {
             ticketExpiry
               ? ticketExpiry
               : `${format(
-                  new Date(getOpenParkExpiry()),
-                  "yyyy-LL-dd"
-                )} 23:59:59`
+                new Date(getOpenParkExpiry()),
+                "yyyy-LL-dd"
+              )} 23:59:59`
           );
         } else {
           const date = format(new Date(), "yyyy-MM-dd");
@@ -519,3 +519,51 @@ exports.paypalOnApprove = async (req, res) => {
     console.log(`WEBHOOK ID ${id} RECEIVED BUT REF ID ${refId} NOT FOUND`);
   }
 };
+
+exports.bpiTransact = async (req, res) => {
+  console.log(`PROCESSING BPI TRANSACTION...`);
+  const { transactionReference, confirmationNumber, merchantTransactionReference, transactionStatus } = req.query;
+
+  // /webhooks/v1/bpi?transactionReference=DDD69E7E36D9&confirmationNumber=undefined&transactionStatus=INCOMPLETE&statusCode=0&merchantTransactionReference=DDD69E7E36D9
+  if (merchantTransactionReference && transactionStatus && transactionStatus == "SUCCESSFUL") {
+    const sale = await Sale.findOne({ refId: merchantTransactionReference }).exec();
+    if (sale) {
+      if (sale.status == "awaiting payment") {
+        //PROCESS SALE (GENERATE AND SEND AR)
+        const option = "bpi";
+        const pOption = await PaymentOption.findOne({ slug: option })
+          .select("_id")
+          .exec();
+
+        sale.status = transactionStatus;
+        sale.paymentDetails = {
+          option: await pOption._id,
+          referenceNumber: confirmationNumber,
+          status: transactionStatus,
+        };
+
+        //UPDATE DATA
+        sale.save((err, result) => {
+          if (transactionStatus == "SUCCESSFUL") {
+            console.log("GENERATING ACCESS PASS");
+            generateAccessPass(result, result.cartItems);
+            console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+            sendAR(result.refId);
+            return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
+          }
+        });
+        //SEND STATUS 200
+      } else {
+        console.log(`BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`);
+        return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
+      }
+    } else {
+      console.log(`BPI: Reference ID ${transactionReference} NOT FOUND...`);
+    }
+  } else {
+    console.log(`BPI: Reference ID ${transactionReference} NOT CONFIRMED`);
+    return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`);
+
+  }
+
+}

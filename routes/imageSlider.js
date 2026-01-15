@@ -2,11 +2,11 @@ const express = require("express");
 const router = express.Router();
 const {
   create,
-  read,
   list,
   update,
   remove,
   toggleStatus,
+  read,
 } = require("../controllers/imageSlider");
 
 const { requireSignin, authMiddleware } = require("../controllers/auth");
@@ -22,7 +22,8 @@ router.put(
 );
 
 router.get("/v1/image-slider", list);
-// router.get("/v1/post/:slug", read);
-router.delete("/v1/image-slider", requireSignin, authMiddleware, remove);
+router.get("/v1/image-slider/:slug", read);
+
+router.delete("/v1/image-slider/:slug", requireSignin, authMiddleware, remove);
 
 module.exports = router;
