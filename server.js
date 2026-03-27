@@ -88,7 +88,8 @@ const {
   cronProcessEmailQueues,
   cronSyncSMTickets,
   dbcleanup,
-  generateDailyReport
+  generateDailyReport,
+  generateQRdeliveryReport
 } = require("./helpers/cronjobs");
 
 // cron jobs
@@ -118,6 +119,7 @@ cron.schedule("5 16 * * *", function () { //UTC for 00:05
   //Execute only on production
   if (process.env.NODE_ENV == "production") {
     generateDailyReport();
+    generateQRdeliveryReport();
   }
 });
 

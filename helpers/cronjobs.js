@@ -269,10 +269,7 @@ exports.generateDailyReport = async () => {
   const datetime = new Date().toISOString().split('T')[0];
 
   const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila')
-  const formattedStartTime = format(start, "PPp")
-
   const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila')
-  const formattedEndTime = format(end, "PPp")
 
   //Works only when server is PHT set.
   //set date range to be covered
@@ -425,5 +422,67 @@ exports.generateDailyReport = async () => {
   } catch (e) {
     console.log(e);
     console.log("Failed trying to send daily report")
+  }
+}
+
+exports.generateQRdeliveryReport = async () => {
+  console.log("Generating QR Delivery Report");
+
+  //Works only when server is UTC set.
+  const datetime = new Date().toISOString().split('T')[0];
+
+  const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila')
+  const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila')
+
+  const accessPassData = await AccessPass.find({
+    createdAt: {
+      $gte: start,
+      $lte: end,
+    }
+  })
+    .select('accessToken salesId ticketId createdAt')
+    .populate({ path: "ticketId", model: "Ticket", select: "name" })
+    .populate({ path: "salesId", model: "Sale", select: "refId" })
+    .exec();
+
+  const dataArray = accessPassData.map((data, key) => {
+    return {
+      generationDate: format(utcToZonedTime(data.createdAt, "Asia/Manila"), "PPp"),
+      referenceNumber: data.salesId?.refId,
+      ticketType: data.ticketId?.name,
+      accessToken: data.accessToken,
+    }
+  })
+
+  const accessPassDataCSV = convertArrayToCSV(dataArray);
+
+  const details = {
+    to: process.env.REPORTS_RECIPIENT,
+    from: process.env.EMAIL_ADDRESS,
+    subject:
+      `QR Values Delivery Report for ${datetime}`,
+    html: `
+    <h1>QR Values Delivery Report for ${format(utcToZonedTime(start, "Asia/Manila"), "PPp")} - ${format(utcToZonedTime(end, "Asia/Manila"), "PPp")} </h1>
+    <p>Total Number of QR Values Delivered: ${accessPassData.length}</p>
+    `,
+    attachments: [{
+      filename: `QR Values Delivery Data - ${format(start, "PP")}.csv`,
+      content: accessPassDataCSV   // attaching csv in the content
+    }],
+  };
+
+  try {
+    sendMail(details).then((info) => {
+      console.log("QR Report Info: ", info);
+      //check info if undefined
+      if (info === undefined) {
+        //create email queue
+      } else {
+        console.log("QR Values Delivery Report Sent");
+      }
+    });
+  } catch (e) {
+    console.log(e);
+    console.log("Failed trying to send QR Values delivery report")
   }
 }
