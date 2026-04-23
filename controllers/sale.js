@@ -198,14 +198,7 @@ exports.sendAR = async (refId) => {
       subject:
         "Your acknowledgement receipt for your Star City ticket purchase",
       html: accessPassEmailNotification(sale),
-      bcc: ["accounting@starcity.com.ph", "pallingayan.mario@starcity.com.ph"],
-      // attachments: [
-      // {
-      //   filename: "healthdeclaration-form.pdf",
-      //   path: `${process.env.DOMAIN}health-declaration-form.pdf`,
-      // },
-      // ...APattachments,
-      // ],
+      bcc: ["accounting@starcity.com.ph"],
     };
 
     try {
