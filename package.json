@@ -12,7 +12,7 @@
     "license": "ISC",
     "dependencies": {
         "aws-sdk": "^2.919.0",
-        "axios": "^0.24.0",
+        "axios": "^1.18.1",
         "body-parser": "^1.19.0",
         "convert-array-to-csv": "^2.0.0",
         "cookie-parser": "^1.4.5",
