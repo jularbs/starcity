@@ -5,6 +5,7 @@ const sendMail = async (email) => {
     var config = {
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
+      secure: process.env.EMAIL_SECURE === 'true' || false,
       auth: {
         user: process.env.EMAIL_ADDRESS,
         pass: process.env.EMAIL_PASSWORD,
