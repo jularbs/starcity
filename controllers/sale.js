@@ -26,14 +26,11 @@ const { processPromo } = require("./promo");
 
 //HELPERS
 exports.getCurrentTicketPrice = (ticket) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const { ticketId } = ticket;
-    Ticket.findOne({ _id: new mongoose.Types.ObjectId(`${ticketId}`) }).exec(
-      (err, result) => {
-        if (err) reject(err);
-        return resolve({ price: result.price });
-      }
-    );
+    const result = await Ticket.findOne({ _id: new mongoose.Types.ObjectId(`${ticketId}`) }).exec();
+    if (!result) reject(new Error("Ticket not found"));
+    return resolve({ price: result.price });
   });
 };
 
@@ -41,13 +38,15 @@ exports.asyncGetTicketPrice = async (ticket) => {
   return this.getCurrentTicketPrice(ticket);
 };
 
-exports.calculateCartItem = (item) => {
-  return new Promise((resolve, reject) => {
+exports.calculateCartItem = async (item) => {
+  return new Promise(async (resolve, reject) => {
     const { ticketId, qty } = item;
-    Ticket.findOne({ _id: ticketId }).exec((err, result) => {
-      if (err) reject(err);
+    try {
+      const result = await Ticket.findOne({ _id: ticketId }).exec();
       return resolve({ amount: qty * result.price });
-    });
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 
@@ -108,12 +107,14 @@ exports.generateAccessPass = (sale, accessPasses) => {
         "yyyy-LL-dd"
       )} 23:59:59`;
 
-      accessPass.save(async (err, result) => {
-        if (err) console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
+      try {
+        const result = await accessPass.save();
         const syncResult = await this.syncAccessPass(result, ticket.itemCode);
         console.log(`Processing ${finalToken}: `, syncResult);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
-      });
+      } catch (err) {
+        console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
+      }
     }
   });
 };
@@ -290,7 +291,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
 
 //REQUESTS
 exports.sync = async (req, res) => {
-  Sale.find({ status: "for sync" })
+  const data = await Sale.find({ status: "for sync" })
     .populate({
       path: "cartItems",
       populate: {
@@ -310,16 +311,14 @@ exports.sync = async (req, res) => {
     .select(
       "customerName cartItems orderTotal paymentDetails refId created_at -_id"
     )
-    .exec(async (err, data) => {
-      if (err) res.json({ error: "Failed to synchronize", message: err });
-      await Sale.updateMany(
-        { status: "for sync" },
-        { status: "synced undelivered" },
-        () => { }
-      );
+    .exec();
+  if (!data) return res.json({ error: "Failed to synchronize" });
+  await Sale.updateMany(
+    { status: "for sync" },
+    { status: "synced undelivered" }
+  );
 
-      res.json(data);
-    });
+  res.json(data);
 };
 
 exports.create = async (req, res) => {
@@ -367,16 +366,15 @@ exports.create = async (req, res) => {
   });
   sale.QRcode = await uploadBase64(await base64, `qrcode/${name}`);
 
-  sale.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-
+  try {
+    const result = await sale.save();
     res.json(result);
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.readBySaltRefID = async (req, res) => {
@@ -400,31 +398,31 @@ exports.readBySaltRefID = async (req, res) => {
   res.json({ details: saleDetails, accessPasses });
 };
 
-exports.read = (req, res) => {
-  Sale.findOne({ refId: req.params.refid })
-    .select(
-      "customerName emailAddress contactNumber orderTotal refId salt paymentDetails"
-    )
-    .populate({
-      path: "paymentDetails",
-      populate: {
-        path: "option",
-        model: "PaymentOption",
-        select: "name",
-      },
-    })
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
+exports.read = async (req, res) => {
+  try {
+    const data = await Sale.findOne({ refId: req.params.refid })
+      .select(
+        "customerName emailAddress contactNumber orderTotal refId salt paymentDetails"
+      )
+      .populate({
+        path: "paymentDetails",
+        populate: {
+          path: "option",
+          model: "PaymentOption",
+          select: "name",
+        },
+      })
+      .exec();
+    res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
+  }
 };
 
-exports.list = (req, res) => {
+exports.list = async (req, res) => {
   const { skip = 0, limit = 10, start, end, search = "" } = req.query;
 
   //check UTC Formatting when in server
@@ -434,7 +432,7 @@ exports.list = (req, res) => {
   console.log("Start Date: ", startDate);
   console.log("End Date: ", endDate);
 
-  Sale.find({
+  const data = await Sale.find({
     createdAt: {
       $gte: startDate,
       $lte: endDate,
@@ -466,29 +464,22 @@ exports.list = (req, res) => {
     .sort("-createdAt")
     .skip(parseInt(skip))
     .limit(parseInt(limit))
-    .exec(async (err, data) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      const count = await Sale.countDocuments({
-        createdAt: {
-          $gte: startDate,
-          $lte: endDate,
-        },
-        status: {
-          $nin: ["awaiting payment", "P", "p"],
-        },
-        $or: [
-          { refId: { $regex: search, $options: "i" } },
-          { customerName: { $regex: search, $options: "i" } },
-        ],
-      });
-      res.json({ count, data });
-    });
+    .exec();
+
+  const count = await Sale.countDocuments({
+    createdAt: {
+      $gte: startDate,
+      $lte: endDate,
+    },
+    status: {
+      $nin: ["awaiting payment", "P", "p"],
+    },
+    $or: [
+      { refId: { $regex: search, $options: "i" } },
+      { customerName: { $regex: search, $options: "i" } },
+    ],
+  });
+  res.json({ count, data });
 };
 
 exports.update = async (req, res) => {
@@ -502,29 +493,29 @@ exports.update = async (req, res) => {
   ticket.price = price;
   ticket.status = status;
 
-  ticket.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
+  try {
+    const result = await ticket.save();
     res.json({ result, status: "success" });
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.remove = async (req, res) => {
   const { slug } = req.body;
 
-  Ticket.findOneAndDelete({ slug }).exec(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
+  try {
+    const result = await Ticket.findOneAndDelete({ slug }).exec();
     res.json({ success: "Ticket deleted successfully" });
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.createCheckout = async (req, res) => {
@@ -606,17 +597,16 @@ exports.createCheckout = async (req, res) => {
   sale.orderTotal = transactionAmount - sale.discount;
 
   sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
-  sale.save((err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-
+  try {
+    const result = await sale.save();
     res.json(result);
-  });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.createDragonPayRequest = async (req, res) => {
@@ -658,13 +648,20 @@ exports.processPaypalPayment = async (req, res) => {
       status: status,
     };
 
-    sale.save((err, result) => {
+    try {
+      const result = await sale.save();
       res.json({ refid: result.refId, payment: result.status });
       if (status == "COMPLETED") {
         this.generateAccessPass(result, result.cartItems);
         this.sendAR(result.refId);
       }
-    });
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
+    }
   } else {
     console.log("ERROR NO SALE FOUND");
     res.status(400).json({ error: "Sale undefined" });

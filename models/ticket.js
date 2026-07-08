@@ -49,9 +49,12 @@ const ticketSchema = new mongoose.Schema(
       trim: true,
     },
     meta: Object,
-    id: false,
   },
-  { timestamps: true, toJSON: { getters: true } }
+  {
+    timestamps: true,
+    toJSON: { getters: true },
+    id: false,
+  }
 );
 
 module.exports = mongoose.model("Ticket", ticketSchema);

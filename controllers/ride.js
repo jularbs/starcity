@@ -30,6 +30,7 @@ exports.create = (req, res) => {
         600
       );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
+
         let ride = new Ride();
         ride.name = name;
         ride.description = description;
@@ -39,20 +40,20 @@ exports.create = (req, res) => {
         ride.rideCategoryId = categoryId;
         ride.media = imageInfo;
 
-        ride.save(async (err, result) => {
-          if (err) {
-            return res.status(400).json({
-              error:
-                "Failed to add new ride/attraction. Please try again later",
-            });
-          }
+        try {
+          const result = await ride.save();
           const r = await result
             .populate("rideCategoryId", "name")
             .execPopulate();
           res.status(200).json({ data: r, success: "Ride added successfully" });
 
           createEntry(req.profile.name, `Create new ride`, { result }, req);
-        });
+        } catch (err) {
+          return res.status(400).json({
+            error:
+              "Failed to add new ride/attraction. Please try again later",
+          });
+        }
       } else {
         res
           .status(400)
@@ -64,33 +65,33 @@ exports.create = (req, res) => {
   });
 };
 
-exports.read = (req, res) => {
-  Ride.findOne({ slug: req.params.slug })
-    .select("name description slug status heightRequirements media")
-    .populate("rideCategoryId", "name")
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
+exports.read = async (req, res) => {
+  try {
+    const data = await Ride.findOne({ slug: req.params.slug })
+      .select("name description slug status heightRequirements media")
+      .populate("rideCategoryId", "name")
+      .exec();
+    res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
+  }
 };
 
-exports.list = (req, res) => {
-  Ride.find()
-    .populate("rideCategoryId", "name")
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
+exports.list = async (req, res) => {
+  try {
+    const data = await Ride.find()
+      .populate("rideCategoryId", "name")
+      .exec();
+    res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
+  }
 };
 
 exports.update = async (req, res) => {
@@ -128,24 +129,24 @@ exports.update = async (req, res) => {
       ride.heightRequirements = heightRequirements;
       ride.rideCategoryId = categoryId;
 
-      ride.save(async (err, result) => {
-        if (err) {
-          return res.status(400).json({
-            error: "Unable to update ride/attraction. Please try again later.",
-            message: err,
-          });
-        }
+      try {
+        const result = await ride.save();
         const r = await result
           .populate("rideCategoryId", "name _id")
           .execPopulate();
         createEntry(req.profile.name, `Updated ride ${r.name}`, {}, req);
 
         return res.json({ result: r, success: "Ride/Attraction updated successfully!" });
-      });
+      } catch (err) {
+        return res.status(400).json({
+          error: "Unable to update ride/attraction. Please try again later.",
+          message: err,
+        });
+      }
     } else {
       return res.status(400).json({
         error: "Ride/Attraction not found. Please try refreshing the page to try again.",
-        message: err,
+        message: "Ride not found",
       });
     }
   });
@@ -154,17 +155,17 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   const { slug } = req.params;
 
-  Ride.findOneAndDelete({ slug }).exec(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "Unable to delete ride. Please try again later",
-        message: err,
-      });
-    }
-
+  try {
+    const result = await Ride.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);
 
     //TODO: DELETE IMAGE
     return res.json({ success: "Ride deleted successfully" });
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "Unable to delete ride. Please try again later.",
+      message: err,
+    });
+  }
+
 };

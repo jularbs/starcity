@@ -53,6 +53,15 @@ exports.create = (req, res) => {
         `image-slider/${year}/${month}/${slug}`
       );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
+        try {
+
+        } catch (err) {
+          console.log("Error on save: ", err)
+          res.status(400).json({
+            error:
+              "Failed to add item in image slider. Please try again later.",
+          });
+        }
         let is = new ImageSlider();
         is.order = order;
         is.name = name;
@@ -62,22 +71,14 @@ exports.create = (req, res) => {
         is.image = imageInfo;
         is.status = false;
 
-        is.save((err, result) => {
-          if (err) {
-            console.log("Error on save: ", err)
-            res.status(400).json({
-              error:
-                "Failed to add item in image slider. Please try again later.",
-            });
-          }
-          res.json({ data: result, success: "Slider Item added successfully!" });
-          createEntry(
-            req.profile.name,
-            "Created new Image Slider Item",
-            { ...result, image: null },
-            req
-          );
-        });
+        const result = await is.save();
+        res.json({ data: result, success: "Slider Item added successfully!" });
+        createEntry(
+          req.profile.name,
+          "Created new Image Slider Item",
+          { ...result, image: null },
+          req
+        );
       } else {
         res
           .status(400)
@@ -104,10 +105,16 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = (req, res) => {
-  ImageSlider.find({}).sort({ order: 1 }).exec((err, result) => {
+exports.list = async (req, res) => {
+  try {
+    const result = await ImageSlider.find({}).sort({ order: 1 }).exec();
     res.json(result);
-  });
+  } catch (err) {
+    console.log("Error: ", err)
+    return res.status(400).json({
+      error: "Error on getting image slider items"
+    })
+  }
 };
 
 exports.update = async (req, res) => {
@@ -146,14 +153,8 @@ exports.update = async (req, res) => {
             .json({ error: "Error on uploading image to Amazon S3" });
         }
       }
-
-      is.save((err, result) => {
-        if (err) {
-          console.log("Error: ", err);
-          return res.status(400).json({
-            error: "Failed to add item in image slider. Please try again later.",
-          });
-        }
+      try {
+        const result = await is.save();
         createEntry(
           req.profile.name,
           `Updated Image Slider Item ${slug}`,
@@ -161,12 +162,15 @@ exports.update = async (req, res) => {
           req
         );
         return res.json({ data: result, success: "Image Slider item updated successfully!" });
-
-      });
+      } catch (err) {
+        console.log("Error: ", err);
+        return res.status(400).json({
+          error: "Failed to add item in image slider. Please try again later.",
+        });
+      }
     } else {
       return res.status(400).json({ error: "Image Slider item not found" })
     }
-
   });
 };
 
@@ -186,16 +190,14 @@ exports.remove = async (req, res) => {
 
 //TODOS: Remove and use update
 exports.toggleStatus = async (req, res) => {
+
   const { id } = req.body;
   let is = await ImageSlider.findOne({ _id: id }).exec();
 
   if (is) {
-    is.status = !is.status;
-
-    is.save((err, result) => {
-      if (err)
-        return res.status(400).json({ error: "Unable to toggle Image Slider status." });
-
+    try {
+      is.status = !is.status;
+      const result = await is.save();
       createEntry(
         req.profile.name,
         `Toggled Image Slider Item ${result.name}`,
@@ -203,11 +205,14 @@ exports.toggleStatus = async (req, res) => {
         req
       );
       return res.json({ data: result, success: "Image Slider Item toggled successfully!" });
-
-    });
+    } catch (err) {
+      console.log("Error: ", err);
+      return res.status(400).json({
+        error: "Failed to toggle item in image slider. Please try again later.",
+      });
+    }
   } else {
     return res.status(404).json({ error: "Image Slider Item not found." });
-
   }
 
 };

@@ -3,7 +3,7 @@ const slugify = require("slugify");
 
 const { createEntry } = require("../controllers/auditTrail");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   const { name, code, shortDescription, price, details } = req.body;
 
   const slug = slugify(name).toLowerCase();
@@ -18,54 +18,53 @@ exports.create = (req, res) => {
   ticket.shortDescription = shortDescription;
   ticket.details = details;
 
-  ticket.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-      });
-    }
-
+  try {
+    const result = await ticket.save();
     createEntry(req.profile.name, `Created New Ticket ${name}`, result, req);
     return res.json({ success: "Ticket created successfully", data: result });
-  });
-};
-
-exports.read = (req, res) => {
-  Ticket.findOne({ slug: req.params.slug })
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
+  }
 };
 
-exports.list = (req, res) => {
+exports.read = async (req, res) => {
+  try {
+    const data = await Ticket.findOne({ slug: req.params.slug }).exec();
+    res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
+};
+
+exports.list = async (req, res) => {
   const { f } = req.query;
 
   if (f) {
-    Ticket.find({ status: true }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
+    try {
+      const data = await Ticket.find({ status: true }).exec();
       res.json(data);
-    });
+    } catch (err) {
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
+    }
   } else {
-    Ticket.find().exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
+    try {
+      const data = await Ticket.find().exec();
       res.json(data);
-    });
+    } catch (err) {
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
+    }
   }
 };
 
@@ -81,31 +80,31 @@ exports.update = async (req, res) => {
   ticket.price = price;
   ticket.details = details;
 
-  ticket.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
+  try {
+    const result = await ticket.save();
     res.json({ result, success: "Ticket updated successfully!" });
     createEntry(req.profile.name, `Updated ticket ${name}`, result, req);
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.remove = async (req, res) => {
   const { _id } = req.body;
 
-  Ticket.findOneAndDelete({ _id }).exec(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
+  try {
+    const result = await Ticket.findOneAndDelete({ _id }).exec();
     res.json({ success: "Ticket deleted successfully" });
     createEntry(req.profile.name, `Deleted ticket ${_id}`, {}, req);
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.toggleStatus = async (req, res) => {
@@ -118,8 +117,8 @@ exports.toggleStatus = async (req, res) => {
 
   ticket.status = !ticket.status;
 
-  ticket.save((err, result) => {
-    if (err) return res.status(400).json({ error: "Unable to toggle ticket status." });
+  try {
+    const result = await ticket.save();
     createEntry(
       req.profile.name,
       `Toggled ticket ${ticket.name}`,
@@ -130,6 +129,7 @@ exports.toggleStatus = async (req, res) => {
       success: "Ticket toggled successfully",
       data: result
     });
-
-  });
+  } catch (err) {
+    return res.status(400).json({ error: "Unable to toggle ticket status." });
+  }
 };

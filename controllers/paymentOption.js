@@ -1,120 +1,122 @@
 const slugify = require("slugify");
 const PaymentOption = require("../models/paymentOption");
-
 const { createEntry } = require("../controllers/auditTrail");
-exports.create = (req, res) => {
+
+exports.create = async (req, res) => {
   const { name } = req.body;
   const slug = slugify(name).toLowerCase();
 
-  let paymentOption = new PaymentOption();
+  try {
+    let paymentOption = new PaymentOption();
+    paymentOption.name = name;
+    paymentOption.slug = slug;
 
-  paymentOption.name = name;
-  paymentOption.slug = slug;
-
-  paymentOption.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-      });
-    }
-    res.json(result);
+    const result = await paymentOption.save();
     createEntry(
       req.profile.name,
       "Created New Payment Option",
       { name: name },
       req
     );
-  });
-};
+    return res.json(result);
 
-exports.read = (req, res) => {
-  PaymentOption.findOne({ slug: req.params.slug })
-    .select("name status")
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
-    });
-};
-
-exports.list = (req, res) => {
-  const { f } = req.query;
-  if (f) {
-    PaymentOption.find({ status: true }).exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
-    });
-  } else {
-    PaymentOption.find().exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
   }
 };
 
-exports.update = async (req, res) => {
-  const { slug, name, status } = req.body;
+exports.read = async (req, res) => {
+  try {
+    const data = await PaymentOption.findOne({ slug: req.params.slug })
+      .select("name status")
+      .exec();
 
-  const paymentOption = await PaymentOption.findOne({ slug: slug }).exec();
+    return res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
+};
 
-  paymentOption.name = name;
-  paymentOption.status = status;
-
-  paymentOption.save((err, result) => {
-    if (err) {
+exports.list = async (req, res) => {
+  const { f } = req.query;
+  if (f) {
+    try {
+      const data = await PaymentOption.find({ status: true }).exec();
+      res.json(data);
+    } catch (err) {
       return res.status(400).json({
         error: "error occured",
         message: err,
       });
     }
-    res.json({ result, status: "success" });
+
+  } else {
+    try {
+      const data = await PaymentOption.find().exec();
+      res.json(data);
+    } catch (err) {
+      return res.status(400).json({
+        error: "error occured",
+        message: err,
+      });
+    }
+  }
+};
+
+exports.update = async (req, res) => {
+  try {
+    const { slug, name, status } = req.body;
+
+    const paymentOption = await PaymentOption.findOne({ slug: slug }).exec();
+    paymentOption.name = name;
+    paymentOption.status = status;
+
+    const result = await paymentOption.save();
     createEntry(
       req.profile.name,
       `Updated Payment Option ${slug}`,
       { name: name },
       req
     );
-  });
+    res.json({ result, status: "success" });
+
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
+
 };
 
 exports.remove = async (req, res) => {
-  const { slug } = req.body;
+  try {
+    const { slug } = req.body;
 
-  PaymentOption.findOneAndDelete({ slug }).exec(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-
+    PaymentOption.findOneAndDelete({ slug }).exec();
     res.json({ success: "Payment Option deleted successfully" });
     createEntry(req.profile.name, `Deleted Payment Option ${slug}`, {}, req);
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.toggleStatus = async (req, res) => {
-  const { _id } = req.body;
-  let paymentOption = await PaymentOption.findOne({ _id }).exec();
-  paymentOption.status = !paymentOption.status;
+  try {
+    const { _id } = req.body;
+    let paymentOption = await PaymentOption.findOne({ _id }).exec();
+    paymentOption.status = !paymentOption.status;
 
-  paymentOption.save((err, result) => {
-    if (err) return res.status(400).json({ error: "Unable to toggle payment option status." });
-
+    const result = await paymentOption.save();
     createEntry(
       req.profile.name,
       `Toggled Payment Option ${paymentOption.name}`,
@@ -122,6 +124,7 @@ exports.toggleStatus = async (req, res) => {
       req
     );
     return res.json({ data: result, success: "Payment Option toggled successfully!" });
-
-  });
+  } catch (err) {
+    return res.status(400).json({ error: "Unable to toggle payment option status." });
+  }
 };

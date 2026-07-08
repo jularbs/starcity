@@ -10,7 +10,7 @@ const {
 
 const { createEntry } = require("../controllers/auditTrail");
 const { zonedTimeToUtc } = require("date-fns-tz");
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -47,24 +47,24 @@ exports.create = (req, res) => {
         `post/${year}/${month}/${slug}`
       );
       if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
-        let post = new Post();
-        post.title = title;
-        post.slug = slug;
-        post.content = content;
-        post.excerpt = excerpt;
-        post.featuredImage = imageInfo;
-        post.status = status;
-        post.publishDate = zonedTimeToUtc(publishDate, "Asia/Manila");
+        try {
+          let post = new Post();
+          post.title = title;
+          post.slug = slug;
+          post.content = content;
+          post.excerpt = excerpt;
+          post.featuredImage = imageInfo;
+          post.status = status;
+          post.publishDate = zonedTimeToUtc(publishDate, "Asia/Manila");
 
-        post.save((err, result) => {
-          if (err) {
-            res.json({
-              error: "Failed to save post. Please try again later.",
-            });
-          }
+          const result = await post.save();
           res.json(result);
           createEntry(req.profile.name, "Created new post", result, req);
-        });
+        } catch (err) {
+          res.json({
+            error: "Failed to save post. Please try again later.",
+          });
+        }
       } else {
         res.json({ error: "Error on uploading image to Amazon S3" });
       }
@@ -76,29 +76,35 @@ exports.create = (req, res) => {
   });
 };
 
-exports.read = (req, res) => {
+exports.read = async (req, res) => {
   const { slug } = req.params;
-  Post.findOne({ slug }).exec((err, result) => {
+  try {
+    const result = await Post.findOne({ slug }).exec();
     res.json(result);
-  });
+  } catch (err) {
+    res.status(400).json({
+      error: "Error occurred while fetching the post.",
+      message: err,
+    });
+  }
 };
 
-exports.list = (req, res) => {
+exports.list = async (req, res) => {
   const { skip, limit } = req.query;
-  Post.find({})
-    .skip(parseInt(skip))
-    .limit(parseInt(limit))
-    .exec(async (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      const count = await Post.countDocuments();
-      res.json({ data: result, count });
+  try {
+    const result = await Post.find({})
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .exec();
+    const count = await Post.countDocuments();
+    res.json({ data: result, count });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
+  }
 };
 
 exports.update = async (req, res) => {
@@ -137,16 +143,16 @@ exports.update = async (req, res) => {
     post.status = status;
     post.publishDate = zonedTimeToUtc(publishDate, "Asia/Manila");
 
-    post.save((err, result) => {
-      if (err) {
-        res.status(400).json({
-          error: "Error on updating post. Please try again later.",
-          payload: err,
-        });
-      }
+    try {
+      const result = await post.save();
       res.json(result);
       createEntry(req.profile.name, `Updated post ${post.title}`, result, req);
-    });
+    } catch (err) {
+      res.status(400).json({
+        error: "Error on updating post. Please try again later.",
+        payload: err,
+      });
+    }
   });
 };
 

@@ -6,7 +6,7 @@ const expressJwt = require("express-jwt");
 const { add } = require("date-fns");
 const { createEntry } = require("../controllers/auditTrail");
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
 
   if (password !== confirmPassword)
@@ -14,17 +14,18 @@ exports.signup = (req, res) => {
       .status(400)
       .json({ error: "Password and Confirm Password should match" });
 
-  User.findOne({ email }).exec((err, user) => {
+  try {
+    const user = await User.findOne({ email }).exec();
+
     if (user) {
       return res.status(400).json({
         error:
           "Email address is already registered. Please proceed to logging in.",
-        message: err,
       });
     }
 
-    let username = shortId.generate();
-    let newUser = new User({
+    const username = shortId.generate();
+    const newUser = new User({
       name,
       email,
       password,
@@ -38,28 +39,29 @@ exports.signup = (req, res) => {
     });
     newUser.otp = { token: OTP, validity: otpValidity };
 
-    newUser.save(async (err, success) => {
-      if (err) {
-        return res.status(400).json({
-          error: "Unable to signup new user.",
-          message: err,
-        });
-      }
+    await newUser.save();
 
-      return res.json({
-        success:
-          "Signup Success! Please wait for your acccount to be processed.",
-      });
+    return res.json({
+      success:
+        "Signup Success! Please wait for your acccount to be processed.",
     });
-  });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      error: "Unable to signup new user.",
+      message: error,
+    });
+  }
+
 };
 
 exports.signin = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  //check if user exists
-  User.findOne({ email }).exec((err, user) => {
-    if (err || !user) {
+    const user = await User.findOne({ email }).exec();
+
+    if (!user) {
       return res.status(400).json({
         error: "Email is not yet registered. Please create an account.",
       });
@@ -71,54 +73,51 @@ exports.signin = async (req, res) => {
           "Your account has been blocked due to many failed attempts to sign in. Please contact web administrator",
       });
     }
-    //authenticate
+
     if (!user.authenticate(password)) {
       user.mistakes = user.mistakes + 1;
-      user.save(async (err, success) => {
-        console.log("Failed log in attempt by: ", user.email);
-        console.log(
-          "Account mistake icremented due to failed login attempt: ",
-          user.email
-        );
-      });
-
+      await user.save();
       return res.status(400).json({
         error: "Email and password do not match.",
       });
     }
+
     if (!user.status) {
       return res.status(400).json({
         error: "Account is not yet approved.",
       });
     }
+
     //generate JWT
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
     res.cookie("token", token, { expiresIn: "1d" });
-    const { _id, name, email, department, role } = user;
 
     res.json({
       token,
       user: {
-        _id,
-        name,
-        email,
-        department,
-        role
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+        role: user.role
       },
     });
 
     user.mistakes = 0;
     user.lastLogin = new Date();
 
-    user.save(async (err, success) => {
-      console.log("Success log in attempt by: ", user.email);
-      console.log("Mistakes Reset");
-    });
+    await user.save();
 
     createEntry(user.name, "Logged in to system", { email: email }, req);
-  });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      error: "Unable to sign in. Please try again later.",
+      message: error,
+    });
+  }
 };
 
 exports.signout = (req, res) => {
@@ -128,16 +127,11 @@ exports.signout = (req, res) => {
   });
 };
 
-exports.changePassword = (req, res) => {
-  const { _id, currentPassword, newPassword, confirmation } = req.body;
+exports.changePassword = async (req, res) => {
+  try {
+    const { _id, currentPassword, newPassword, confirmation } = req.body;
 
-  User.findOne({ _id }).exec((err, user) => {
-    if (err) {
-      res
-        .status(400)
-        .json({ error: "Unable to change password. Please try again later" });
-    }
-
+    const user = await User.findOne({ _id }).exec();
     if (!user.authenticate(currentPassword)) {
       return res.status(400).json({
         error: "Current password is incorrect.",
@@ -152,42 +146,42 @@ exports.changePassword = (req, res) => {
 
     user.password = confirmation;
 
-    user.save((err, result) => {
-      if (err) {
-        res.status(400).json({
-          error: "Unable to change password. Please try again later",
-        });
-      }
+    await user.save();
+    createEntry(user.name, `Changed Password`, {}, req);
+    return res.json({ success: "Password successfully changed" });
 
-      res.json({ success: "Password successfully changed" });
-      createEntry(req.profile.name, `Changed Password`, {}, req);
-    });
-  });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: "Unable to change password. Please try again later" });
+  }
 };
 
 //User CRUD
 exports.remove = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const user = await User.findOne({ _id: id }).exec();
+    const user = await User.findOne({ _id: id }).exec();
 
-  if (!user)
-    return res.status(400).json({ error: "User not found" })
+    if (!user)
+      return res.status(400).json({ error: "User not found" })
 
-  user.deletedAt = new Date();
-  user.email = new Date().toISOString(); //convert to datetime so email can be registered again due to unique constraint
+    user.deletedAt = new Date();
+    user.email = new Date().toISOString(); //convert to datetime so email can be registered again due to unique constraint
 
-  user.save((err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(400).json({
-        error: "Failed to remove user. Please try again later.",
-      });
-    }
+    await user.save();
+
     return res.json({
       success: "User removed successfully",
     });
-  })
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      error: "Failed to remove user. Please try again later.",
+    });
+  }
+
 };
 
 exports.read = async (req, res) => {
@@ -231,18 +225,19 @@ exports.update = async (req, res) => {
   if (req.body?.role)
     user.role = req.body?.role;
 
-  user.save((err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(400).json({
-        error: "Failed to update user. Please try again later.",
-      });
-    }
+
+  try {
+    await user.save();
     return res.json({
       success: "User updated successfully",
     });
-  })
-}
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      error: "Failed to update user. Please try again later.",
+    });
+  }
+};
 
 exports.list = async (req, res) => {
   const {
@@ -303,11 +298,6 @@ exports.list = async (req, res) => {
       error: "Something went wrong"
     });
   }
-
-
-
-
-
 }
 
 exports.requireSignin = (req, res, next) => {
@@ -340,20 +330,23 @@ exports.requireSignin = (req, res, next) => {
   }
 }
 
-exports.authMiddleware = (req, res, next) => {
+exports.authMiddleware = async (req, res, next) => {
   // const authUserId = req.user._id;
   if (req.user?._id) {
-    User.findById({ _id: req.user?._id }).exec((err, user) => {
-      if (err || !user) {
+    try {
+      const user = await User.findById({ _id: req.user?._id }).exec();
+      if (!user) {
         return res.status(401).json({
           error: "Requesting user invalid"
-        })
+        });
       }
       req.profile = user;
       next();
-    });
+    } catch (err) {
+      return res.status(401).json({ error: "Invalid Authentication" });
+    }
   } else {
-    return res.status(401).json({ error: "Invalid Authentication" })
+    return res.status(401).json({ error: "Invalid Authentication" });
   }
 
 
@@ -362,270 +355,3 @@ exports.authMiddleware = (req, res, next) => {
 exports.validateToken = (req, res) => {
   return res.json({ message: "VALID" });
 };
-
-// exports.adminMiddleware = (req, res, next) => {
-//   const adminUserId = req.user._id;
-//   User.findById({
-//     _id: adminUserId,
-//   }).exec((err, user) => {
-//     if (err || !user) {
-//       return res.status(400).json({
-//         error: "User not found",
-//       });
-//     }
-
-//     if (user.role !== 1) {
-//       return res.status(400).json({
-//         error: "Admin resource. Access denied.",
-//       });
-//     }
-
-//     req.profile = user;
-//     next();
-//   });
-// };
-
-// exports.isVerifiedMiddleware = (req, res, next) => {
-//   const { verificationMethod } = req.profile;
-
-//   if (verificationMethod == "unverified") {
-//     res.json({
-//       error:
-//         "Your account is not verified yet. Please check email/SMS to verify your account.",
-//     });
-//   } else {
-//     next();
-//   }
-// };
-
-// exports.sendOTP = async (req, res) => {
-//   const etherealConfig = {
-//     host: "smtp.ethereal.email",
-//     port: 587,
-//     auth: {
-//       user: "martina.wisozk35@ethereal.email",
-//       pass: "6WcZXHe5RNvWSWPUpN",
-//     },
-//   };
-
-//   const transporter = nodemailer.createTransport(etherealConfig);
-
-//   const details = {
-//     to: req.otp.email,
-//     from: "noreply@manilabroadcasting.com.ph",
-//     subject: "Your OTP is ****",
-//     text: `Your OTP is ${req.otp.token}, it will expire on ${req.otp.validity}`,
-//   };
-
-//   let info = await transporter.sendMail(details);
-
-//   res.json(info);
-// };
-
-// exports.createOTP = (req, res, next) => {
-//   const { userid } = req.params;
-
-//   User.findOne({ _id: userid }).exec((err, user) => {
-//     if (err || !user) {
-//       return res.status(400).json({
-//         error: "User with that email does not exist. Please create an account.",
-//       });
-//     }
-
-//     const OTP = user.makeOTP();
-//     const otpValidity = add(new Date(), {
-//       minutes: 5,
-//     });
-
-//     user.otp = { token: OTP, validity: otpValidity };
-
-//     user.save((err, data) => {
-//       if (err) {
-//         return res.status(400).json({
-//           error: "Error on database. Please try again",
-//           message: err,
-//         });
-//       }
-
-//       req.otp = {
-//         token: data.otp.token,
-//         validity: data.otp.validity,
-//         email: data.email,
-//       };
-//       next();
-//     });
-//   });
-// };
-
-// exports.verifyOTP = (req, res, next) => {
-//   const { _id, otp } = req.body;
-
-//   User.findOne({ _id }).exec((err, user) => {
-//     if (err || !user) {
-//       return res.status(400).json({
-//         error: "User with that email does not exist. Please create an account.",
-//       });
-//     }
-
-//     const currentTime = new Date();
-//     if (isBefore(currentTime, user.otp.validity) && otp == user.otp.token) {
-//       //removeOTP
-//       user.otp = {};
-//       user.save((err, data) => {
-//         req.valid = true;
-//         req.user = data;
-//         next();
-//       });
-//     } else {
-//       req.valid = false;
-//       next();
-//     }
-//   });
-// };
-
-// exports.verifyAccount = (req, res) => {
-//   const isValid = req.valid;
-
-//   if (isValid) {
-//     const user = req.user;
-//     user.verificationMethod = "Verified via Email";
-//     user.save((err, result) => {
-//       if (err) {
-//         return res.status(400).json({
-//           error: err,
-//         });
-//       }
-//       res.json({ success: true, message: "User is now verified" });
-//     });
-//   } else {
-//     res.json({ error: "OTP is not valid. Please try again." });
-//   }
-// };
-
-// exports.verifyThroughEmail = async (req, res) => {
-//   const { _id, otp } = req.params;
-
-//   try {
-//     const user = await User.findOne({ _id }).exec();
-//     const currentTime = new Date();
-//     // if (isBefore(currentTime, user.otp.validity) && otp == user.otp.token) {
-//     if (otp == user.otp.token) {
-//       //removeOTP
-//       user.otp = {};
-//       user.verificationMethod = "Verified via Email";
-
-//       user.save((err, data) => {
-//         if (err) {
-//           console.log(err);
-//           res.json("Invalid Verification Token.");
-//         }
-//         res.redirect(`${process.env.FRONTEND_DOMAIN}msff/?verified=true`);
-//       });
-//     } else {
-//       res.json(
-//         "Invalid Token. Your account may already be verified. Please try logging in."
-//       );
-//     }
-//   } catch (e) {
-//     console.log(e);
-//     res.json("Invalid Token");
-//   }
-// };
-
-// exports.createChangePasswordToken = (req, res) => {
-//   const { email } = req.body;
-
-//   User.findOne({ email }).exec((err, user) => {
-//     if (err || !user) {
-//       return res.status(400).json({
-//         error: "The email you submitted is not yet registered.",
-//       });
-//     }
-
-//     const changeToken = user.makeSalt();
-
-//     const encryptedToken = user.encryptPassword(changeToken);
-
-//     user.resetPasswordLink.token = encryptedToken;
-
-//     user.save(async (err, data) => {
-//       if (err) {
-//         return res.status(400).json({
-//           error: "Error on database. Please try again",
-//           message: err,
-//         });
-//       }
-
-//       //email link to user {`${process.env.FRONTEND_DOMAIN}/msff/auth/changepassword?i=${data._id}&t=${data.resetPasswordLink.token}`}
-
-//       const details = {
-//         to: email,
-//         from: process.env.MBC_EMAIL,
-//         subject: "Password Reset Request for DZRH News",
-//         html: `
-//         <h1>PASSWORD RESET</h1>
-//         <p>If you requested a password reset, clink the link below to complete the process. If you didn't make this request, ignore this email.</p>
-//         <a href="${process.env.FRONTEND_DOMAIN}msff/auth/changepassword?i=${data._id}&t=${data.resetPasswordLink.token}">Click here to change password.</a>
-//         <p>If you encounter issues clinking the link above, copy and paste the following url in your browser:
-//         ${process.env.FRONTEND_DOMAIN}/msff/auth/changepassword?i=${data._id}&t=${data.resetPasswordLink.token}</p>`,
-//       };
-
-//       try {
-//         let info = await sendMail(details);
-//       } catch (e) {
-//         console.log(e);
-//       }
-//       res.json({
-//         success: "Please check your email to reset your password",
-//       });
-//     });
-//   });
-// };
-
-// exports.changePassword = (req, res) => {
-//   const { _id, password, token } = req.body;
-
-//   User.findOne({ _id }).exec((err, user) => {
-//     if (err || !user) {
-//       return res.status(400).json({
-//         error: "Error on changing password. User not found",
-//       });
-//     }
-
-//     if (user.resetPasswordLink.token !== token) {
-//       return res.status(400).json({
-//         error: "Token invalid",
-//       });
-//     }
-
-//     user.password = password;
-//     user.resetPasswordLink.token = "";
-
-//     user.save(async (err, data) => {
-//       if (err) {
-//         return res.status(400).json({
-//           error: "Error on database. Please try again",
-//           message: err,
-//         });
-//       }
-
-//       const details = {
-//         to: data.email,
-//         from: process.env.MBC_EMAIL,
-//         subject: "Change password confirmation",
-//         html: `
-//         <h1>PASSWORD CHANGE CONFIRMATION</h1>
-//         <p>Your password was changed successfully. If you didn't make this request, please report this incident to contactus@dzrh.com.ph.</p>`,
-//       };
-
-//       try {
-//         let info = await sendMail(details);
-//       } catch (e) {
-//         console.log(e);
-//       }
-//       res.json({
-//         success: "Password changed successfully, please proceed to log in.",
-//       });
-//     });
-//   });
-// };

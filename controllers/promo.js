@@ -43,18 +43,18 @@ exports.create = async (req, res) => {
             promo.acceptedPaymentMethods = JSON.parse(paymentOptions)
 
 
-        promo.save((err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(400).json({
-                    error: "Failed to add promo. Please try again later.",
-                });
-            }
+        try {
+            const result = await promo.save();
             return res.json({
                 success: "Promo Code created successfully",
                 data: result
             });
-        })
+        } catch (err) {
+            console.log(err);
+            return res.status(400).json({
+                error: "Failed to add promo. Please try again later.",
+            });
+        }
     });
 }
 
@@ -111,18 +111,18 @@ exports.update = async (req, res) => {
             promo.acceptedPaymentMethods = JSON.parse(paymentOptions)
 
 
-        promo.save((err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(400).json({
-                    error: "Failed to update promo. Please try again later.",
-                });
-            }
+        try {
+            const result = await promo.save();
             return res.json({
                 success: "Promo Code updated successfully",
                 data: result
             });
-        })
+        } catch (err) {
+            console.log(err);
+            return res.status(400).json({
+                error: "Failed to update promo. Please try again later.",
+            });
+        }
     });
 };
 
@@ -141,18 +141,18 @@ exports.remove = async (req, res) => {
 
     promo.deletedAt = new Date();
 
-    promo.save((err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(400).json({
-                error: "Failed to remove promo. Please try again later.",
-            });
-        }
+    try {
+        const result = await promo.save();
         return res.json({
             success: "Promo Code removed successfully",
             data: result
         });
-    })
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({
+            error: "Failed to remove promo. Please try again later.",
+        });
+    }
 }
 
 exports.apply = async (req, res) => {
@@ -229,16 +229,16 @@ exports.toggle = async (req, res) => {
 
     promo.status = !promo.status;
 
-    promo.save((err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(400).json({
-                error: "Failed to toggle promo. Please try again later.",
-            });
-        }
+    try {
+        const result = await promo.save();
         return res.json({
             success: "Promo toggled successfully",
             data: result
         });
-    })
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({
+            error: "Failed to toggle promo. Please try again later.",
+        });
+    }
 }

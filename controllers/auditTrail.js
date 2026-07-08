@@ -15,21 +15,26 @@ exports.createEntry = (user, action, payload, req) => {
   at.save();
 };
 
-exports.list = (req, res) => {
+exports.list = async (req, res) => {
   const { skip = 0, limit = 0 } = req.query;
-  AuditTrail.find({})
-    .select("userName action payload createdAt ipAddress -_id")
-    .sort("-createdAt")
-    .skip(parseInt(skip))
-    .limit(parseInt(limit))
-    .exec(async (err, result) => {
-      if (err) {
-        console.log("Audit Error: ", err)
-        return res.status(400).json({
-          error: "Error occured",
-        });
-      }
-      const count = await AuditTrail.countDocuments();
-      return res.json({ data: result, count });
+
+  try {
+    const auditTrails = await AuditTrail.find({})
+      .select("userName action payload createdAt ipAddress -_id")
+      .sort("-createdAt")
+      .skip(parseInt(skip))
+      .limit(parseInt(limit))
+      .exec();
+
+    const count = await AuditTrail.countDocuments();
+    return res.json({ data: auditTrails, count });
+  } catch (err) {
+    console.log("Audit Error: ", err)
+    return res.status(400).json({
+      error: "Error occured",
     });
+  }
+
+
+
 };

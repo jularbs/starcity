@@ -15,40 +15,35 @@ exports.logoUpload = async (req, res) => {
     let option = await Option.findOne({ name }).exec();
 
     if (option) {
-      option.name = name;
-      option.value = imageInfo.location;
-      option.meta = imageInfo;
-
-      option.save((err, result) => {
-        if (err) {
-          return res.status(400).json({
-            error: "error occured",
-            message: err,
-          });
-        }
+      try {
+        option.name = name;
+        option.value = imageInfo.location;
+        option.meta = imageInfo;
+        const result = await option.save();
         res.json({ result, status: "success" });
-
         createEntry(
           req.profile.name,
           `Option ${name} updated`,
           imageInfo,
           req
         );
-      });
+      } catch (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
+
     } else {
-      const slug = slugify(name).toLowerCase();
-      let newOption = new Option();
+      try {
+        const slug = slugify(name).toLowerCase();
+        let newOption = new Option();
 
-      newOption.name = name;
-      newOption.slug = slug;
-      newOption.value = value;
+        newOption.name = name;
+        newOption.slug = slug;
+        newOption.value = value;
 
-      newOption.save((err, result) => {
-        if (err) {
-          return res.status(400).json({
-            error: "error occured",
-          });
-        }
+        const result = await newOption.save();
         res.json(result);
         createEntry(
           req.profile.name,
@@ -58,7 +53,12 @@ exports.logoUpload = async (req, res) => {
           },
           req
         );
-      });
+      } catch (err) {
+        return res.status(400).json({
+          error: "error occured",
+          message: err,
+        });
+      }
     }
   });
 };
@@ -72,41 +72,34 @@ exports.create = async (req, res) => {
     option.name = name;
     option.value = value;
     option.meta = meta;
+    try {
 
-    option.save((err, result) => {
-      if (err) {
-        return res.status(400).json({
-          error: "Unable to save option. Please try again later.",
-          message: err,
-        });
-      }
-
-      createEntry(
-        req.profile.name,
-        `Option ${name} updated`,
-        { value: req.value },
-        req
-      );
-      return res.json({ result, success: "Option has been updated successfully!" });
-
-
-    });
+    } catch (err) {
+      return res.status(400).json({
+        error: "Unable to save option. Please try again later.",
+        message: err,
+      });
+    }
+    const result = await option.save();
+    createEntry(
+      req.profile.name,
+      `Option ${name} updated`,
+      { value: req.value },
+      req
+    );
+    return res.json({ result, success: "Option has been updated successfully!" });
   } else {
-    const slug = slugify(name).toLowerCase();
+    try {
+      const slug = slugify(name).toLowerCase();
 
-    let newOption = new Option();
+      let newOption = new Option();
 
-    newOption.name = name;
-    newOption.slug = slug;
-    newOption.value = value;
-    newOption.meta = meta;
+      newOption.name = name;
+      newOption.slug = slug;
+      newOption.value = value;
+      newOption.meta = meta;
 
-    newOption.save((err, result) => {
-      if (err) {
-        return res.status(400).json({
-          error: "Unable to save option. Please try again later.",
-        });
-      }
+      const result = await newOption.save();
       createEntry(
         req.profile.name,
         `Option ${name} created`,
@@ -116,41 +109,49 @@ exports.create = async (req, res) => {
         req
       );
       return res.json({ result, success: "Option has been updated successfully!" });
+    } catch (err) {
+      return res.status(400).json({
+        error: "Unable to save option. Please try again later.",
+        message: err,
+      });
+    }
+  }
+};
+
+exports.read = async (req, res) => {
+  try {
+    const data = await Option.findOne({ name: req.params.name })
+      .select("name value")
+      .exec();
+    res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
     });
   }
 };
 
-exports.read = (req, res) => {
-  Option.findOne({ name: req.params.name })
-    .select("name value")
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
-    });
+exports.list = async (req, res) => {
+  try {
+    const options = await Option.find()
+      .select("name value")
+      .exec();
+    res.json(options);
+  } catch (err) {
+    res.status(400).json({ error: "Unable to retrieve options" });
+  }
 };
 
-exports.list = (req, res) => {
-  Option.find()
-    .select("name value")
-    .exec((err, options) => {
-      if (err) res.status(400).json({ error: "Unable to retrieve options" });
-      res.json(options);
-    });
-};
-
-exports.listOptionsv2 = (req, res) => {
-  Option.find({})
-    .select("name value")
-    .exec((error, result) => {
-      if (error)
-        return res.status(400).json({ error: "Unable to retrieve options" });
-      return res.status(200).json(result);
-    });
+exports.listOptionsv2 = async (req, res) => {
+  try {
+    const result = await Option.find({})
+      .select("name value")
+      .exec();
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(400).json({ error: "Unable to retrieve options" });
+  }
 };
 
 exports.update = async (req, res) => {
@@ -162,28 +163,27 @@ exports.update = async (req, res) => {
   option.value = value;
   option.meta = meta;
 
-  option.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-    res.json({ result, status: "success" });
-  });
+  try {
+    const result = await option.save();
+    return res.json({ result, status: "success" });
+  } catch (err) {
+    return res.status(400).json({
+      error: "Unable to update option. Please try again later.",
+      message: err,
+    });
+  }
 };
 
 exports.remove = async (req, res) => {
   const { slug } = req.body;
-
-  Option.findOneAndDelete({ slug }).exec(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-
+  try {
+    await Option.findOneAndDelete({ slug }).exec();
     res.json({ success: "Payment Option deleted successfully" });
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
+
 };

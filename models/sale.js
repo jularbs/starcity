@@ -26,10 +26,12 @@ const cartItem = new mongoose.Schema(
       required: true,
       default: 1,
     },
+  },
+  {
+    toJSON: { getters: true },
     id: false,
     _id: false,
-  },
-  { toJSON: { getters: true } }
+  }
 );
 
 const saleSchema = new mongoose.Schema(
@@ -89,9 +91,12 @@ const saleSchema = new mongoose.Schema(
     },
     meta: Object,
     expiryDate: String,
-    id: false,
   },
-  { timestamps: true, toJSON: { getters: true } }
+  {
+    timestamps: true,
+    toJSON: { getters: true },
+    id: false,
+  }
 );
 
 module.exports = mongoose.model("Sale", saleSchema);

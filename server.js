@@ -6,6 +6,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 
 require("dotenv").config();
+mongoose.set("strictQuery", true);
 
 //routes
 const rideCategoryRoutes = require("./routes/rideCategory");
@@ -19,7 +20,6 @@ const postRoutes = require("./routes/post");
 const imageSliderRoutes = require("./routes/imageSlider");
 const authRoutes = require("./routes/auth");
 const bannerRoutes = require("./routes/banner");
-const healthDeclarationRoutes = require("./routes/healthDeclaration");
 const mediaRoutes = require("./routes/media");
 const webhookRoutes = require("./routes/webhooks");
 const promoRoutes = require("./routes/promo");
@@ -47,12 +47,7 @@ app.use(
 );
 
 mongoose
-  .connect(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.DB_CONNECTION_STRING)
   .then(() => console.log(`DB connected`))
   .catch((error) => console.log("Error in connecting to DB: " + error));
 
@@ -76,7 +71,6 @@ app.use("/api", postRoutes);
 app.use("/api", imageSliderRoutes);
 app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
-app.use("/api", healthDeclarationRoutes);
 app.use("/api", mediaRoutes);
 app.use("/api", promoRoutes);
 app.use("/webhooks", webhookRoutes);

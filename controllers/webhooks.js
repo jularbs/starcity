@@ -30,7 +30,8 @@ exports.paymayaPaymentSuccess = async (req, res) => {
     status: status,
   };
 
-  sale.save((err, result) => {
+  try {
+    const result = await sale.save();
     res
       .status(200)
       .json({ status: status, message: "Paymaya payment processed" });
@@ -42,7 +43,12 @@ exports.paymayaPaymentSuccess = async (req, res) => {
       console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
       sendAR(result.refId);
     }
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "Unable to process Paymaya payment",
+      message: err,
+    });
+  }
 };
 
 exports.paymayaPaymentFailed = async (req, res) => {
@@ -116,15 +122,14 @@ exports.dragonPaySuccess = async (req, res) => {
       amountPaid: amount,
     };
 
-    sale.save((err, result) => {
-      //send Acknowledgement receipt
-      if (status == "S" || status == "s") {
-        console.log("GENERATING ACCESS PASS");
-        generateAccessPass(result, result.cartItems);
-        console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
-        sendAR(result.refId);
-      }
-    });
+    const result = await sale.save();
+    //send Acknowledgement receipt
+    if (status == "S" || status == "s") {
+      console.log("GENERATING ACCESS PASS");
+      generateAccessPass(result, result.cartItems);
+      console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
+      sendAR(result.refId);
+    }
 
     res.setHeader("Content-Type", "text/plain");
     res.send("result=OK");
@@ -142,7 +147,7 @@ exports.dragonPayReturn = async (req, res) => {
   );
 };
 
-const addToQueue = (
+const addToQueue = async (
   tokenID,
   rideCode,
   ticketExpiry,
@@ -153,13 +158,13 @@ const addToQueue = (
   newQ.RideCode = rideCode;
   newQ.status = status;
   newQ.ticketExpiry = ticketExpiry;
-  newQ.save((err, result) => {
-    if (err) {
-      console.log("ERROR IN QUEUEING SM TICKET: ", err);
-    } else {
-      console.log("QUEUE CREATED FOR SM TICKET: ", tokenID);
-    }
-  });
+
+  try {
+    const newQueue = await newQ.save();
+    console.log("QUEUE CREATED FOR SM TICKET: ", tokenID);
+  } catch (err) {
+    console.log("ERROR IN QUEUEING SM TICKET: ", err);
+  }
 };
 
 const checkExisting = (tickets) => {
@@ -185,7 +190,7 @@ const checkExisting = (tickets) => {
 };
 
 const processTickets = (tickets) => {
-  tickets.map((item) => {
+  tickets.map(async (item) => {
     const { ticketID, ticketType, ticketExpiry } = item;
     console.log("PROCESSING TICKET: ", item);
 
@@ -203,13 +208,12 @@ const processTickets = (tickets) => {
       )} 23:59:59`;
     }
 
-    newticket.save((err) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log("SM Ticket recorded: ", ticketID);
-      }
-    });
+    try {
+      const result = await newticket.save();
+      console.log("SM Ticket recorded: ", ticketID);
+    } catch (err) {
+      console.log(err);
+    }
 
     try {
       pool.getConnection(async (err, connection) => {
@@ -343,7 +347,7 @@ exports.smTicketVoid = async (req, res) => {
 
   if (token == process.env.SM_TOKEN) {
     if (tickets) {
-      tickets.map((item) => {
+      tickets.map(async (item) => {
         const { ticketID } = item;
         console.log("VOIDING TICKET: ", ticketID);
 
@@ -352,13 +356,12 @@ exports.smTicketVoid = async (req, res) => {
         newticket.tokenId = ticketID;
         newticket.method = "Void";
 
-        newticket.save((err) => {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log("SM Ticket voided: ", ticketID);
-          }
-        });
+        try {
+          const result = await newticket.save();
+          console.log("SM Ticket voided: ", ticketID);
+        } catch (err) {
+          console.log(err);
+        };
 
         try {
           pool.getConnection(async (err, connection) => {
@@ -431,7 +434,8 @@ exports.paypalProcess = async (req, res) => {
     status: status,
   };
 
-  sale.save((err, result) => {
+  try {
+    const result = await sale.save();
     res
       .status(200)
       .json({ status: status, message: "Paypal payment processed" });
@@ -443,7 +447,12 @@ exports.paypalProcess = async (req, res) => {
       console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
       sendAR(result.refId);
     }
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "Unable to process Paypal payment",
+      message: err,
+    });
+  }
 };
 
 exports.paypalOnApprove = async (req, res) => {
@@ -487,7 +496,8 @@ exports.paypalOnApprove = async (req, res) => {
       };
 
       //UPDATE DATA
-      sale.save((err, result) => {
+      try {
+        const result = await sale.save();
         res.status(200).json({ status: "ok" });
         if (
           status == "COMPLETED" ||
@@ -499,7 +509,12 @@ exports.paypalOnApprove = async (req, res) => {
           console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
           sendAR(result.refId);
         }
-      });
+      } catch (err) {
+        return res.status(400).json({
+          error: "Unable to process Paypal payment",
+          message: err,
+        });
+      }
 
       //SEND STATUS 200
     } else if (
@@ -543,7 +558,8 @@ exports.bpiTransact = async (req, res) => {
         };
 
         //UPDATE DATA
-        sale.save((err, result) => {
+        try {
+          const result = await sale.save();
           if (transactionStatus == "SUCCESSFUL") {
             console.log("GENERATING ACCESS PASS");
             generateAccessPass(result, result.cartItems);
@@ -551,7 +567,9 @@ exports.bpiTransact = async (req, res) => {
             sendAR(result.refId);
             return res.redirect(`${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`);
           }
-        });
+        } catch (err) {
+          console.log("Unable to process BPI payment", err);
+        }
         //SEND STATUS 200
       } else {
         console.log(`BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`);
@@ -566,4 +584,4 @@ exports.bpiTransact = async (req, res) => {
 
   }
 
-}
+};

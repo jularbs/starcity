@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     },
     salt: String,
     resetPasswordLink: {
-      token: String,
+      type: String,
       default: "",
     },
     status: {

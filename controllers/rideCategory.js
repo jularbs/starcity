@@ -4,7 +4,7 @@ const formidable = require("formidable");
 
 const { createEntry } = require("../controllers/auditTrail");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   const { name, description } = req.body;
 
   const slug = slugify(name).toLowerCase();
@@ -15,42 +15,41 @@ exports.create = (req, res) => {
   rideCategory.description = description;
   rideCategory.slug = slug;
 
-  rideCategory.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "Failed to add new ride category. Please try again!",
-      });
-    }
-
+  try {
+    const result = await rideCategory.save();
     createEntry(req.profile.name, `Created new Ride Category`, result, req);
     return res.json({ data: result, success: "Ride Category added successfully!" });
-  });
-};
-
-exports.read = (req, res) => {
-  Option.findOne({ slug: req.params.slug })
-    .select("name description slug image meta")
-    .exec((err, data) => {
-      if (err) {
-        return res.status(400).json({
-          error: "error occured",
-          message: err,
-        });
-      }
-      res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "Failed to add new ride category. Please try again!",
     });
+  }
 };
 
-exports.list = (req, res) => {
-  RideCategory.find().exec((err, data) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
+exports.read = async (req, res) => {
+  try {
+    const data = await RideCategory.findOne({ slug: req.params.slug })
+      .select("name description slug image meta")
+      .exec();
     res.json(data);
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
+};
+
+exports.list = async (req, res) => {
+  try {
+    const data = await RideCategory.find().exec();
+    res.json(data);
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.update = async (req, res) => {
@@ -61,32 +60,29 @@ exports.update = async (req, res) => {
   rideCategory.name = name;
   rideCategory.description = description;
 
-  rideCategory.save((err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
+  try {
+    const result = await rideCategory.save();
     res.json({ result, status: "success" });
     createEntry(req.profile.name, `Updated Ride Category ${name}`, result, req);
-  });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };
 
 exports.remove = async (req, res) => {
   const { slug } = req.body;
 
-  RideCategory.findOneAndDelete({ slug }).exec(async (err, result) => {
-    if (err) {
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-
-    const data = await RideCategory.find().exec();
-
-    res.json({ success: "Ride Category deleted successfully" });
+  try {
+    const result = await RideCategory.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted Ride Category`, { slug }, req);
-  });
+    res.json({ success: "Ride Category deleted successfully" });
+  } catch (err) {
+    return res.status(400).json({
+      error: "error occured",
+      message: err,
+    });
+  }
 };

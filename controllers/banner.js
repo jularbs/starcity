@@ -10,7 +10,7 @@ const { createEntry } = require("../controllers/auditTrail");
 
 const { zonedTimeToUtc } = require("date-fns-tz");
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -53,6 +53,14 @@ exports.create = (req, res) => {
         `banners/${year}/${month}/${slug}`
       );
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
+        try {
+
+        } catch (err) {
+          console.log(err);
+          res.status(400).json({
+            error: "Failed to add banner. Please try again later.",
+          });
+        }
         let b = new Banner();
         b.name = name;
         b.link = link;
@@ -63,30 +71,22 @@ exports.create = (req, res) => {
         b.status = false;
         b.sizeCategory = sizeCategory;
 
-        b.save((err, result) => {
-          if (err) {
-            console.log(err);
-            res.status(400).json({
-              error: "Failed to add banner. Please try again later.",
-            });
-          }
-          res.json(result);
-          createEntry(
-            req.profile.name,
-            "Created new banner",
-            {
-              name,
-              startDate,
-              endDate,
-              sizeCategory,
-            },
-            req
-          );
-        });
+        const banner = await b.save();
+        res.json(banner);
+        createEntry(
+          req.profile.name,
+          "Created new banner",
+          {
+            name,
+            startDate,
+            endDate,
+            sizeCategory,
+          },
+          req
+        );
       } else {
         console.log("error at image upload");
-
-        res
+        return res
           .status(400)
           .json({ error: "Error on uploading image to Amazon S3" });
       }
@@ -100,17 +100,25 @@ exports.create = (req, res) => {
   });
 };
 
-exports.read = (req, res) => {
-  const { slug } = req.params;
-  Banner.findOne({ slug }).exec((err, result) => {
+exports.read = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const result = await Banner.findOne({ slug }).exec();
     res.json(result);
-  });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({ error: "Error on getting banner information" });
+  }
 };
 
-exports.list = (req, res) => {
-  Banner.find({}).exec((err, result) => {
+exports.list = async (req, res) => {
+  try {
+    const result = await Banner.find({}).exec();
     res.json(result);
-  });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({ error: "Error on getting banners list" });
+  }
 };
 
 exports.update = async (req, res) => {
@@ -142,7 +150,7 @@ exports.update = async (req, res) => {
         image,
         `banners/${year}/${month}/${slug}`
       );
-      if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
+      if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         b.image = imageInfo;
       } else {
         res
@@ -151,13 +159,9 @@ exports.update = async (req, res) => {
       }
     }
 
-    b.save((err, result) => {
-      if (err) {
-        res.status(400).json({
-          error: "Failed to add banner. Please try again later.",
-        });
-      }
-      res.json(result);
+    try {
+      const banner = await b.save();
+      res.json(banner);
       createEntry(
         req.profile.name,
         `Updated banner ${slug}`,
@@ -170,7 +174,11 @@ exports.update = async (req, res) => {
         },
         req
       );
-    });
+    } catch (err) {
+      res.status(400).json({
+        error: "Failed to add banner. Please try again later.",
+      });
+    }
   });
 };
 
@@ -188,14 +196,16 @@ exports.toggleStatus = async (req, res) => {
   let b = await Banner.findOne({ _id }).exec();
   b.status = !b.status;
 
-  b.save((err, result) => {
-    if (err) res.status(400).json({ error: "Unable to toggle banner status." });
-    res.json({ result });
+  try {
+    const banner = await b.save();
+    res.json({ banner });
     createEntry(
       req.profile.name,
-      `Toggled banner status ${result.name}`,
-      { status: result.status },
+      `Toggled banner status ${banner.name}`,
+      { status: banner.status },
       req
     );
-  });
+  } catch (err) {
+    res.status(400).json({ error: "Unable to toggle banner status." });
+  }
 };
