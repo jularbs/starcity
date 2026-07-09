@@ -51,7 +51,7 @@ exports.cronSyncAP = async () => {
             const sql =
               "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
 
-            connection.query(sql, [values], function (error, results, fields) {
+            connection.query(sql, [values], async function (error, results, fields) {
               if (error) {
                 console.log("FAILED TO SYNC: ", q.accessPass.accessToken);
                 addAuditTrailEntry({
@@ -61,11 +61,11 @@ exports.cronSyncAP = async () => {
               } else if (results.affectedRows < 1) {
                 console.log(
                   `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                  accessPass.accessToken
+                  q.accessPass.accessToken
                 );
               } else {
                 //remove in queue;
-                AccessPassQueue.deleteOne({ _id: q._id }).exec();
+                await AccessPassQueue.deleteOne({ _id: q._id }).exec();
                 console.log(
                   "ACCESSPASS SUCCESS FOR ID: ",
                   q.accessPass.accessToken
@@ -117,7 +117,7 @@ exports.cronSyncSMTickets = async () => {
           const sql =
             "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
 
-          connection.query(sql, [values], function (error, results, fields) {
+          connection.query(sql, [values], async function (error, results, fields) {
             //if Error: do not remove in queue
             if (error) {
               console.log("Unable to process SM Queue: ", error);
@@ -131,7 +131,7 @@ exports.cronSyncSMTickets = async () => {
 
             // no error (remove from queue);
             console.log("SM Queue Processed for tokenID: ", q.tokenID);
-            SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
+            await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
             return 1;
           });
         });
@@ -182,7 +182,7 @@ exports.forceSync = async (skip, limit) => {
             const sql =
               "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;";
 
-            connection.query(sql, [values], function (error, results, fields) {
+            connection.query(sql, [values], async function (error, results, fields) {
               if (error) {
                 console.log("FAILED TO SYNC: ", q.accessPass.accessToken);
                 addAuditTrailEntry({
@@ -192,11 +192,11 @@ exports.forceSync = async (skip, limit) => {
               } else if (results.affectedRows < 1) {
                 console.log(
                   `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                  accessPass.accessToken
+                  q.accessPass.accessToken
                 );
               } else {
                 //remove in queue;
-                AccessPassQueue.deleteOne({ _id: q._id }).exec();
+                await AccessPassQueue.deleteOne({ _id: q._id }).exec();
                 console.log(
                   "ACCESSPASS SUCCESS FOR ID: ",
                   q.accessPass.accessToken
