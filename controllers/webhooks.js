@@ -16,12 +16,26 @@ const { cronSyncSMTickets } = require("../helpers/cronjobs.js");
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
   console.log("PAYMAYA PAYLOAD: ", req.body);
-  const { status, requestReferenceNumber } = req.body;
+  const { status = 'success', requestReferenceNumber } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
   const pOption = await PaymentOption.findOne({ slug: option })
-    .select("_id")
+    .select("_id status")
     .exec();
+
+  if (pOption.status == false) {
+    return res.status(400).json({
+      error: "Payment option is disabled",
+      message: "Please contact support",
+    });
+  }
+
+  if (!sale) {
+    return res.status(400).json({
+      error: "Sale not found",
+      message: "Please contact support",
+    });
+  }
 
   sale.status = status;
   sale.paymentDetails = {
