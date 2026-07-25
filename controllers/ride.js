@@ -42,9 +42,7 @@ exports.create = (req, res) => {
 
         try {
           const result = await ride.save();
-          const r = await result
-            .populate("rideCategoryId", "name")
-            .execPopulate();
+          const r = await result.populate("rideCategoryId", "name");
           res.status(200).json({ data: r, success: "Ride added successfully" });
 
           createEntry(req.profile.name, `Create new ride`, { result }, req);
@@ -131,9 +129,7 @@ exports.update = async (req, res) => {
 
       try {
         const result = await ride.save();
-        const r = await result
-          .populate("rideCategoryId", "name _id")
-          .execPopulate();
+        const r = await result.populate("rideCategoryId", "name _id");
         createEntry(req.profile.name, `Updated ride ${r.name}`, {}, req);
 
         return res.json({ result: r, success: "Ride/Attraction updated successfully!" });

@@ -211,13 +211,14 @@ exports.sendAR = async (refId) => {
           //add to email queue
           let q = new EmailQueue();
           q.refId = refId;
-          q.save((err, result) => {
-            if (err) {
-              console.log("ERROR IN QUEUEING EMAIL: ", err);
-            } else {
+          q
+            .save()
+            .then(() => {
               console.log("QUEUE CREATED FOR REF ID: ", refId);
-            }
-          });
+            })
+            .catch((err) => {
+              console.log("ERROR IN QUEUEING EMAIL: ", err);
+            });
           resolve(false);
         } else {
           console.log("EMAIL SENT SUCCESSFULLY");
