@@ -23,6 +23,14 @@ exports.paymayaPaymentSuccess = async (req, res) => {
     .select("_id status")
     .exec();
 
+  if (!sale) {
+    console.log("PAYMAYA PAYMENT SALE NOT FOUND: ", requestReferenceNumber);
+    return res.status(400).json({
+      error: "Sale not found",
+      message: "Please contact support",
+    });
+  }
+
   if (!sale || amount != sale.orderTotal) {
     console.log("PAYMAYA PAYMENT AMOUNT MISMATCH: ", amount, "EXPECTED: ", sale.orderTotal);
     return res.status(400).json({
@@ -35,14 +43,6 @@ exports.paymayaPaymentSuccess = async (req, res) => {
     console.log("PAYMAYA PAYMENT OPTION DISABLED: ", pOption.status);
     return res.status(400).json({
       error: "Payment option is disabled",
-      message: "Please contact support",
-    });
-  }
-
-  if (!sale) {
-    console.log("PAYMAYA PAYMENT SALE NOT FOUND: ", requestReferenceNumber);
-    return res.status(400).json({
-      error: "Sale not found",
       message: "Please contact support",
     });
   }
