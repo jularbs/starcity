@@ -16,12 +16,19 @@ const { cronSyncSMTickets } = require("../helpers/cronjobs.js");
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
   console.log("PAYMAYA PAYLOAD: ", req.body);
-  const { status = 'success', requestReferenceNumber } = req.body;
+  const { status = 'success', requestReferenceNumber, amount } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
   const pOption = await PaymentOption.findOne({ slug: option })
     .select("_id status")
     .exec();
+
+  if (!sale || amount != sale.orderTotal) {
+    return res.status(400).json({
+      error: "Payment amount mismatch",
+      message: "Please contact support",
+    });
+  }
 
   if (pOption.status == false) {
     return res.status(400).json({
