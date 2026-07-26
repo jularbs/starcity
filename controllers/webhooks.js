@@ -13,6 +13,14 @@ const { format } = require("date-fns");
 
 const { cronSyncSMTickets } = require("../helpers/cronjobs.js");
 
+exports.paymayaCreateCheckout = async (req, res) => {
+  const paymayaPK = process.env.PAYMAYA_PUBLIC_KEY;
+  const PaymayaCredentialsBase64 = Buffer.from(paymayaPK + ":").toString("base64");
+
+
+
+}
+
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
   console.log("PAYMAYA PAYLOAD: ", req.body);

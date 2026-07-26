@@ -250,12 +250,9 @@ exports.dbcleanup = async () => {
   //   function (err) { }
   // );
 
-  const deleteSalesData = await Sale.deleteMany(
-    {
-      createdAt: { $lte: previous2Months },
-    },
-    function (err) { }
-  );
+  const deleteSalesData = await Sale.deleteMany({
+    createdAt: { $lte: previous2Months },
+  });
 
   console.log("Database clean up: Removing data before -", format(previous2Months, "PPpp"));
   // console.log("Database clean up: Deleted Access Pass -", accessPassCount);

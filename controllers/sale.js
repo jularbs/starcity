@@ -682,19 +682,13 @@ exports.cleanUp = async (req, res) => {
     createdAt: { $lte: previous2Months },
   });
 
-  const deleteAccessPass = await AccessPass.deleteMany(
-    {
-      createdAt: { $lte: previous2Months },
-    },
-    function (err) { }
-  );
+  const deleteAccessPass = await AccessPass.deleteMany({
+    createdAt: { $lte: previous2Months },
+  });
 
-  const deleteSalesData = await Sale.deleteMany(
-    {
-      createdAt: { $lte: previous2Months },
-    },
-    function (err) { }
-  );
+  const deleteSalesData = await Sale.deleteMany({
+    createdAt: { $lte: previous2Months },
+  });
 
   res.json({
     date: format(previous2Months, "PPpp"),
