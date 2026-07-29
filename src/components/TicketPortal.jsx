@@ -22,9 +22,6 @@ import { applyPromoCode } from "@/actions/promo";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { processPaypalPayment } from "@/actions/sale";
 
-//Paymaya
-import paymaya from "paymaya-js-sdk";
-
 //Date FNS
 import add from "date-fns/add";
 import { utcToZonedTime } from "date-fns-tz";
@@ -34,7 +31,7 @@ import nextThursday from "date-fns/nextThursday";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { fetcher } from "@/actions/fetcher";
-import { createCheckout, createDragonPayCheckout } from "@/actions/sale";
+import { createCheckout, createDragonPayCheckout, requestPaymayaCheckout } from "@/actions/sale";
 
 import { useRouter } from "next/navigation";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -42,9 +39,6 @@ import { sanitizeHtml } from "@/lib/sanitize";
 //Forms
 const TicketPortal = ({ open, onOpenChange }) => {
   const router = useRouter();
-
-  //Data Fetch
-  paymaya.init(process.env.NEXT_PUBLIC_PAYMAYA_PK, process.env.NEXT_PUBLIC_PAYMAYA_ENV === "0" ? false : true);
 
   const { data: paymentOptions } = useSWR({ url: "v1/payment-option" }, fetcher);
   const { data: ticketData } = useSWR({ url: "v1/ticket" }, fetcher);
@@ -106,7 +100,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
             price: item.price,
             qty: 0,
           };
-        })
+        }),
       );
   }, [ticketData]);
 
@@ -617,7 +611,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
       token: captchaToken.token,
       promoCode: appliedCode,
     })
-      .then((data) => {
+      .then(async (data) => {
         setMessage({
           ...message,
           success: "Please wait. You will be redirected to payment page.",
@@ -649,39 +643,32 @@ const TicketPortal = ({ open, onOpenChange }) => {
 
         //Paymaya Payment
         if (paymentOption == "paymaya") {
-          const cart = {
-            totalAmount: {
-              value: data.orderTotal,
-              currency: "PHP",
-            },
-            buyer: {
-              firstName: personalDetails.firstName,
-              lastName: personalDetails.lastName,
-              contact: {
-                phone: personalDetails.contactNumber,
-                email: personalDetails.confirmEmail,
-              },
-            },
-            items: cartItems
-              .filter((item) => item.qty > 0)
-              .map((item) => {
-                return {
-                  name: item.name,
-                  quantity: item.qty,
-                  totalAmount: {
-                    value: item.price * item.qty,
-                  },
-                };
-              }),
-            redirectUrl: {
-              success: `${process.env.NEXT_PUBLIC_DOMAIN}/?payment=success&refid=${data.refId}`,
-              failure: `${process.env.NEXT_PUBLIC_DOMAIN}/?payment=failure&refid=${data.refId}`,
-              cancel: `${process.env.NEXT_PUBLIC_DOMAIN}/?payment=cancel&refid=${data.refId}`,
-            },
-            requestReferenceNumber: data.refId,
-            metadata: {},
+          const paymayaCheckoutPayload = {
+            customerFirstName: personalDetails.firstName,
+            customerLastName: personalDetails.lastName,
+            refId: data.refId,
           };
-          paymaya.createCheckout(cart);
+
+          try {
+            const paymayaResponse = await requestPaymayaCheckout(paymayaCheckoutPayload);
+            if (paymayaResponse && paymayaResponse.data.redirectUrl) {
+              window.location.href = paymayaResponse.data.redirectUrl;
+            } else {
+              setMessage({
+                ...message,
+                success: "",
+                error: "Paymaya redirect URL not available. Please try a different payment method.",
+              });
+            }
+            console.log(paymayaResponse);
+          } catch (error) {
+            console.log(error);
+            setMessage({
+              ...message,
+              success: "",
+              error: "Paymaya request checkout occured. Please try a different payment method.",
+            });
+          }
         }
 
         //Paypal Payment
@@ -720,7 +707,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
       add(new Date(), {
         months: 1,
       }),
-      "Asia/Manila"
+      "Asia/Manila",
     );
     const dayValue = getDay(expiryDate);
     const inAdjustDays = adjustDays.indexOf(dayValue);
@@ -786,20 +773,20 @@ const TicketPortal = ({ open, onOpenChange }) => {
               personalDetails.email == ""
                 ? "Email Address is required"
                 : validateEmail(personalDetails.email)
-                ? ""
-                : "Please enter a valid email address.",
+                  ? ""
+                  : "Please enter a valid email address.",
             contactNumber:
               personalDetails.contactNumber == ""
                 ? "Contact Number is required"
                 : validateMobileNumber(personalDetails.contactNumber)
-                ? ""
-                : "Please enter a valid Philippine mobile number. Start with 09 or +63.",
+                  ? ""
+                  : "Please enter a valid Philippine mobile number. Start with 09 or +63.",
             confirmEmail:
               personalDetails.confirmEmail == ""
                 ? "Confirm Email Address is required"
                 : validateEmailConfirmation(personalDetails.confirmEmail, personalDetails.email)
-                ? ""
-                : "Email confirmation is incorrect.",
+                  ? ""
+                  : "Email confirmation is incorrect.",
           });
         }
       }
