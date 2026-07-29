@@ -149,22 +149,26 @@ const TicketPortal = ({ open, onOpenChange }) => {
         />
         <div className="p-4 text-black">
           {showTickets()}
-          <div className="text-right">
-            <span className="total">
-              <strong>Total: </strong> ₱{computeTotal()}
-            </span>
-          </div>
-          <div className="mt-4 text-xs text-neutral-500">
-            *Tickets are valid until <strong>{computeExpiry()}</strong>
-          </div>
-          {ticketFooterData && (
-            <div
-              className="mt-4 text-xs text-neutral-500"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(ticketFooterData.value) }}
-            />
-          )}
-          {validation.cartItems && (
-            <div className="text-xs font-medium text-right text-red-600">{validation.cartItems}</div>
+          {cartItems && cartItems.filter((item) => item.status == true).length > 0 && (
+            <>
+              <div className="text-right">
+                <span className="total">
+                  <strong>Total: </strong> ₱{computeTotal()}
+                </span>
+              </div>
+              <div className="mt-4 text-xs text-neutral-500">
+                *Tickets are valid until <strong>{computeExpiry()}</strong>
+              </div>
+              {ticketFooterData && (
+                <div
+                  className="mt-4 text-xs text-neutral-500"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(ticketFooterData.value) }}
+                />
+              )}
+              {validation.cartItems && (
+                <div className="text-xs font-medium text-right text-red-600">{validation.cartItems}</div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -366,9 +370,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
   };
 
   const showTickets = () => {
-    return (
-      cartItems &&
-      cartItems.map((ticket, index) => {
+    if (cartItems && cartItems.filter((item) => item.status == true).length > 0) {
+      return cartItems.map((ticket, index) => {
         if (ticket.status)
           return (
             <div className="mb-3" key={index}>
@@ -395,8 +398,15 @@ const TicketPortal = ({ open, onOpenChange }) => {
               </div>
             </div>
           );
-      })
-    );
+      });
+    } else {
+      return (
+        <div className="text-center text-black">
+          <div className="text-lg font-bold">No tickets available</div>
+          <div className="text-sm font-light">Please check back later</div>
+        </div>
+      );
+    }
   };
 
   //Paypal Functions
