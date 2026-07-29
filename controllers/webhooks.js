@@ -13,13 +13,94 @@ const { format } = require("date-fns");
 
 const { cronSyncSMTickets } = require("../helpers/cronjobs.js");
 
-exports.paymayaCreateCheckout = async (req, res) => {
+exports.paymayaRequestCheckout = async (req, res) => {
   const paymayaPK = process.env.PAYMAYA_PUBLIC_KEY;
   const PaymayaCredentialsBase64 = Buffer.from(paymayaPK + ":").toString("base64");
+  const paymayaEnvironment = process.env.PAYMAYA_ENVIRONMENT || "sandbox";
+  const paymayaBaseURL = paymayaEnvironment !== "prod" ? "https://pg-sandbox.paymaya.com/checkout/v1/checkouts" : "https://pg.paymaya.com/checkout/v1/checkouts";
 
+  const { refId, customerFirstName, customerLastName } = req.body;
 
+  const sale = await Sale.findOne({ refId: refId })
+    .populate({
+      path: "cartItems",
+      populate: {
+        path: "ticketId",
+        model: "Ticket",
+        select: "name -_id",
+      },
+    })
+    .exec();
 
-}
+  if (!sale) {
+    return res.status(400).json({
+      error: "Sale not found",
+      message: "Please contact support",
+    });
+  }
+
+  const checkoutItems = sale.cartItems.map((item) => {
+    return {
+      name: item.ticketId.name,
+      quantity: item.qty,
+      totalAmount: {
+        value: (item.priceAcquired * item.qty).toFixed(2),
+        currency: "PHP",
+      },
+    };
+  });
+
+  //Create Checkout Session with Paymaya
+  const checkoutPayload = {
+    items: checkoutItems,
+    totalAmount: {
+      value: sale.orderTotal.toFixed(2),
+      currency: "PHP",
+    },
+    buyer: {
+      firstName: customerFirstName || sale.customerName.split(" ")[0] || "",
+      lastName: customerLastName || sale.customerName.split(" ")[1] || "",
+      contact: {
+        phone: sale.contactNumber || "",
+        email: sale.emailAddress || "",
+      }
+    },
+    redirectUrl: {
+      success: `${process.env.WEBSITE_URL}/?payment=success&refid=${refId}`,
+      failure: `${process.env.WEBSITE_URL}/?payment=failure&refid=${refId}`,
+      cancel: `${process.env.WEBSITE_URL}/?payment=cancel&refid=${refId}`,
+    },
+    requestReferenceNumber: refId,
+    metadata: {},
+  };
+
+  //Send Checkout Payload to Paymaya API
+  const paymayaResponse = await fetch(paymayaBaseURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${PaymayaCredentialsBase64}`,
+    },
+    body: JSON.stringify(checkoutPayload),
+  });
+
+  const paymayaData = await paymayaResponse.json();
+
+  if (!paymayaResponse.ok) {
+    console.error("Paymaya Create Checkout Error:", paymayaData);
+    return res.status(400).json({
+      error: "Paymaya create checkout failed",
+      message: paymayaData,
+    });
+  }
+
+  console.log("Paymaya Checkout Response: ", paymayaData);
+
+  return res.status(200).json({
+    success: true,
+    data: paymayaData,
+  });
+};
 
 exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
@@ -33,7 +114,7 @@ exports.paymayaPaymentSuccess = async (req, res) => {
 
   if (!sale) {
     console.log("PAYMAYA PAYMENT SALE NOT FOUND: ", requestReferenceNumber);
-    return res.status(400).json({
+    return res.status(200).json({
       error: "Sale not found",
       message: "Please contact support",
     });
@@ -41,18 +122,26 @@ exports.paymayaPaymentSuccess = async (req, res) => {
 
   if (!sale || amount != sale.orderTotal) {
     console.log("PAYMAYA PAYMENT AMOUNT MISMATCH: ", amount, "EXPECTED: ", sale.orderTotal);
-    return res.status(400).json({
+    return res.status(200).json({
       error: "Payment amount mismatch",
       message: "Please contact support",
     });
+
+    //Send email to customer, support indicating that there was a discrepancy between the payment amount and the order total.
+    //Send email to support to process refund, indicate that no tickets were released due to the discrepancy. 
+    //Indiciate the amount received and the expected amount, and that the customer should be refunded the amount paid.
   }
 
   if (pOption.status == false) {
     console.log("PAYMAYA PAYMENT OPTION DISABLED: ", pOption.status);
-    return res.status(400).json({
+    return res.status(200).json({
       error: "Payment option is disabled",
       message: "Please contact support",
     });
+
+    //Send email to customer, support indicating that Star City is currently not accepting payments from paymaya.
+    //Send email to support to process refund if account is charged, indicate that no tickets were released due to the payment option being disabled. Indicate that the customer should be refunded the amount paid if customer was charged.
+
   }
 
   sale.status = status;

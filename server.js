@@ -52,7 +52,7 @@ mongoose
   .catch((error) => console.log("Error in connecting to DB: " + error));
 
 //middlewares
-app.use(morgan("combined"));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(cookieParser());
 

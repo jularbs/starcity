@@ -234,6 +234,10 @@ exports.sendAR = async (refId) => {
 };
 
 exports.syncAccessPass = (accessPass, RideCode) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Access Pass Syncing is disabled in non-production environments.");
+    return;
+  }
   console.log("SYNCING ACCESS PASS: ", accessPass.accessToken);
   return new Promise((resolve, reject) => {
     try {

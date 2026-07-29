@@ -19,6 +19,7 @@ const {
 } = require("../controllers/sale");
 
 const { requireSignin, authMiddleware } = require("../controllers/auth");
+const { paymayaRequestCheckout } = require("../controllers/webhooks");
 
 //Version 1.0
 router.post("/v1/sale", create);
@@ -29,6 +30,7 @@ router.delete("/v1/sale", remove);
 router.get("/v1/access-pass", readBySaltRefID);
 router.get("/v1/sync", sync);
 
+router.post("/v1/paymaya/checkout", paymayaRequestCheckout);
 router.post("/v1/create-checkout", createCheckout);
 router.post("/v1/sale/resend-email", requireSignin, authMiddleware, resendAR);
 
