@@ -248,6 +248,30 @@ exports.dragonPaySuccess = async (req, res) => {
       .select("_id")
       .exec();
 
+    if (!sale) {
+      console.log("DRAGONPAY TRANSACTION NOT FOUND: ", txnid);
+      return res.status(200).json({
+        error: "Sale not found",
+        message: "Please contact support",
+      });
+    }
+
+    if (!pOption || pOption.status == false) {
+      console.log("DRAGONPAY PAYMENT OPTION DISABLED: ", pOption.status);
+      return res.status(200).json({
+        error: "Payment option is disabled",
+        message: "Please contact support",
+      });
+    }
+
+    if (amount.toFixed(2) != sale.orderTotal.toFixed(2)) {
+      console.log("DRAGONPAY PAYMENT AMOUNT MISMATCH: ", amount, "EXPECTED: ", sale.orderTotal);
+      return res.status(200).json({
+        error: "Payment amount mismatch",
+        message: "Please contact support",
+      });
+    }
+
     sale.status = status;
     sale.paymentDetails = {
       option: await pOption._id,
@@ -561,6 +585,14 @@ exports.paypalProcess = async (req, res) => {
     .select("_id")
     .exec();
 
+  if (!pOption || pOption.status == false) {
+    console.log("PAYPAL PAYMENT OPTION DISABLED: ", pOption.status);
+    return res.status(200).json({
+      error: "Payment option is disabled",
+      message: "Please contact support",
+    });
+  }
+
   sale.status = status;
   sale.paymentDetails = {
     option: await pOption._id,
@@ -621,6 +653,14 @@ exports.paypalOnApprove = async (req, res) => {
       const pOption = await PaymentOption.findOne({ slug: option })
         .select("_id")
         .exec();
+
+      if (!pOption || pOption.status == false) {
+        console.log("PAYPAL PAYMENT OPTION DISABLED: ", pOption.status);
+        return res.status(200).json({
+          error: "Payment option is disabled",
+          message: "Please contact support",
+        });
+      }
 
       sale.status = status;
       sale.paymentDetails = {
@@ -683,6 +723,11 @@ exports.bpiTransact = async (req, res) => {
         const pOption = await PaymentOption.findOne({ slug: option })
           .select("_id")
           .exec();
+
+        if (!pOption || pOption.status == false) {
+          console.log("BPI PAYMENT OPTION DISABLED: ", pOption.status);
+          return res.redirect(`${process.env.WEBSITE_URL}/?payment=error&refid=${merchantTransactionReference}`);
+        }
 
         sale.status = transactionStatus;
         sale.paymentDetails = {
