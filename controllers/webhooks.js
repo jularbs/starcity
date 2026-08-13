@@ -107,7 +107,16 @@ exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("PAYMAYA PAYLOAD: ", req.body);
 
   const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  console.log('PAYMAYA WEBHOOK REQUEST IP: ', ip);
+  //Paymaya Webhook IPs:
+  const allowedIPs = ["18.138.50.235", "3.1.207.200"];
+
+  if (ip && !allowedIPs.includes(ip)) {
+    console.log("PAYMAYA WEBHOOK REQUEST IP NOT ALLOWED: ", ip);
+    return res.status(200).json({
+      error: "Forbidden",
+      message: "IP not allowed",
+    });
+  }
 
   const { status = 'success', requestReferenceNumber, amount } = req.body;
   const option = "paymaya";
