@@ -530,26 +530,8 @@ exports.createCheckout = async (req, res) => {
     email,
     contactNumber,
     paymentDetails,
-    token,
     promoCode
   } = req.body;
-
-  //CHECK RECAPTCHA
-  const captcha = await axios({
-    method: "POST",
-    url: "https://www.google.com/recaptcha/api/siteverify",
-    params: {
-      secret: process.env.RECAPTCHA_SECRET_KEY,
-      response: token,
-    },
-  });
-
-  if (!captcha.data.success) {
-    console.log("ERROR IN CAPTCHA");
-    return res.status(400).json({
-      error: "Please prove you are not a robot by checking the checkbox below.",
-    });
-  }
 
   let isExisting = [];
   let refID = "";
