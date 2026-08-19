@@ -622,39 +622,6 @@ exports.createDragonPayRequest = async (req, res) => {
   if (dpRequest.data.Status == "S") res.json(dpRequest.data);
 };
 
-exports.processPaypalPayment = async (req, res) => {
-  const { status, orderId } = req.body;
-  const sale = await Sale.findOne({
-    "paymentDetails.referenceNumber": orderId,
-  }).exec();
-
-  if (sale) {
-    sale.status = "success";
-    sale.paymentDetails = {
-      ...sale.paymentDetails,
-      status: status,
-    };
-
-    try {
-      const result = await sale.save();
-      res.json({ refid: result.refId, payment: result.status });
-      if (status == "COMPLETED") {
-        this.generateAccessPass(result, result.cartItems);
-        this.sendAR(result.refId);
-      }
-    } catch (err) {
-      console.log(err);
-      return res.status(400).json({
-        error: "error occured",
-        message: err,
-      });
-    }
-  } else {
-    console.log("ERROR NO SALE FOUND");
-    res.status(400).json({ error: "Sale undefined" });
-  }
-};
-
 //HELPER FUNCTIONS
 exports.cleanUp = async (req, res) => {
   let previous2Months = new Date();

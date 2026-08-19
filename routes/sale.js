@@ -8,7 +8,6 @@ const {
   remove,
   sync,
   createCheckout,
-  processPaypalPayment,
   readBySaltRefID,
   createDragonPayRequest,
   resendAR,
@@ -36,7 +35,6 @@ router.post("/v1/create-checkout", createRateLimiter({ windowMs: 5 * 60 * 1000, 
 router.post("/v1/sale/resend-email", requireSignin, authMiddleware, resendAR);
 
 //payment webhooks
-// router.put("/v1/payment/paypal", processPaypalPayment);
 // router.post("/v1/payment/dragonpay", createDragonPayRequest);
 
 //Helper Functions
