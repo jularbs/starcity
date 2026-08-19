@@ -106,11 +106,19 @@ exports.paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
   console.log("PAYMAYA PAYLOAD: ", req.body);
 
-  const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  console.log("(TEMPORARY) req.headers[cf-connecting-ip]: ", req.headers["cf-connecting-ip"]);
+  console.log("(TEMPORARY) req.ip: ", req.ip);
+
+  // req.ip is resolved via Express's trust proxy setting, so it safely
+  // handles multi-value X-Forwarded-For instead of treating it as one IP.
+  // Take only the first value in case a header was duplicated, and strip
+  // the ::ffff: prefix Node adds to IPv4 addresses on dual-stack sockets.
+  const rawIp = req.headers['cf-connecting-ip'] || req.ip;
+  const ip = rawIp?.split(",")[0].trim().replace(/^::ffff:/, "");
   //Paymaya Webhook IPs:
   const allowedIPs = ["18.138.50.235", "3.1.207.200"];
 
-  if (ip && !allowedIPs.includes(ip)) {
+  if (!ip || !allowedIPs.includes(ip)) {
     console.log("PAYMAYA WEBHOOK REQUEST IP NOT ALLOWED: ", ip);
     return res.status(200).json({
       error: "Forbidden",
