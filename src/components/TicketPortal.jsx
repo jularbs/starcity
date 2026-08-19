@@ -669,7 +669,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           setMessage({
             ...message,
             success: "",
-            error: error.error,
+            error: error.message || error.error,
           });
       });
   };

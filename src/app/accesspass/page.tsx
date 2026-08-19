@@ -45,7 +45,7 @@ export default async function Page({
         console.log(err)
         return (
             <div className="text-center pt-8 px-3">
-                <h2 className="text-2xl font-bold uppercase">Invalid Data</h2>
+                <h2 className="text-2xl font-bold uppercase">{err.message || err.error || 'Invalid Data'}</h2>
                 <Link href="/">
                     <Button className="mt-3 border-2 border-black bg-white text-black">Go to homepage</Button>
                 </Link>
