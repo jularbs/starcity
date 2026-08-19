@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 
 require("dotenv").config();
 mongoose.set("strictQuery", true);
@@ -27,6 +28,10 @@ const promoRoutes = require("./routes/promo");
 var cron = require("node-cron");
 
 const app = express();
+
+// Only trust the first hop (Cloudflare/your reverse proxy) so req.ip and
+// X-Forwarded-For based IP resolution can't be spoofed by the client itself.
+app.set("trust proxy", 1);
 
 var allowedDomains = JSON.parse(process.env.CORS_DOMAINS);
 app.use(
@@ -76,6 +81,28 @@ app.use("/api", promoRoutes);
 app.use("/webhooks", webhookRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
+
+//Rate Limiting 404 requests
+const CatchAllLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50,
+  message: {
+    error: 'RATE_LIMIT_EXCEEDED',
+    message: "Too many failed 404 requests from this IP, please try again after 15 minutes",
+  },
+  // cf-connecting-ip is only trustworthy if the origin is unreachable except via
+  // Cloudflare (firewall rules / Authenticated Origin Pulls); otherwise it's spoofable.
+  // ipKeyGenerator normalizes IPv6 addresses to a subnet so rate limits can't be
+  // trivially bypassed by rotating within the same /64.
+  keyGenerator: (req) => ipKeyGenerator(req.headers["cf-connecting-ip"] || req.ip),
+});
+app.use(CatchAllLimiter);
+
+app.use((req, res, next) => {
+  res.status(404).json({
+    error: "Resource Not Found",
+  });
+});
 
 const {
   cronSyncAP,
