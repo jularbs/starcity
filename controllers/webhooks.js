@@ -228,38 +228,6 @@ exports.paymayaPaymentExpired = async (req, res) => {
   });
 };
 
-exports.paymayaAuthorized = async (req, res) => {
-  res.status(200).json({
-    function: "PaymayaAuthorized",
-    resPayload: req.body,
-    params: req.params,
-  });
-};
-
-exports.paymayaCheckoutSuccess = async (req, res) => {
-  res.status(200).json({
-    function: "PaymayaCheckoutSuccess",
-    resPayload: req.body,
-    params: req.params,
-  });
-};
-
-exports.paymayaCheckoutFailure = async (req, res) => {
-  res.status(200).json({
-    function: "PaymayaCheckoutFailure",
-    resPayload: req.body,
-    params: req.params,
-  });
-};
-
-exports.paymayaCheckoutDropout = async (req, res) => {
-  res.status(200).json({
-    function: "PaymayaCheckoutDropout",
-    resPayload: req.body,
-    params: req.params,
-  });
-};
-
 exports.dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY POSTBACK RECIEVED...");
   const option = "dragonpay";
