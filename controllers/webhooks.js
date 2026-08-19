@@ -165,6 +165,14 @@ exports.paymayaPaymentSuccess = async (req, res) => {
     });
   }
 
+  if (sale && sale.status == status) {
+    console.log("PAYMAYA PAYMENT STATUS ALREADY PROCESSED: ", status);
+    return res.status(200).json({
+      error: "Payment status already processed",
+      message: "Please contact support",
+    });
+  }
+
   sale.status = status;
   sale.paymentDetails = {
     option: await pOption._id,
