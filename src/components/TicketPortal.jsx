@@ -15,7 +15,6 @@ import { LoaderCircle, Minus, Plus, X } from "lucide-react";
 import { getOptionByName } from "@/actions/option";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import ReCaptchaV2 from "react-google-recaptcha";
 import { applyPromoCode } from "@/actions/promo";
 
 //Paypal
@@ -80,13 +79,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
   const [appliedCode, setAppliedCode] = useState("");
   const [discount, setDiscount] = useState(0);
 
-  //Recaptcha
-  const [captchaToken, setCaptchaToken] = useState({ token: null });
-  const recaptchaRef = useRef(null);
-  const handleToken = (token) => {
-    setCaptchaToken({ ...captchaToken, token });
-  };
-
   //Effects
   useEffect(() => {
     if (ticketData && ticketData.length > 0)
@@ -111,7 +103,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
   useEffect(() => {
     if (open) {
       setCurrentStep(1);
-      setCaptchaToken({ ...captchaToken, token: null });
     }
   }, [open]);
 
@@ -296,13 +287,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
           {message.error && <div className="px-2 mb-2 text-xs text-red-600">{message.error}</div>}
 
           {message.success && <div className="px-2 mb-2 text-xs text-black">{message.success}</div>}
-
-          <ReCaptchaV2
-            ref={recaptchaRef}
-            style={{ display: "inline-block" }}
-            onChange={handleToken}
-            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-          />
         </div>
         <div className="mt-4">
           {/* Paypal  */}
@@ -324,7 +308,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
                   borderRadius: 8,
                 }}
                 className="mb-1"
-                forceReRender={[captchaToken]}
+                forceReRender={[]}
                 createOrder={createOrder}
                 onApprove={onApprove}
               />
@@ -428,10 +412,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
     const checkout = await createCheckout({
       cartItems: items,
       ...buyerDetails,
-      token: captchaToken.token,
       promoCode: appliedCode,
     }).catch((err) => {
-      recaptchaRef.current?.reset();
       setMessage({
         ...message,
         success: "",
@@ -618,7 +600,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
     createCheckout({
       cartItems: items,
       ...buyerDetails,
-      token: captchaToken.token,
       promoCode: appliedCode,
     })
       .then(async (data) => {
@@ -627,8 +608,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
           success: "Please wait. You will be redirected to payment page.",
           error: "",
         });
-        recaptchaRef.current?.reset();
-        setCaptchaToken({ token: null });
         setLoading({ ...loading, [paymentOption]: false });
 
         //forward checkout details to payment channel
@@ -686,8 +665,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
       .catch((error) => {
         console.log(error);
         setLoading({ ...loading, [paymentOption]: false });
-        recaptchaRef.current?.reset();
-        setCaptchaToken({ token: null });
         if (error.error)
           setMessage({
             ...message,
