@@ -1,4 +1,3 @@
-//TODOS: Paypal not working as of the moment due to update of package
 //TODOS: Convert form to React Hook Form - ZOD
 "use client";
 import {
@@ -16,10 +15,6 @@ import { getOptionByName } from "@/actions/option";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { applyPromoCode } from "@/actions/promo";
-
-//Paypal
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { processPaypalPayment } from "@/actions/sale";
 
 //Date FNS
 import add from "date-fns/add";
@@ -289,32 +284,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
           {message.success && <div className="px-2 mb-2 text-xs text-black">{message.success}</div>}
         </div>
         <div className="mt-4">
-          {/* Paypal  */}
-          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "paypal").length ==
-            1 && (
-            <PayPalScriptProvider
-              options={{
-                clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
-                currency: "PHP",
-                intent: "capture",
-              }}
-            >
-              <PayPalButtons
-                style={{
-                  color: "gold",
-                  label: "pay",
-                  tagline: false,
-                  layout: "horizontal",
-                  borderRadius: 8,
-                }}
-                className="mb-1"
-                forceReRender={[]}
-                createOrder={createOrder}
-                onApprove={onApprove}
-              />
-            </PayPalScriptProvider>
-          )}
-
           {/* Paymaya */}
           {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "paymaya").length ==
             1 && (
@@ -391,83 +360,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
         </div>
       );
     }
-  };
-
-  //Paypal Functions
-  const createOrder = async (data, actions) => {
-    //initiate cart items
-    const items = cartItems
-      .filter((item) => item.qty > 0)
-      .map((item) => {
-        return { _id: item._id, qty: item.qty };
-      });
-
-    //initiate customer details
-    const buyerDetails = {
-      customerName: `${personalDetails.firstName} ${personalDetails.lastName}`,
-      email: personalDetails.confirmEmail,
-      contactNumber: personalDetails.contactNumber,
-    };
-
-    const checkout = await createCheckout({
-      cartItems: items,
-      ...buyerDetails,
-      promoCode: appliedCode,
-    }).catch((err) => {
-      setMessage({
-        ...message,
-        success: "",
-        error: err.error,
-      });
-    });
-
-    try {
-      return actions.order.create({
-        intent: "CAPTURE",
-        purchase_units: [
-          {
-            reference_id: checkout.refId,
-            amount: {
-              currency_code: "PHP",
-              value: checkout.orderTotal,
-            },
-          },
-        ],
-        application_context: {
-          brand_name: "Star City PH",
-          shipping_preference: "NO_SHIPPING",
-        },
-      });
-    } catch (err) {
-      console.log(err);
-      setMessage({
-        success: "",
-        error: "Selected payment method not available. Please try another payment method.",
-      });
-    }
-  };
-
-  const onApprove = (data, actions) => {
-    return actions.order
-      .capture()
-      .then(async (details) => {
-        const paypalResponse = {
-          id: details.id,
-          status: details.status,
-          refId: details.purchase_units[0].reference_id,
-          eventType: details.intent,
-        };
-
-        await processPaypalPayment(paypalResponse);
-        return paypalResponse;
-      })
-      .then((data) => {
-        onOpenChange(false);
-        router.push(`/?refid=${data.refId}&payment=true`);
-      })
-      .catch((err) => {
-        console.log("Error in Paypal: ", err);
-      });
   };
 
   //Handlers
@@ -659,8 +551,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
             });
           }
         }
-
-        //Paypal Payment
       })
       .catch((error) => {
         console.log(error);
