@@ -118,7 +118,7 @@ exports.paymayaPaymentSuccess = async (req, res) => {
     });
   }
 
-  const { status = 'success', requestReferenceNumber, amount } = req.body;
+  const { status, requestReferenceNumber, amount } = req.body;
   const option = "paymaya";
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
   const pOption = await PaymentOption.findOne({ slug: option })
@@ -157,6 +157,14 @@ exports.paymayaPaymentSuccess = async (req, res) => {
 
   }
 
+  if (!!status && status !== "PAYMENT_SUCCESS") {
+    console.log("PAYMAYA PAYMENT STATUS NOT SUCCESS: ", status);
+    return res.status(200).json({
+      error: "Payment status not successful",
+      message: "Please contact support",
+    });
+  }
+
   sale.status = status;
   sale.paymentDetails = {
     option: await pOption._id,
@@ -171,7 +179,7 @@ exports.paymayaPaymentSuccess = async (req, res) => {
       .json({ status: status, message: "Paymaya payment processed" });
 
     //send Acknowledgement receipt
-    if (status == "success" || status == "PAYMENT_SUCCESS") {
+    if (status == "PAYMENT_SUCCESS") {
       console.log("GENERATING ACCESS PASS");
       generateAccessPass(result, result.cartItems);
       console.log("SENDING ACKNOWLEDGEMENT RECEIPT");
