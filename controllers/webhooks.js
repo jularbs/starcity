@@ -115,10 +115,13 @@ exports.paymayaPaymentSuccess = async (req, res) => {
   // the ::ffff: prefix Node adds to IPv4 addresses on dual-stack sockets.
   const rawIp = req.headers['cf-connecting-ip'] || req.ip;
   const ip = rawIp?.split(",")[0].trim().replace(/^::ffff:/, "");
-  //Paymaya Webhook IPs:
-  const allowedIPs = ["18.138.50.235", "3.1.207.200"];
+  // Comma-separated list of IPs allowed to call the Paymaya webhook, e.g. "18.138.50.235,3.1.207.200"
+  const PAYMAYA_ALLOWED_IPS = (process.env.PAYMAYA_ALLOWED_IPS || "")
+    .split(",")
+    .map((ip) => ip.trim())
+    .filter(Boolean);
 
-  if (!ip || !allowedIPs.includes(ip)) {
+  if (!ip || !PAYMAYA_ALLOWED_IPS.includes(ip)) {
     console.log("PAYMAYA WEBHOOK REQUEST IP NOT ALLOWED: ", ip);
     return res.status(200).json({
       error: "Forbidden",
