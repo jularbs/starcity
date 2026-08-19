@@ -15,9 +15,14 @@ const {
 } = require("../controllers/auth.js");
 
 const { list: audit } = require("../controllers/auditTrail");
+const { createRateLimiter } = require("../helpers/rateLimiter");
 
-router.post("/v1/signup", signup);
-router.post("/v1/signin", signin);
+router.post("/v1/signup",
+  createRateLimiter({ windowMs: 60 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 60 minutes." }),
+  signup);
+router.post("/v1/signin",
+  createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 15 minutes." }),
+  signin);
 router.post(
   "/v1/change-password",
   requireSignin,
