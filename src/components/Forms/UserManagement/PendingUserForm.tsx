@@ -100,10 +100,13 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
     useEffect(() => {
         if (!isLoading)
             if (data) {
-                form.setValue("_id", data._id);
-                form.setValue("name", data.name);
-                form.setValue("email", data.email);
-                form.setValue("department", data.department);
+                form.reset({
+                    _id: data._id,
+                    name: data.name,
+                    email: data.email,
+                    department: data.department,
+                    status: true,
+                });
             }
     }, [form, isLoading, data])
 
@@ -113,7 +116,8 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
                 _id: "",
                 name: "",
                 email: "",
-                department: ""
+                department: "",
+                status: true,
             },);
         }
     }, [open, form])
