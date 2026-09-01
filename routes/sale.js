@@ -25,9 +25,9 @@ const { paymayaRequestCheckout } = require("../controllers/webhooks");
 // router.post("/v1/sale", create);
 // router.put("/v1/sale", update);
 router.get("/v1/sale", requireSignin, authMiddleware, list);
-router.get("/v1/sale/:refid", requireSignin, authMiddleware, read);
+router.get("/v1/sale/:refid", read);
 // router.delete("/v1/sale", remove);
-router.get("/v1/access-pass", createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 3, message: "Too many attempts, please try again in 15 minutes." }), readBySaltRefID);
+router.get("/v1/access-pass", createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 150, message: "Too many attempts, please try again in 15 minutes." }), readBySaltRefID);
 // router.get("/v1/sync", sync);
 
 router.post("/v1/paymaya/checkout", createRateLimiter({ windowMs: 5 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 5 minutes." }), paymayaRequestCheckout);
