@@ -75,31 +75,38 @@ exports.paymayaRequestCheckout = async (req, res) => {
   };
 
   //Send Checkout Payload to Paymaya API
-  const paymayaResponse = await fetch(paymayaBaseURL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${PaymayaCredentialsBase64}`,
-    },
-    body: JSON.stringify(checkoutPayload),
-  });
+  try {
+    const paymayaResponse = await fetch(paymayaBaseURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${PaymayaCredentialsBase64}`,
+      },
+      body: JSON.stringify(checkoutPayload),
+    });
 
-  const paymayaData = await paymayaResponse.json();
+    if (!paymayaResponse.ok) {
+      console.error("Paymaya Create Checkout Error:", paymayaResponse);
+      return res.status(400).json({
+        error: "Paymaya create checkout failed",
+      });
+    }
 
-  if (!paymayaResponse.ok) {
-    console.error("Paymaya Create Checkout Error:", paymayaData);
-    return res.status(400).json({
+    const paymayaData = await paymayaResponse.json();
+
+    console.log("Paymaya Checkout Response: ", paymayaData);
+
+    return res.status(200).json({
+      success: true,
+      data: paymayaData,
+    });
+  } catch (error) {
+    console.error("Paymaya Create Checkout Exception:", error);
+    return res.status(502).json({
       error: "Paymaya create checkout failed",
-      message: paymayaData,
+      message: "An error occurred while creating Paymaya checkout",
     });
   }
-
-  console.log("Paymaya Checkout Response: ", paymayaData);
-
-  return res.status(200).json({
-    success: true,
-    data: paymayaData,
-  });
 };
 
 exports.paymayaPaymentSuccess = async (req, res) => {
