@@ -20,7 +20,7 @@ import { processPromo } from "../promo/promo.controller.js";
 //HELPERS
 const { utcToZonedTime } = dateFnsTz;
 
-export const getCurrentTicketPrice = (ticket) => {
+const getCurrentTicketPrice = (ticket) => {
   return new Promise(async (resolve, reject) => {
     const { ticketId } = ticket;
     const result = await Ticket.findOne({ _id: new mongoose.Types.ObjectId(`${ticketId}`) }).exec();
@@ -29,11 +29,7 @@ export const getCurrentTicketPrice = (ticket) => {
   });
 };
 
-export const asyncGetTicketPrice = async (ticket) => {
-  return getCurrentTicketPrice(ticket);
-};
-
-export const calculateCartItem = async (item) => {
+const calculateCartItem = async (item) => {
   return new Promise(async (resolve, reject) => {
     const { ticketId, qty } = item;
     try {
@@ -45,7 +41,7 @@ export const calculateCartItem = async (item) => {
   });
 };
 
-export const calculateCart = (cartItems) => {
+const calculateCart = (cartItems) => {
   return Promise.all(cartItems.map((item) => calculateCartItem(item)));
 };
 
@@ -228,7 +224,7 @@ export const sendAR = async (refId) => {
   });
 };
 
-export const syncAccessPass = (accessPass, RideCode) => {
+const syncAccessPass = (accessPass, RideCode) => {
   if (process.env.NODE_ENV !== "production") {
     console.log("Access Pass Syncing is disabled in non-production environments.");
     return;
@@ -290,93 +286,6 @@ export const syncAccessPass = (accessPass, RideCode) => {
 };
 
 //REQUESTS
-export const sync = async (req, res) => {
-  const data = await Sale.find({ status: "for sync" })
-    .populate({
-      path: "cartItems",
-      populate: {
-        path: "ticketId",
-        model: "Ticket",
-        select: "name -_id",
-      },
-    })
-    .populate({
-      path: "paymentDetails",
-      populate: {
-        path: "option",
-        model: "PaymentOption",
-        select: "name -_id",
-      },
-    })
-    .select(
-      "customerName cartItems orderTotal paymentDetails refId created_at -_id"
-    )
-    .exec();
-  if (!data) return res.json({ error: "Failed to synchronize" });
-  await Sale.updateMany(
-    { status: "for sync" },
-    { status: "synced undelivered" }
-  );
-
-  res.json(data);
-};
-
-export const create = async (req, res) => {
-  const { name, email, cartItems, paymentDetails } = req.body;
-
-  let isExisting = [];
-  let refID = "";
-
-  do {
-    refID = crypto.randomBytes(15).toString("hex");
-    isExisting = await Sale.find({ refId: refID }).exec();
-  } while (isExisting.length !== 0);
-
-  let sale = new Sale();
-  sale.customerName = name;
-  sale.emailAddress = email;
-  sale.refId = refID;
-  const cart = await Promise.all(
-    cartItems.map(async (item) => {
-      const { price } = await getCurrentTicketPrice(item);
-      return {
-        ticketId: item.ticketId,
-        qty: item.qty,
-        priceAcquired: price,
-      };
-    })
-  );
-
-  sale.cartItems = cart;
-  //compute for order total
-  sale.orderTotal = await (
-    await calculateCart(cartItems)
-  ).reduce((a, b) => a.amount + b.amount);
-
-  sale.paymentDetails = paymentDetails;
-
-  let base64 = await QRCode.toDataURL(refID, {
-    version: 4,
-    errorCorrectionLevel: "H",
-    type: "image/jpeg",
-    quality: 1,
-    margin: 5,
-    width: 250,
-    height: 250,
-  });
-  sale.QRcode = await uploadBase64(await base64, `qrcode/${name}`);
-
-  try {
-    const result = await sale.save();
-    res.json(result);
-  } catch (err) {
-    return res.status(400).json({
-      error: "error occured",
-      message: err,
-    });
-  }
-};
-
 export const readBySaltRefID = async (req, res) => {
   const saleDetails = await Sale.findOne({
     salt: req.query.salt,
@@ -482,42 +391,6 @@ export const list = async (req, res) => {
   res.json({ count, data });
 };
 
-export const update = async (req, res) => {
-  const { name, slug, description, price, status } = req.body;
-
-  const ticket = await Ticket.findOne({ slug: slug }).exec();
-
-  ticket.name = name;
-  ticket.description = description;
-
-  ticket.price = price;
-  ticket.status = status;
-
-  try {
-    const result = await ticket.save();
-    res.json({ result, status: "success" });
-  } catch (err) {
-    return res.status(400).json({
-      error: "error occured",
-      message: err,
-    });
-  }
-};
-
-export const remove = async (req, res) => {
-  const { slug } = req.body;
-
-  try {
-    const result = await Ticket.findOneAndDelete({ slug }).exec();
-    res.json({ success: "Ticket deleted successfully" });
-  } catch (err) {
-    return res.status(400).json({
-      error: "error occured",
-      message: err,
-    });
-  }
-};
-
 export const createCheckout = async (req, res) => {
   const {
     cartItems,
@@ -591,32 +464,6 @@ export const createCheckout = async (req, res) => {
   }
 };
 
-export const createDragonPayRequest = async (req, res) => {
-  const { txnId, amount, email } = req.body;
-  const token = Buffer.from(
-    `${process.env.DRAGONPAY_MERCH_ID}:${process.env.DRAGONPAY_PW}`,
-    "utf8"
-  ).toString("base64");
-
-  const dpRequest = await axios({
-    method: "POST",
-    url: `${process.env.DRAGONPAY_URL}/${txnId}/post`,
-    data: {
-      Amount: amount.toFixed(2),
-      Currency: "PHP",
-      Description: "Star City tickets",
-      Email: email,
-    },
-    headers: {
-      Authorization: `Basic ${token}`,
-    },
-  }).catch((error) => {
-    console.log(error.response);
-  });
-
-  if (dpRequest.data.Status == "S") res.json(dpRequest.data);
-};
-
 //HELPER FUNCTIONS
 export const cleanUp = async (req, res) => {
   let previous2Months = new Date();
@@ -642,14 +489,6 @@ export const cleanUp = async (req, res) => {
     date: format(previous2Months, "PPpp"),
     AccessPassDeletedCount: accessPassCount,
     saleDeletedCount: saleCount,
-  });
-};
-
-export const syncAP = async (req, res) => {
-  cronSyncAP();
-
-  res.json({
-    message: "done",
   });
 };
 

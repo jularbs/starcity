@@ -25,7 +25,6 @@
         "express": "^4.17.1",
         "express-rate-limit": "^8.6.2",
         "formidable": "^1.2.2",
-        "html-pdf-node": "^1.0.7",
         "jsonwebtoken": "^9.0.3",
         "moment": "^2.29.1",
         "mongoose": "^9.7.4",

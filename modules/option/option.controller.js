@@ -148,17 +148,6 @@ export const list = async (req, res) => {
   }
 };
 
-export const listOptionsv2 = async (req, res) => {
-  try {
-    const result = await Option.find({})
-      .select("name value")
-      .exec();
-    return res.status(200).json(result);
-  } catch (err) {
-    return res.status(400).json({ error: "Unable to retrieve options" });
-  }
-};
-
 export const update = async (req, res) => {
   const { slug, name, value, meta } = req.body;
 
