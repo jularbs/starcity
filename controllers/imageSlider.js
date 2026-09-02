@@ -177,6 +177,12 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   const { slug } = req.params;
 
+  if (!slug) {
+    return res.status(400).json({
+      error: "Image Slider item slug is required",
+    });
+  }
+
   const data = await ImageSlider.deleteOne({ slug }).exec();
 
   if (data) {

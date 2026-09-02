@@ -151,6 +151,12 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   const { slug } = req.params;
 
+  if (!slug) {
+    return res.status(400).json({
+      error: "Ride slug is required",
+    });
+  }
+
   try {
     const result = await Ride.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);

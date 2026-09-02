@@ -176,6 +176,13 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   const { slug } = req.body;
+
+  if (!slug) {
+    return res.status(400).json({
+      error: "Option slug is required",
+    });
+  }
+
   try {
     await Option.findOneAndDelete({ slug }).exec();
     res.json({ success: "Payment Option deleted successfully" });

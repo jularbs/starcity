@@ -185,6 +185,12 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   const { slug } = req.body;
 
+  if (!slug) {
+    return res.status(400).json({
+      error: "Banner slug is required",
+    });
+  }
+
   const data = await Banner.deleteOne({ slug }).exec();
   res.json({ message: "Banner deleted successfully" });
   //TODO: DELETE IMAGE IN S3

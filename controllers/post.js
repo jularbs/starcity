@@ -159,6 +159,12 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   const { slug } = req.body;
 
+  if (!slug) {
+    return res.status(400).json({
+      error: "Post slug is required",
+    });
+  }
+
   const data = await Post.deleteOne({ slug }).exec();
   //TODO: DELETE IMAGE
 
