@@ -3,8 +3,7 @@ import morgan from "morgan";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import { rateLimit, ipKeyGenerator } from "express-rate-limit";
-
+import { createRateLimiter, catchAllLimiter } from "./common/middleware/rate-limit.middleware.js";
 import dotenv from "dotenv";
 dotenv.config();
 import { connectMongoDB, disconnectMongoDB } from "./database/mongodb/index.js";
@@ -80,20 +79,7 @@ app.use("/api", auditTrailRoutes);
 app.use("/webhooks", webhookRoutes);
 
 //Rate Limiting 404 requests
-const CatchAllLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50,
-  message: {
-    error: 'RATE_LIMIT_EXCEEDED',
-    message: "Too many failed 404 requests from this IP, please try again after 15 minutes",
-  },
-  // cf-connecting-ip is only trustworthy if the origin is unreachable except via
-  // Cloudflare (firewall rules / Authenticated Origin Pulls); otherwise it's spoofable.
-  // ipKeyGenerator normalizes IPv6 addresses to a subnet so rate limits can't be
-  // trivially bypassed by rotating within the same /64.
-  keyGenerator: (req) => ipKeyGenerator(req.headers["cf-connecting-ip"] || req.ip),
-});
-app.use(CatchAllLimiter);
+app.use(catchAllLimiter());
 
 app.use((req, res, next) => {
   res.status(404).json({

@@ -10,7 +10,7 @@ import {
   regenerateAccessPass,
   resyncSaleByRefId
 } from "./sale.controller.js";
-import { createRateLimiter } from "../../helpers/rateLimiter.js";
+import { createRateLimiter } from "../../common/middleware/rate-limit.middleware.js";
 import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 import { paymayaRequestCheckout } from "../webhooks/webhooks.controller.js";
 

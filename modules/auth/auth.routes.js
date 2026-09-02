@@ -8,7 +8,7 @@ import {
   validateToken,
 } from "./auth.controller.js";
 import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
-import { createRateLimiter } from "../../helpers/rateLimiter.js";
+import { createRateLimiter } from "../../common/middleware/rate-limit.middleware.js";
 
 router.post("/v1/signup",
   createRateLimiter({ windowMs: 60 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 60 minutes." }),
