@@ -3,7 +3,7 @@ import morgan from "morgan";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import { createRateLimiter, catchAllLimiter } from "./common/middleware/rate-limit.middleware.js";
+import { catchAllLimiter } from "./common/middleware/rate-limit.middleware.js";
 import dotenv from "dotenv";
 dotenv.config();
 import { connectMongoDB, disconnectMongoDB } from "./database/mongodb/index.js";
