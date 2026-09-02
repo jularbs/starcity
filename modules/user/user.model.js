@@ -29,10 +29,6 @@ const userSchema = new mongoose.Schema(
       require: true,
     },
     salt: String,
-    resetPasswordLink: {
-      type: String,
-      default: "",
-    },
     status: {
       type: Boolean,
       default: false,
@@ -45,11 +41,6 @@ const userSchema = new mongoose.Schema(
     department: {
       type: String,
       default: "admin",
-    },
-    role: {
-      type: String,
-      default: "moderator",
-      require: true,
     },
     deletedAt: {
       type: Date,

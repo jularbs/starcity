@@ -99,7 +99,6 @@ export const signin = async (req, res) => {
         name: user.name,
         email: user.email,
         department: user.department,
-        role: user.role
       },
     });
 

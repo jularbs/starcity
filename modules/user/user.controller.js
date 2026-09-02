@@ -31,7 +31,7 @@ export const read = async (req, res) => {
 
     try {
         const user = await User.findOne({ _id: id })
-            .select("_id name email createdAt department role")
+            .select("_id name email createdAt department")
             .exec();
 
         if (!user)
@@ -64,10 +64,6 @@ export const update = async (req, res) => {
     if (req.body?.department)
         user.department = req.body?.department;
 
-    if (req.body?.role)
-        user.role = req.body?.role;
-
-
     try {
         await user.save();
         return res.json({
@@ -85,7 +81,6 @@ export const list = async (req, res) => {
     const {
         query = "",
         department = "",
-        role = "",
         skip = 0,
         limit = 0,
         status = false,
@@ -113,16 +108,13 @@ export const list = async (req, res) => {
     if (department)
         filters.department = department;
 
-    if (role)
-        filters.role = role;
-
     if (andOperator.length > 0) {
         filters.$and = andOperator;
     }
 
     try {
         const users = await User.find({ ...filters })
-            .select("_id name email createdAt department role status lastLogin")
+            .select("_id name email createdAt department status lastLogin")
             .skip(parseInt(skip))
             .limit(parseInt(limit))
             .exec();
