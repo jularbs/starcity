@@ -30,9 +30,15 @@ exports.create = async (req, res) => {
 
 exports.read = async (req, res) => {
   try {
-    const data = await PaymentOption.findOne({ slug: req.params.slug })
+    const data = await PaymentOption.findOne({ slug: req.params.slug, deletedAt: null })
       .select("name status")
       .exec();
+
+    if (!data) {
+      return res.status(404).json({
+        error: "Payment Option not found",
+      });
+    }
 
     return res.json(data);
   } catch (err) {
@@ -47,7 +53,7 @@ exports.list = async (req, res) => {
   const { f } = req.query;
   if (f) {
     try {
-      const data = await PaymentOption.find({ status: true }).exec();
+      const data = await PaymentOption.find({ status: true, deletedAt: null }).exec();
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -58,7 +64,7 @@ exports.list = async (req, res) => {
 
   } else {
     try {
-      const data = await PaymentOption.find().exec();
+      const data = await PaymentOption.find({ deletedAt: null }).exec();
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -98,8 +104,21 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const { slug } = req.body;
+    if (!slug) {
+      return res.status(400).json({
+        error: "Payment Option slug is required",
+      });
+    }
 
-    PaymentOption.findOneAndDelete({ slug }).exec();
+    const paymentOption = await PaymentOption.findOne({ slug }).exec();
+    if (!paymentOption) {
+      return res.status(404).json({
+        error: "Payment Option not found",
+      });
+    }
+
+    paymentOption.deletedAt = new Date();
+    await paymentOption.save();
     res.json({ success: "Payment Option deleted successfully" });
     createEntry(req.profile.name, `Deleted Payment Option ${slug}`, {}, req);
   } catch (err) {

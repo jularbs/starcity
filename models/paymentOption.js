@@ -19,6 +19,10 @@ const paymentOptionSchema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
     meta: Object,
   },
   { timestamps: true }
