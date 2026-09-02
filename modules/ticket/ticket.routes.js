@@ -9,17 +9,34 @@ import {
   toggleStatus,
 } from "./ticket.controller.js";
 import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
-//Version 1.0
-router.post("/v1/ticket", requireSignin, authzMiddleware("admin"), create);
-router.put("/v1/ticket", requireSignin, authzMiddleware("admin"), update);
+import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from "../auth/auth.constants.js";
+
+router.post("/v1/ticket",
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  create
+);
+
+router.put("/v1/ticket",
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  update
+);
+
 router.get("/v1/ticket", list);
+
 router.get("/v1/ticket/:slug", read);
-router.delete("/v1/ticket", requireSignin, authzMiddleware("admin"), remove);
+
+router.delete("/v1/ticket",
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  remove
+);
 
 router.put(
   "/v1/ticket/toggle-status",
   requireSignin,
-  authzMiddleware("admin"),
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   toggleStatus
 );
 

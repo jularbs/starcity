@@ -7,24 +7,38 @@ import {
   changePassword,
   validateToken,
 } from "./auth.controller.js";
-import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
+import { requireSignin } from "../../common/middleware/auth.middleware.js";
 import { createRateLimiter } from "../../common/middleware/rate-limit.middleware.js";
 
 router.post("/v1/signup",
-  createRateLimiter({ windowMs: 60 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 60 minutes." }),
-  signup);
+  createRateLimiter({
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    message: "Too many attempts, please try again in 60 minutes."
+  }),
+  signup
+);
+
 router.post("/v1/signin",
-  createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 15 minutes." }),
-  signin);
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    message: "Too many attempts, please try again in 15 minutes."
+  }),
+  signin
+);
+
 router.post(
   "/v1/change-password",
   requireSignin,
-  authzMiddleware("admin"),
   changePassword
 );
 
 router.get("/v1/signout", signout);
 
-router.get("/v1/validate-token", requireSignin, authzMiddleware("admin"), validateToken);
+router.get("/v1/validate-token",
+  requireSignin,
+  validateToken
+);
 
 export default router;
