@@ -9,7 +9,7 @@ import {
   apply,
   toggle
 } from "./promo.controller.js";
-import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
 router.post("/v1/promo", requireSignin, authMiddleware, create);
 router.post("/v1/promo/toggle", requireSignin, authMiddleware, toggle);

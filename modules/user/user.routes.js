@@ -3,7 +3,7 @@ const router = express.Router();
 import {
     requireSignin,
     authMiddleware,
-} from "../auth/auth.controller.js";
+} from "../../common/middleware/auth.middleware.js";
 import { remove, read, list, update } from "./user.controller.js";
 
 router.delete("/v1/user/:id", requireSignin, authMiddleware, remove);

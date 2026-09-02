@@ -5,10 +5,9 @@ import {
   signin,
   signout,
   changePassword,
-  requireSignin,
-  authMiddleware,
   validateToken,
 } from "./auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 import { createRateLimiter } from "../../helpers/rateLimiter.js";
 
 router.post("/v1/signup",

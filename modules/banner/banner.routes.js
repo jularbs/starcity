@@ -8,7 +8,7 @@ import {
   remove,
   toggleStatus,
 } from "./banner.controller.js";
-import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
 router.post("/v1/banner", requireSignin, authMiddleware, create);
 

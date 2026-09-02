@@ -11,7 +11,7 @@ import {
   resyncSaleByRefId
 } from "./sale.controller.js";
 import { createRateLimiter } from "../../helpers/rateLimiter.js";
-import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 import { paymayaRequestCheckout } from "../webhooks/webhooks.controller.js";
 
 router.get("/v1/sale", requireSignin, authMiddleware, list);

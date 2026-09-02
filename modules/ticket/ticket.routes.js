@@ -8,7 +8,7 @@ import {
   remove,
   toggleStatus,
 } from "./ticket.controller.js";
-import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
 router.post("/v1/ticket", requireSignin, authMiddleware, create);
 router.put("/v1/ticket", requireSignin, authMiddleware, update);

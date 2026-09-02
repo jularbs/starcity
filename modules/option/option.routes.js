@@ -8,7 +8,7 @@ import {
   remove,
   logoUpload,
 } from "./option.controller.js";
-import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
 router.post("/v1/option", requireSignin, authMiddleware, create);
 router.post("/v1/logo-option", requireSignin, authMiddleware, logoUpload);

@@ -8,7 +8,7 @@ import {
   toggleStatus,
   read,
 } from "./imageSlider.controller.js";
-import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
 router.post("/v1/image-slider", requireSignin, authMiddleware, create);
 
