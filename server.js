@@ -10,20 +10,20 @@ require("dotenv").config();
 mongoose.set("strictQuery", true);
 
 //routes
-const rideCategoryRoutes = require("./routes/rideCategory");
-const rideRoutes = require("./routes/ride");
-const ticketRoutes = require("./routes/ticket");
-const paymentOptionRoutes = require("./routes/paymentOption");
-const optionRoutes = require("./routes/option");
-const saleRoutes = require("./routes/sale");
-const accessPassRoutes = require("./routes/accessPass");
-const postRoutes = require("./routes/post");
-const imageSliderRoutes = require("./routes/imageSlider");
-const authRoutes = require("./routes/auth");
-const bannerRoutes = require("./routes/banner");
-const mediaRoutes = require("./routes/media");
-const webhookRoutes = require("./routes/webhooks");
-const promoRoutes = require("./routes/promo");
+const rideCategoryRoutes = require("./modules/rideCategory/rideCategory.routes");
+const rideRoutes = require("./modules/ride/ride.routes");
+const ticketRoutes = require("./modules/ticket/ticket.routes");
+const paymentOptionRoutes = require("./modules/paymentOption/paymentOption.routes");
+const optionRoutes = require("./modules/option/option.routes");
+const saleRoutes = require("./modules/sale/sale.routes");
+const accessPassRoutes = require("./modules/accessPass/accessPass.routes");
+const postRoutes = require("./modules/post/post.routes");
+const imageSliderRoutes = require("./modules/imageSlider/imageSlider.routes");
+const authRoutes = require("./modules/auth/auth.routes");
+const bannerRoutes = require("./modules/banner/banner.routes");
+const mediaRoutes = require("./modules/media/media.routes");
+const webhookRoutes = require("./modules/webhooks/webhooks.routes");
+const promoRoutes = require("./modules/promo/promo.routes");
 
 var cron = require("node-cron");
 

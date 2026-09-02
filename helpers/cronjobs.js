@@ -1,13 +1,13 @@
-const AccessPassQueue = require("../models/accessPassQueue");
-const SmQueue = require("../models/smQueue");
-const EmailQueue = require("../models/emailQueue");
-const Sale = require("../models/sale");
-const AccessPass = require("../models/accessPass");
-const PaymentOption = require("../models/paymentOption");
-const Ticket = require("../models/ticket");
+const AccessPassQueue = require("../modules/accessPass/accessPassQueue.model");
+const SmQueue = require("../modules/smTickets/smQueue.model");
+const EmailQueue = require("../modules/email/emailQueue.model");
+const Sale = require("../modules/sale/sale.model");
+const AccessPass = require("../modules/accessPass/accessPass.model");
+const PaymentOption = require("../modules/paymentOption/paymentOption.model");
+const Ticket = require("../modules/ticket/ticket.model");
 
 const { pool } = require("../lib/mysql/connect");
-const { addAuditTrailEntry } = require("../helpers/auditTrailHandler");
+const { addAuditTrailEntry } = require("../modules/auditTrail/auditTrail.controller");
 const { format } = require("date-fns");
 const startOfYesterday = require('date-fns/startOfYesterday')
 const endOfYesterday = require('date-fns/endOfYesterday')
@@ -15,7 +15,7 @@ const { sendMail } = require("../helpers/nodemailer");
 const { convertArrayToCSV } = require('convert-array-to-csv');
 const { zonedTimeToUtc, utcToZonedTime } = require("date-fns-tz");
 
-const sale = require("../controllers/sale");
+const sale = require("../modules/sale/sale.controller");
 
 exports.cronSyncAP = async () => {
   const queues = await AccessPassQueue.find({}).populate("accessPass").exec();
