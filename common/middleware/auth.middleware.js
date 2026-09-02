@@ -21,7 +21,7 @@ export const requireSignin = (req, res, next) => {
 
             } else {
                 //proceed
-                req.user = decoded;
+                req.profile = decoded;
                 next();
             }
         });
@@ -32,23 +32,5 @@ export const requireSignin = (req, res, next) => {
 }
 
 export const authMiddleware = async (req, res, next) => {
-    // const authUserId = req.user._id;
-    if (req.user?._id) {
-        try {
-            const user = await User.findById({ _id: req.user?._id }).exec();
-            if (!user) {
-                return res.status(401).json({
-                    error: "Requesting user invalid"
-                });
-            }
-            req.profile = user;
-            next();
-        } catch (err) {
-            return res.status(401).json({ error: "Invalid Authentication" });
-        }
-    } else {
-        return res.status(401).json({ error: "Invalid Authentication" });
-    }
-
-
+    next();
 };

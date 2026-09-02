@@ -87,7 +87,7 @@ export const signin = async (req, res) => {
     }
 
     //generate JWT
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ _id: user._id, department: user.department, name: user.name }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
     res.cookie("token", token, { expiresIn: "1d" });
