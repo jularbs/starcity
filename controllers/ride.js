@@ -24,11 +24,18 @@ exports.create = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadFile(
-        image,
-        `ride/${year}/${month}/${slug}`,
-        600
-      );
+      let imageInfo;
+      try {
+        imageInfo = await uploadFile(
+          image,
+          `ride/${year}/${month}/${slug}`,
+          600
+        );
+      } catch (err) {
+        console.log("Error on upload: ", err);
+        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+      }
+
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
 
         let ride = new Ride();
@@ -114,11 +121,16 @@ exports.update = async (req, res) => {
         var month = date.getUTCMonth() + 1; //months from 1-12
         var year = date.getUTCFullYear();
 
-        const imageInfo = await uploadFile(
-          image,
-          `ride/${year}/${month}/${slug}`
-        );
-        ride.media = imageInfo;
+        try {
+          const imageInfo = await uploadFile(
+            image,
+            `ride/${year}/${month}/${slug}`
+          );
+          ride.media = imageInfo;
+        } catch (err) {
+          console.log("Error on upload: ", err);
+          return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+        }
       }
 
       ride.name = name;

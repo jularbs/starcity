@@ -48,13 +48,37 @@ exports.create = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadFile(
-        image,
-        `image-slider/${year}/${month}/${slug}`
-      );
+      let imageInfo;
+
+      try {
+        imageInfo = await uploadFile(
+          image,
+          `image-slider/${year}/${month}/${slug}`
+        );
+      } catch (err) {
+        console.log(err);
+        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+      }
+
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         try {
+          let is = new ImageSlider();
+          is.order = order;
+          is.name = name;
+          is.slug = slug;
+          is.startDate = startDate;
+          is.endDate = endDate;
+          is.image = imageInfo;
+          is.status = false;
 
+          const result = await is.save();
+          res.json({ data: result, success: "Slider Item added successfully!" });
+          createEntry(
+            req.profile.name,
+            "Created new Image Slider Item",
+            { ...result, image: null },
+            req
+          );
         } catch (err) {
           console.log("Error on save: ", err)
           res.status(400).json({
@@ -62,23 +86,7 @@ exports.create = (req, res) => {
               "Failed to add item in image slider. Please try again later.",
           });
         }
-        let is = new ImageSlider();
-        is.order = order;
-        is.name = name;
-        is.slug = slug;
-        is.startDate = startDate;
-        is.endDate = endDate;
-        is.image = imageInfo;
-        is.status = false;
 
-        const result = await is.save();
-        res.json({ data: result, success: "Slider Item added successfully!" });
-        createEntry(
-          req.profile.name,
-          "Created new Image Slider Item",
-          { ...result, image: null },
-          req
-        );
       } else {
         res
           .status(400)
@@ -141,10 +149,16 @@ exports.update = async (req, res) => {
         var month = date.getUTCMonth() + 1; //months from 1-12
         var year = date.getUTCFullYear();
 
-        const imageInfo = await uploadFile(
-          image,
-          `image-slider/${year}/${month}/${slug}`
-        );
+        let imageInfo;
+        try {
+          imageInfo = await uploadFile(
+            image,
+            `image-slider/${year}/${month}/${slug}`
+          );
+        } catch (err) {
+          console.log("Error on upload: ", err);
+          return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+        }
         if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
           is.image = imageInfo;
         } else {

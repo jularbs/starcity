@@ -48,42 +48,51 @@ exports.create = async (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadFile(
-        image,
-        `banners/${year}/${month}/${slug}`
-      );
+      let imageInfo;
+
+      try {
+        imageInfo = await uploadFile(
+          image,
+          `banners/${year}/${month}/${slug}`
+        );
+      } catch (err) {
+        console.log(err);
+        return res.status(400).json({
+          error: "Failed to add banner due to failed upload. Please try again later.",
+        });
+      }
+
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         try {
+          let b = new Banner();
+          b.name = name;
+          b.link = link;
+          b.slug = slug;
+          b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
+          b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
+          b.image = imageInfo;
+          b.status = false;
+          b.sizeCategory = sizeCategory;
 
+          const banner = await b.save();
+          res.json(banner);
+          createEntry(
+            req.profile.name,
+            "Created new banner",
+            {
+              name,
+              startDate,
+              endDate,
+              sizeCategory,
+            },
+            req
+          );
         } catch (err) {
           console.log(err);
-          res.status(400).json({
+          return res.status(400).json({
             error: "Failed to add banner. Please try again later.",
           });
         }
-        let b = new Banner();
-        b.name = name;
-        b.link = link;
-        b.slug = slug;
-        b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
-        b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
-        b.image = imageInfo;
-        b.status = false;
-        b.sizeCategory = sizeCategory;
-
-        const banner = await b.save();
-        res.json(banner);
-        createEntry(
-          req.profile.name,
-          "Created new banner",
-          {
-            name,
-            startDate,
-            endDate,
-            sizeCategory,
-          },
-          req
-        );
       } else {
         console.log("error at image upload");
         return res
@@ -92,7 +101,6 @@ exports.create = async (req, res) => {
       }
     } else {
       console.log("error at no image");
-
       return res.status(400).json({
         error: "Image is required",
       });
@@ -146,10 +154,17 @@ exports.update = async (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadFile(
-        image,
-        `banners/${year}/${month}/${slug}`
-      );
+      let imageInfo;
+      try {
+        imageInfo = await uploadFile(
+          image,
+          `banners/${year}/${month}/${slug}`
+        );
+      } catch (err) {
+        console.log(err);
+        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+      }
+
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         b.image = imageInfo;
       } else {

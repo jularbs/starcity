@@ -42,10 +42,17 @@ exports.create = async (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadFile(
-        image,
-        `post/${year}/${month}/${slug}`
-      );
+      let imageInfo;
+      try {
+        imageInfo = await uploadFile(
+          image,
+          `post/${year}/${month}/${slug}`
+        );
+      } catch (err) {
+        console.log("Error on upload: ", err);
+        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+      }
+
       if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
         try {
           let post = new Post();
@@ -116,18 +123,26 @@ exports.update = async (req, res) => {
 
     let post = await Post.findOne({ slug }).exec();
 
+    let imageInfo;
     if (image) {
       deleteObjectFromS3(post.featuredImage.key, post.featuredImage.bucket);
 
       var date = new Date();
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
-      const imageInfo = await uploadFile(
-        image,
-        `post/${year}/${month}/${slug}`
-      );
 
-      post.featuredImage = imageInfo;
+
+      try {
+        imageInfo = await uploadFile(
+          image,
+          `post/${year}/${month}/${slug}`
+        );
+
+        post.featuredImage = imageInfo;
+      } catch (err) {
+        console.log("Error on upload: ", err);
+        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+      }
     }
 
     const excerpt = smartTrim(
@@ -195,11 +210,17 @@ exports.uploadImage = (req, res) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const imageInfo = await uploadFile(
-        files.photo,
-        `attachments/${year}/${month}`
-      );
-      if (imageInfo) res.json({ location: imageInfo.location });
+      try {
+        const imageInfo = await uploadFile(
+          files.photo,
+          `attachments/${year}/${month}`
+        );
+        if (imageInfo) res.json({ location: imageInfo.location });
+      } catch (err) {
+        console.log("Error on upload: ", err);
+        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+      }
+
     } else {
       return res.status(400).json({
         error: "No image is selected.",

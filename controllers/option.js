@@ -11,7 +11,14 @@ exports.logoUpload = async (req, res) => {
     const { value } = files;
     const { name } = fields;
 
-    const imageInfo = await uploadFile(value, `logo-image`);
+    let imageInfo;
+    try {
+      imageInfo = await uploadFile(value, `logo-image`);
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+    }
+
     let option = await Option.findOne({ name }).exec();
 
     if (option) {
@@ -69,25 +76,24 @@ exports.create = async (req, res) => {
   let option = await Option.findOne({ name }).exec();
 
   if (option) {
-    option.name = name;
-    option.value = value;
-    option.meta = meta;
     try {
-
+      option.name = name;
+      option.value = value;
+      option.meta = meta;
+      const result = await option.save();
+      createEntry(
+        req.profile.name,
+        `Option ${name} updated`,
+        { value: req.value },
+        req
+      );
+      return res.json({ result, success: "Option has been updated successfully!" });
     } catch (err) {
       return res.status(400).json({
         error: "Unable to save option. Please try again later.",
         message: err,
       });
     }
-    const result = await option.save();
-    createEntry(
-      req.profile.name,
-      `Option ${name} updated`,
-      { value: req.value },
-      req
-    );
-    return res.json({ result, success: "Option has been updated successfully!" });
   } else {
     try {
       const slug = slugify(name).toLowerCase();
