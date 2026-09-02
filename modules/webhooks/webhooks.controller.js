@@ -7,7 +7,7 @@ import {
   sendAR,
   getOpenParkExpiry,
 } from "../sale/sale.controller.js";
-import { pool } from "../../lib/mysql/connect.js";
+import { pool } from "../../database/mysql/index.js";
 import { format } from "date-fns";
 import { cronSyncSMTickets } from "../../helpers/cronjobs.js";
 

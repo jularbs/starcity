@@ -6,7 +6,7 @@ import AccessPass from "../modules/accessPass/accessPass.model.js";
 import PaymentOption from "../modules/paymentOption/paymentOption.model.js";
 import Ticket from "../modules/ticket/ticket.model.js";
 
-import { pool } from "../lib/mysql/connect.js";
+import { pool } from "../database/mysql/index.js";
 import { addAuditTrailEntry } from "../modules/auditTrail/auditTrail.controller.js";
 import { format } from "date-fns";
 import { sendMail } from "../helpers/nodemailer.js";

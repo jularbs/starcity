@@ -7,7 +7,7 @@ import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 import dotenv from "dotenv";
 dotenv.config();
-import { connectMongoDB, disconnectMongoDB } from "./database/mongodb.js";
+import { connectMongoDB, disconnectMongoDB } from "./database/mongodb/index.js";
 
 //routes
 import rideCategoryRoutes from "./modules/rideCategory/rideCategory.routes.js";
