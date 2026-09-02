@@ -24,6 +24,8 @@ import bannerRoutes from "./modules/banner/banner.routes.js";
 import mediaRoutes from "./modules/media/media.routes.js";
 import webhookRoutes from "./modules/webhooks/webhooks.routes.js";
 import promoRoutes from "./modules/promo/promo.routes.js";
+import userRoutes from "./modules/user/user.routes.js";
+
 import { startCronJobs } from "./helpers/cronScheduler.js";
 
 const app = express();
@@ -72,6 +74,7 @@ app.use("/api", authRoutes);
 app.use("/api", bannerRoutes);
 app.use("/api", mediaRoutes);
 app.use("/api", promoRoutes);
+app.use("/api", userRoutes);
 app.use("/webhooks", webhookRoutes);
 
 //Rate Limiting 404 requests

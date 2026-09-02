@@ -8,10 +8,6 @@ import {
   requireSignin,
   authMiddleware,
   validateToken,
-  read,
-  update,
-  list,
-  remove
 } from "./auth.controller.js";
 import { list as listAudit } from "../auditTrail/auditTrail.controller.js";
 import { createRateLimiter } from "../../helpers/rateLimiter.js";
@@ -33,11 +29,5 @@ router.get("/v1/signout", signout);
 router.get("/v1/validate-token", requireSignin, authMiddleware, validateToken);
 
 router.get("/v1/audit-trail", requireSignin, authMiddleware, listAudit);
-
-router.delete("/v1/user/:id", requireSignin, authMiddleware, remove);
-router.get("/v1/user/:id", requireSignin, authMiddleware, read);
-router.get("/v1/user", requireSignin, authMiddleware, list);
-router.patch("/v1/user", requireSignin, authMiddleware, update);
-
 
 export default router;
