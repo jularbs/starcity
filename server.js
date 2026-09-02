@@ -25,6 +25,7 @@ import mediaRoutes from "./modules/media/media.routes.js";
 import webhookRoutes from "./modules/webhooks/webhooks.routes.js";
 import promoRoutes from "./modules/promo/promo.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
+import auditTrailRoutes from "./modules/auditTrail/auditTrail.routes.js";
 
 import { startCronJobs } from "./helpers/cronScheduler.js";
 
@@ -75,6 +76,7 @@ app.use("/api", bannerRoutes);
 app.use("/api", mediaRoutes);
 app.use("/api", promoRoutes);
 app.use("/api", userRoutes);
+app.use("/api", auditTrailRoutes);
 app.use("/webhooks", webhookRoutes);
 
 //Rate Limiting 404 requests

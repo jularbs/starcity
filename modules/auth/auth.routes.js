@@ -9,8 +9,8 @@ import {
   authMiddleware,
   validateToken,
 } from "./auth.controller.js";
-import { list as listAudit } from "../auditTrail/auditTrail.controller.js";
 import { createRateLimiter } from "../../helpers/rateLimiter.js";
+
 router.post("/v1/signup",
   createRateLimiter({ windowMs: 60 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 60 minutes." }),
   signup);
@@ -27,7 +27,5 @@ router.post(
 router.get("/v1/signout", signout);
 
 router.get("/v1/validate-token", requireSignin, authMiddleware, validateToken);
-
-router.get("/v1/audit-trail", requireSignin, authMiddleware, listAudit);
 
 export default router;
