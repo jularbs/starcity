@@ -21,10 +21,12 @@ router.get("/v1/sale",
   list
 );
 
-router.get("/v1/sale/:refid", read);
+router.get("/v1/sale/:refid",
+  createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 25, message: "Too many attempts, please try again in 15 minutes." }),
+  read);
 
 router.get("/v1/access-pass",
-  createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 150, message: "Too many attempts, please try again in 15 minutes." }),
+  createRateLimiter({ windowMs: 15 * 60 * 1000, limit: 25, message: "Too many attempts, please try again in 15 minutes." }),
   readBySaltRefID
 );
 
