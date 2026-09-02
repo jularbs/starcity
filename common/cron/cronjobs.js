@@ -9,7 +9,7 @@ import Ticket from "../../modules/ticket/ticket.model.js";
 import { pool } from "../../database/mysql/index.js";
 import { addAuditTrailEntry } from "../../modules/auditTrail/auditTrail.controller.js";
 import { format } from "date-fns";
-import { sendMail } from "../../helpers/nodemailer.js";
+import { sendMail } from "../../modules/email/email.service.js";
 import { convertArrayToCSV } from 'convert-array-to-csv';
 import dateFnsTz from "date-fns-tz";
 
