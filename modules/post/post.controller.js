@@ -1,6 +1,6 @@
 import Post from "./post.model.js";
 import slugify from "slugify";
-import { smartTrim } from "../../helpers/commonFunctions.js";
+import { smartTrim } from "../../common/utils/smart-trim.js";
 import { stripHtml } from "string-strip-html";
 import formidable from "formidable";
 import {
