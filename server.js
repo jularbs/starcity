@@ -24,8 +24,7 @@ const bannerRoutes = require("./modules/banner/banner.routes");
 const mediaRoutes = require("./modules/media/media.routes");
 const webhookRoutes = require("./modules/webhooks/webhooks.routes");
 const promoRoutes = require("./modules/promo/promo.routes");
-
-var cron = require("node-cron");
+const { startCronJobs } = require("./helpers/cronScheduler");
 
 const app = express();
 
@@ -104,47 +103,9 @@ app.use((req, res, next) => {
   });
 });
 
-const {
-  cronSyncAP,
-  cronProcessEmailQueues,
-  cronSyncSMTickets,
-  dbcleanup,
-  generateDailyReport,
-  generateQRdeliveryReport
-} = require("./helpers/cronjobs");
-
-// cron jobs
-cron.schedule("*/15 * * * *", function () {
-  //Execute only on production
-  if (process.env.NODE_ENV == "production") {
-    cronSyncSMTickets();
-    cronSyncAP();
-  }
-});
-
-cron.schedule("*/5 * * * *", function () {
-  //Execute only on production
-  if (process.env.NODE_ENV == "production") {
-    cronProcessEmailQueues();
-  }
-});
-
-cron.schedule("0 0 * * *", function () {
-  //Execute only on production
-  if (process.env.NODE_ENV == "production") {
-    dbcleanup();
-  }
-});
-
-cron.schedule("5 16 * * *", function () { //UTC for 00:05
-  //Execute only on production
-  if (process.env.NODE_ENV == "production") {
-    generateDailyReport();
-    generateQRdeliveryReport();
-  }
-});
-
 const port = process.env.PORT || 8000;
+
+startCronJobs();
 
 app.listen(port, () => {
   console.log(`Environment is ${process.env.NODE_ENV}`);
