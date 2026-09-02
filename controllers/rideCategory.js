@@ -76,6 +76,26 @@ exports.remove = async (req, res) => {
   const { slug } = req.body;
 
   try {
+    if (!slug) {
+      return res.status(400).json({
+        error: "Slug is required",
+      });
+    }
+
+    const rideCategory = await RideCategory.findOne({ slug }).exec();
+    if (!rideCategory) {
+      return res.status(404).json({
+        error: "Ride Category not found",
+      });
+    }
+
+    const referencedRides = await Ride.find({ rideCategoryId: rideCategory._id }).exec();
+    if (referencedRides.length > 0) {
+      return res.status(400).json({
+        error: "Cannot delete ride category with existing rides",
+      });
+    }
+
     const result = await RideCategory.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted Ride Category`, { slug }, req);
     res.json({ success: "Ride Category deleted successfully" });
