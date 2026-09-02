@@ -1,19 +1,19 @@
-import AccessPassQueue from "../modules/accessPass/accessPassQueue.model.js";
-import SmQueue from "../modules/smTickets/smQueue.model.js";
-import EmailQueue from "../modules/email/emailQueue.model.js";
-import Sale from "../modules/sale/sale.model.js";
-import AccessPass from "../modules/accessPass/accessPass.model.js";
-import PaymentOption from "../modules/paymentOption/paymentOption.model.js";
-import Ticket from "../modules/ticket/ticket.model.js";
+import AccessPassQueue from "../../modules/accessPass/accessPassQueue.model.js";
+import SmQueue from "../../modules/smTickets/smQueue.model.js";
+import EmailQueue from "../../modules/email/emailQueue.model.js";
+import Sale from "../../modules/sale/sale.model.js";
+import AccessPass from "../../modules/accessPass/accessPass.model.js";
+import PaymentOption from "../../modules/paymentOption/paymentOption.model.js";
+import Ticket from "../../modules/ticket/ticket.model.js";
 
-import { pool } from "../database/mysql/index.js";
-import { addAuditTrailEntry } from "../modules/auditTrail/auditTrail.controller.js";
+import { pool } from "../../database/mysql/index.js";
+import { addAuditTrailEntry } from "../../modules/auditTrail/auditTrail.controller.js";
 import { format } from "date-fns";
-import { sendMail } from "../helpers/nodemailer.js";
+import { sendMail } from "../../helpers/nodemailer.js";
 import { convertArrayToCSV } from 'convert-array-to-csv';
 import dateFnsTz from "date-fns-tz";
 
-import { sendAR } from "../modules/sale/sale.controller.js";
+import { sendAR } from "../../modules/sale/sale.controller.js";
 
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 

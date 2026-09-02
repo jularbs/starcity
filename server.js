@@ -26,7 +26,7 @@ import promoRoutes from "./modules/promo/promo.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
 import auditTrailRoutes from "./modules/auditTrail/auditTrail.routes.js";
 
-import { startCronJobs } from "./helpers/cronScheduler.js";
+import { startCronJobs } from "./common/cron/cronScheduler.js";
 
 const app = express();
 

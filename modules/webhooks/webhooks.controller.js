@@ -9,7 +9,7 @@ import {
 } from "../sale/sale.controller.js";
 import { pool } from "../../database/mysql/index.js";
 import { format } from "date-fns";
-import { cronSyncSMTickets } from "../../helpers/cronjobs.js";
+import { cronSyncSMTickets } from "../../common/cron/cronjobs.js";
 
 export const paymayaRequestCheckout = async (req, res) => {
   const paymayaPK = process.env.PAYMAYA_PUBLIC_KEY;

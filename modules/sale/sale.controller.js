@@ -12,7 +12,7 @@ import { add, format, getDay, nextThursday } from "date-fns";
 import dateFnsTz from "date-fns-tz";
 import moment from "moment";
 import axios from "axios";
-import { cronSyncAP } from "../../helpers/cronjobs.js";
+import { cronSyncAP } from "../../common/cron/cronjobs.js";
 import { addToQueue } from "../accessPass/accessPassQueue.controller.js";
 import EmailQueue from "../email/emailQueue.model.js";
 //TEST
