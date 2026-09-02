@@ -1,5 +1,5 @@
 import formidable from "formidable";
-import { getObjectFromS3, uploadFile } from "../../helpers/s3uploader.js";
+import { getObjectFromS3, uploadFile } from "../../common/object-storage/amazon-s3.js";
 export const getMedia = async (req, res) => {
   const { key, bucket = process.env.AWS_S3_BUCKETNAME } = req.query;
 

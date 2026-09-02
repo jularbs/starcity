@@ -3,7 +3,7 @@ import Ticket from "../ticket/ticket.model.js";
 import AccessPass from "../accessPass/accessPass.model.js";
 import crypto from "crypto";
 import QRCode from "qrcode";
-import { uploadBase64 } from "../../helpers/s3uploader.js";
+import { uploadBase64 } from "../../common/object-storage/amazon-s3.js";
 import mongoose from "mongoose";
 import { sendMail } from "../email/email.service.js";
 import { accessPassEmailNotification } from "../email/templates/index.js";

@@ -3,7 +3,7 @@ import slugify from "slugify";
 import formidable from "formidable";
 import {
   uploadFile,
-} from "../../helpers/s3uploader.js";
+} from "../../common/object-storage/amazon-s3.js";
 import { createEntry } from "../auditTrail/auditTrail.controller.js";
 import dateFnsTz from "date-fns-tz";
 

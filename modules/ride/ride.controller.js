@@ -1,7 +1,7 @@
 import Ride from "./ride.model.js";
 import formidable from "formidable";
 import slugify from "slugify";
-import { uploadFile } from "../../helpers/s3uploader.js";
+import { uploadFile } from "../../common/object-storage/amazon-s3.js";
 import { createEntry } from "../auditTrail/auditTrail.controller.js";
 export const create = (req, res) => {
   const form = formidable({ multiples: true });

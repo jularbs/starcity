@@ -1,7 +1,7 @@
 import slugify from "slugify";
 import Option from "./option.model.js";
 import { createEntry } from "../auditTrail/auditTrail.controller.js";
-import { uploadFile } from "../../helpers/s3uploader.js";
+import { uploadFile } from "../../common/object-storage/amazon-s3.js";
 import formidable from "formidable";
 export const logoUpload = async (req, res) => {
   const form = formidable({ multiples: true });
