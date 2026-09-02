@@ -4,8 +4,6 @@ import {
   paymayaPaymentExpired,
   paymayaPaymentFailed,
   paymayaPaymentSuccess,
-  dragonPayReturn,
-  dragonPaySuccess,
   smTicketTest,
   smTicketExpiry,
   smTicketTransact,
@@ -16,8 +14,6 @@ import {
 router.post("/v1/paymaya/payment-success", paymayaPaymentSuccess);
 router.post("/v1/paymaya/payment-failed", paymayaPaymentFailed);
 router.post("/v1/paymaya/payment-expired", paymayaPaymentExpired);
-router.post("/v1/dragonpay/callback", dragonPaySuccess);
-router.get("/v1/dragonpay/return", dragonPayReturn);
 
 router.get("/v1/smticket/test", smTicketTest);
 router.get("/v1/smticket/expiry", smTicketExpiry);
