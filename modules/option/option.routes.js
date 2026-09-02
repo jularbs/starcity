@@ -8,14 +8,14 @@ import {
   remove,
   logoUpload,
 } from "./option.controller.js";
-import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
+import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
-router.post("/v1/option", requireSignin, authMiddleware, create);
-router.post("/v1/logo-option", requireSignin, authMiddleware, logoUpload);
+router.post("/v1/option", requireSignin, authzMiddleware("admin"), create);
+router.post("/v1/logo-option", requireSignin, authzMiddleware("admin"), logoUpload);
 
-router.put("/v1/option", requireSignin, authMiddleware, update);
+router.put("/v1/option", requireSignin, authzMiddleware("admin"), update);
 router.get("/v1/option", list);
 router.get("/v1/option/:name", read);
-router.delete("/v1/option", requireSignin, authMiddleware, remove);
+router.delete("/v1/option", requireSignin, authzMiddleware("admin"), remove);
 
 export default router;

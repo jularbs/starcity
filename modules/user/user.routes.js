@@ -2,13 +2,13 @@ import express from "express";
 const router = express.Router();
 import {
     requireSignin,
-    authMiddleware,
+    authzMiddleware,
 } from "../../common/middleware/auth.middleware.js";
 import { remove, read, list, update } from "./user.controller.js";
 
-router.delete("/v1/user/:id", requireSignin, authMiddleware, remove);
-router.get("/v1/user/:id", requireSignin, authMiddleware, read);
-router.get("/v1/user", requireSignin, authMiddleware, list);
-router.patch("/v1/user", requireSignin, authMiddleware, update);
+router.delete("/v1/user/:id", requireSignin, authzMiddleware("admin"), remove);
+router.get("/v1/user/:id", requireSignin, authzMiddleware("admin"), read);
+router.get("/v1/user", requireSignin, authzMiddleware("admin"), list);
+router.patch("/v1/user", requireSignin, authzMiddleware("admin"), update);
 
 export default router;

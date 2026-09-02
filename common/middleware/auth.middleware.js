@@ -27,10 +27,16 @@ export const requireSignin = (req, res, next) => {
         });
     } else {
         // Handle the case where the token is missing or invalid
-        return res.status(400).json({ error: 'Permission Denied for this request' });
+        return res.status(400).json({ error: 'Auth token required for this request' });
     }
 }
 
-export const authMiddleware = async (req, res, next) => {
+export const authzMiddleware = (...department) => async (req, res, next) => {
+    const userRole = req.profile?.department;
+
+    if (!userRole || (department.length && !department.includes(userRole))) {
+        return res.status(403).json({ error: "You don't have permission to make this request" });
+    }
+
     next();
 };

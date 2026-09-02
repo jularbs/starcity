@@ -9,18 +9,18 @@ import {
   apply,
   toggle
 } from "./promo.controller.js";
-import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
+import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
 //Version 1.0
-router.post("/v1/promo", requireSignin, authMiddleware, create);
-router.post("/v1/promo/toggle", requireSignin, authMiddleware, toggle);
+router.post("/v1/promo", requireSignin, authzMiddleware("admin"), create);
+router.post("/v1/promo/toggle", requireSignin, authzMiddleware("admin"), toggle);
 
-router.patch("/v1/promo", requireSignin, authMiddleware, update);
+router.patch("/v1/promo", requireSignin, authzMiddleware("admin"), update);
 
 router.get("/v1/promo/apply", apply);
 router.get("/v1/promo/:id", read);
-router.get("/v1/promo", requireSignin, authMiddleware, list);
+router.get("/v1/promo", requireSignin, authzMiddleware("admin"), list);
 
-router.delete("/v1/promo/:id", requireSignin, authMiddleware, remove);
+router.delete("/v1/promo/:id", requireSignin, authzMiddleware("admin"), remove);
 
 
 

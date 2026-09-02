@@ -7,7 +7,7 @@ import {
   changePassword,
   validateToken,
 } from "./auth.controller.js";
-import { requireSignin, authMiddleware } from "../../common/middleware/auth.middleware.js";
+import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
 import { createRateLimiter } from "../../common/middleware/rate-limit.middleware.js";
 
 router.post("/v1/signup",
@@ -19,12 +19,12 @@ router.post("/v1/signin",
 router.post(
   "/v1/change-password",
   requireSignin,
-  authMiddleware,
+  authzMiddleware("admin"),
   changePassword
 );
 
 router.get("/v1/signout", signout);
 
-router.get("/v1/validate-token", requireSignin, authMiddleware, validateToken);
+router.get("/v1/validate-token", requireSignin, authzMiddleware("admin"), validateToken);
 
 export default router;
