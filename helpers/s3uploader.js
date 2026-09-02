@@ -38,37 +38,6 @@ exports.uploadBase64 = (base64, folder) => {
   });
 };
 
-exports.uploadTos3withKey = (file, folder) => {
-  return new Promise((resolve, reject) => {
-    s3.upload(
-      {
-        Key: `${folder}/${file.name}`,
-        Bucket: process.env.AWS_S3_BUCKETNAME,
-        Body: fs.readFileSync(file.path),
-        ACL: "public-read",
-      },
-      (err, data) => {
-        if (err) return reject(err);
-        return resolve({
-          location: data.Location,
-          bucket: data.Bucket,
-          key: data.Key,
-        });
-      }
-    );
-  });
-};
-
-exports.asyncUploadToS3WithKey = async (file, folder) => {
-  return this.uploadTos3withKey(file, folder);
-};
-
-exports.uploadAllFilesToS3 = async (files, folder) => {
-  return Promise.all(
-    files.map((file) => this.asyncUploadToS3WithKey(file, folder))
-  );
-};
-
 exports.deleteObjectFromS3 = async (key, bucket) => {
   const params = {
     Bucket: bucket,
