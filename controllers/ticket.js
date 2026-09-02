@@ -32,7 +32,14 @@ exports.create = async (req, res) => {
 
 exports.read = async (req, res) => {
   try {
-    const data = await Ticket.findOne({ slug: req.params.slug }).exec();
+    const data = await Ticket.findOne({ slug: req.params.slug, deletedAt: null }).exec();
+
+    if (!data) {
+      return res.status(404).json({
+        error: "Ticket not found",
+      });
+    }
+
     res.json(data);
   } catch (err) {
     return res.status(400).json({
@@ -47,7 +54,7 @@ exports.list = async (req, res) => {
 
   if (f) {
     try {
-      const data = await Ticket.find({ status: true }).exec();
+      const data = await Ticket.find({ status: true, deletedAt: null }).exec();
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -57,7 +64,7 @@ exports.list = async (req, res) => {
     }
   } else {
     try {
-      const data = await Ticket.find().exec();
+      const data = await Ticket.find({ deletedAt: null }).exec();
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -96,7 +103,22 @@ exports.remove = async (req, res) => {
   const { _id } = req.body;
 
   try {
-    const result = await Ticket.findOneAndDelete({ _id }).exec();
+    if (!_id) {
+      return res.status(400).json({
+        error: "Ticket ID is required",
+      });
+    }
+
+    const ticket = await Ticket.findOne({ _id }).exec();
+
+    if (!ticket) {
+      return res.status(404).json({
+        error: "Ticket not found",
+      });
+    }
+
+    ticket.deletedAt = new Date();
+    await ticket.save();
     res.json({ success: "Ticket deleted successfully" });
     createEntry(req.profile.name, `Deleted ticket ${_id}`, {}, req);
   } catch (err) {

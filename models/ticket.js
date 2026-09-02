@@ -48,6 +48,10 @@ const ticketSchema = new mongoose.Schema(
       max: 4,
       trim: true,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
     meta: Object,
   },
   {
