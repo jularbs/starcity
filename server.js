@@ -79,8 +79,6 @@ app.use("/api", mediaRoutes);
 app.use("/api", promoRoutes);
 app.use("/webhooks", webhookRoutes);
 
-app.use(express.static(__dirname + "/data/img"));
-
 //Rate Limiting 404 requests
 const CatchAllLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
