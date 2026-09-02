@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import { uploadBase64 } from "../../helpers/s3uploader.js";
 import mongoose from "mongoose";
 import { sendMail } from "../../helpers/nodemailer.js";
-import { accessPassEmailNotification } from "../../helpers/emailTemplates.js";
+import { accessPassEmailNotification } from "../email/templates/index.js";
 import { pool } from "../../database/mysql/index.js";
 import { add, format, getDay, nextThursday } from "date-fns";
 import dateFnsTz from "date-fns-tz";
