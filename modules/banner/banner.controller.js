@@ -1,16 +1,15 @@
-const Banner = require("./banner.model");
-
-const slugify = require("slugify");
-const formidable = require("formidable");
-const {
+import Banner from "./banner.model.js";
+import slugify from "slugify";
+import formidable from "formidable";
+import {
   uploadFile,
-} = require("../../helpers/s3uploader");
+} from "../../helpers/s3uploader.js";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+import dateFnsTz from "date-fns-tz";
 
-const { createEntry } = require("../auditTrail/auditTrail.controller");
+const { zonedTimeToUtc } = dateFnsTz;
 
-const { zonedTimeToUtc } = require("date-fns-tz");
-
-exports.create = async (req, res) => {
+export const create = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -108,7 +107,7 @@ exports.create = async (req, res) => {
   });
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   try {
     const { slug } = req.params;
     const result = await Banner.findOne({ slug }).exec();
@@ -119,7 +118,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   try {
     const result = await Banner.find({}).exec();
     res.json(result);
@@ -129,7 +128,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -197,7 +196,7 @@ exports.update = async (req, res) => {
   });
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.body;
 
   if (!slug) {
@@ -212,7 +211,7 @@ exports.remove = async (req, res) => {
   createEntry(req.profile.name, `Deleted banner ${slug}`, {}, req);
 };
 
-exports.toggleStatus = async (req, res) => {
+export const toggleStatus = async (req, res) => {
   const { _id } = req.body;
   let b = await Banner.findOne({ _id }).exec();
   b.status = !b.status;

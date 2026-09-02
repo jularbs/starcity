@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const rideCategorySchema = new mongoose.Schema(
   {
     name: {
@@ -21,4 +20,4 @@ const rideCategorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("RideCategory", rideCategorySchema);
+export default mongoose.model("RideCategory", rideCategorySchema);

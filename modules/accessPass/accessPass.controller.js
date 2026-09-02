@@ -1,6 +1,6 @@
-const html_to_pdf = require("html-pdf-node");
+import html_to_pdf from "html-pdf-node";
 
-exports.download = async (req, res) => {
+export const download = async (req, res) => {
   const { salt, refId, ticketId } = req.params;
   let options = { format: "A4" };
 

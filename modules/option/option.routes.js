@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   list,
@@ -8,10 +8,8 @@ const {
   update,
   remove,
   logoUpload,
-} = require("./option.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
-
+} from "./option.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/option", requireSignin, authMiddleware, create);
 router.post("/v1/logo-option", requireSignin, authMiddleware, logoUpload);
@@ -22,4 +20,4 @@ router.get("/v1/options-v2", listOptionsv2);
 router.get("/v1/option/:name", read);
 router.delete("/v1/option", requireSignin, authMiddleware, remove);
 
-module.exports = router;
+export default router;

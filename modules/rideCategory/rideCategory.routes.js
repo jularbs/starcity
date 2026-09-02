@@ -1,12 +1,11 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { create, update, list, remove } = require("./rideCategory.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
+import { create, update, list, remove } from "./rideCategory.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/ride-category", requireSignin, authMiddleware, create);
 router.put("/v1/ride-category", requireSignin, authMiddleware, update);
 router.get("/v1/ride-categories", list);
 router.delete("/v1/ride-category", requireSignin, authMiddleware, remove);
 
-module.exports = router;
+export default router;

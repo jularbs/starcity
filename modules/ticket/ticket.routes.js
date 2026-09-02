@@ -1,16 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   update,
   list,
   remove,
   toggleStatus,
-} = require("./ticket.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
-
+} from "./ticket.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/ticket", requireSignin, authMiddleware, create);
 router.put("/v1/ticket", requireSignin, authMiddleware, update);
@@ -25,4 +23,4 @@ router.put(
   toggleStatus
 );
 
-module.exports = router;
+export default router;

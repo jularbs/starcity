@@ -1,12 +1,12 @@
-const cron = require("node-cron");
-const {
+import cron from "node-cron";
+import {
     cronSyncAP,
     cronProcessEmailQueues,
     cronSyncSMTickets,
     dbcleanup,
     generateDailyReport,
     generateQRdeliveryReport,
-} = require("./cronjobs");
+} from "./cronjobs.js";
 
 let isStarted = false;
 
@@ -16,7 +16,7 @@ const runJob = (job, name) => {
     });
 };
 
-const startCronJobs = () => {
+export const startCronJobs = () => {
     if (isStarted) {
         return;
     }
@@ -49,5 +49,3 @@ const startCronJobs = () => {
         }
     });
 };
-
-module.exports = { startCronJobs };

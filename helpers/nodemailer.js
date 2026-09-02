@@ -1,6 +1,6 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
-const sendMail = async (email) => {
+export const sendMail = async (email) => {
   try {
     var config = {
       host: process.env.EMAIL_HOST,
@@ -21,5 +21,3 @@ const sendMail = async (email) => {
     console.log("ERROR IN MAILER: ", e);
   }
 };
-
-module.exports = { sendMail };

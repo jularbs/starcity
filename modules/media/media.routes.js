@@ -1,10 +1,9 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { getMedia, uploadMediaFromEditor } = require("./media.controller");
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
-
+import { getMedia, uploadMediaFromEditor } from "./media.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 router.get("/v1/media", getMedia);
 
 router.post("/v1/upload/editor", requireSignin, authMiddleware, uploadMediaFromEditor);
 
-module.exports = router;
+export default router;

@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const imageSliderSchema = new mongoose.Schema(
   {
     order: {
@@ -31,4 +30,4 @@ const imageSliderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("ImageSlider", imageSliderSchema);
+export default mongoose.model("ImageSlider", imageSliderSchema);

@@ -1,15 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   list,
   update,
   remove,
   toggleStatus,
-} = require("./paymentOption.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
+} from "./paymentOption.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/payment-option", requireSignin, authMiddleware, create);
 
@@ -26,4 +25,4 @@ router.get("/v1/payment-option/:slug", read);
 
 router.delete("/v1/payment-option", requireSignin, authMiddleware, remove);
 
-module.exports = router;
+export default router;

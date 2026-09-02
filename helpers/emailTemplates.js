@@ -1,6 +1,6 @@
-const { format } = require("date-fns");
+import { format } from "date-fns";
 
-exports.accessPassEmailNotification = (data) => {
+export const accessPassEmailNotification = (data) => {
   const {
     salt,
     refId,
@@ -559,9 +559,8 @@ exports.accessPassEmailNotification = (data) => {
                                         text-align: left;
                                       "
                                     >  
-                                      These QR Codes are your tickets to the park and are <strong>valid until ${
-                                        data.expiryDate
-                                      }.</strong> 
+                                      These QR Codes are your tickets to the park and are <strong>valid until ${data.expiryDate
+    }.</strong> 
                                       Please download the QR codes and print or save in your mobile phone for scanning 
                                       at the park's main entrance turnstiles. One QR code per person. 
                                     </p>
@@ -795,10 +794,9 @@ exports.accessPassEmailNotification = (data) => {
                                                     >
                                                       <a
                                                         align="center"
-                                                        href="${
-                                                          process.env
-                                                            .WEBSITE_URL
-                                                        }/accesspass?s=${salt}&r=${refId}"
+                                                        href="${process.env
+      .WEBSITE_URL
+    }/accesspass?s=${salt}&r=${refId}"
                                                         style="
                                                           border: 0 solid
                                                             #ffae00;
@@ -1178,10 +1176,9 @@ exports.accessPassEmailNotification = (data) => {
                                                       ><br /><span
                                                         class="tw-light"
                                                         style="font-weight: 300"
-                                                        >${
-                                                          paymentDetails.option
-                                                            .name
-                                                        }</span
+                                                        >${paymentDetails.option
+      .name
+    }</span
                                                       >
                                                     </p>
                                                     <p
@@ -1209,9 +1206,8 @@ exports.accessPassEmailNotification = (data) => {
                                                       ><br /><span
                                                         class="tw-light"
                                                         style="font-weight: 300"
-                                                        >${
-                                                          paymentDetails.referenceNumber
-                                                        }</span
+                                                        >${paymentDetails.referenceNumber
+    }</span
                                                       >
                                                     </p>
                                                     <p

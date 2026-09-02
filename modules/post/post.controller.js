@@ -1,16 +1,18 @@
-const Post = require("./post.model");
-const slugify = require("slugify");
-const { smartTrim } = require("../../helpers/commonFunctions");
-const { stripHtml } = require("string-strip-html");
-const formidable = require("formidable");
-const {
+import Post from "./post.model.js";
+import slugify from "slugify";
+import { smartTrim } from "../../helpers/commonFunctions.js";
+import { stripHtml } from "string-strip-html";
+import formidable from "formidable";
+import {
   deleteObjectFromS3,
   uploadFile,
-} = require("../../helpers/s3uploader");
+} from "../../helpers/s3uploader.js";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+import dateFnsTz from "date-fns-tz";
 
-const { createEntry } = require("../auditTrail/auditTrail.controller");
-const { zonedTimeToUtc } = require("date-fns-tz");
-exports.create = async (req, res) => {
+const { zonedTimeToUtc } = dateFnsTz;
+
+export const create = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -83,7 +85,7 @@ exports.create = async (req, res) => {
   });
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   const { slug } = req.params;
   try {
     const result = await Post.findOne({ slug }).exec();
@@ -96,7 +98,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const { skip, limit } = req.query;
   try {
     const result = await Post.find({})
@@ -114,7 +116,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -171,7 +173,7 @@ exports.update = async (req, res) => {
   });
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.body;
 
   if (!slug) {
@@ -187,7 +189,7 @@ exports.remove = async (req, res) => {
   createEntry(req.profile.name, `Deleted post ${slug}`, {}, req);
 };
 
-exports.uploadImage = (req, res) => {
+export const uploadImage = (req, res) => {
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
 

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { Decimal128 } = mongoose.Schema.Types;
 
 function getPrice(value) {
@@ -61,4 +61,4 @@ const ticketSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Ticket", ticketSchema);
+export default mongoose.model("Ticket", ticketSchema);

@@ -1,5 +1,6 @@
-const AccessPassQueue = require("./accessPassQueue.model")
-exports.addToQueue = (accessPass, status) => {
+import AccessPassQueue from "./accessPassQueue.model.js";
+
+export const addToQueue = (accessPass, status) => {
     let q = new AccessPassQueue();
     q.accessPass = accessPass._id;
     q.status = status;

@@ -1,15 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   list,
   update,
   remove,
   toggleStatus,
-} = require("./banner.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
+} from "./banner.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/banner", requireSignin, authMiddleware, create);
 
@@ -25,4 +24,4 @@ router.get("/v1/banner", list);
 // router.get("/v1/post/:slug", read);
 router.delete("/v1/banner", requireSignin, authMiddleware, remove);
 
-module.exports = router;
+export default router;

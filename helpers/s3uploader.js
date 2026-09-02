@@ -1,15 +1,15 @@
-const fs = require("fs");
-const AWS = require("aws-sdk");
-const { nanoid } = require("nanoid");
-const sharp = require("sharp");
-const path = require("path");
+import fs from "fs";
+import AWS from "aws-sdk";
+import { nanoid } from "nanoid";
+import sharp from "sharp";
+import path from "path";
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_S3_PUBLICKEY,
   secretAccessKey: process.env.AWS_S3_SECRETKEY,
 });
 
-exports.uploadBase64 = (base64, folder) => {
+export const uploadBase64 = (base64, folder) => {
   return new Promise((resolve, reject) => {
     const base64Data = new Buffer.from(
       base64.replace(/^data:image\/\w+;base64,/, ""),
@@ -38,7 +38,7 @@ exports.uploadBase64 = (base64, folder) => {
   });
 };
 
-exports.deleteObjectFromS3 = async (key, bucket) => {
+export const deleteObjectFromS3 = async (key, bucket) => {
   const params = {
     Bucket: bucket,
     Key: key,
@@ -53,7 +53,7 @@ exports.deleteObjectFromS3 = async (key, bucket) => {
   return res;
 };
 
-exports.getObjectFromS3 = async (key, bucket) => {
+export const getObjectFromS3 = async (key, bucket) => {
   const params = {
     Bucket: bucket,
     Key: key,
@@ -69,7 +69,7 @@ exports.getObjectFromS3 = async (key, bucket) => {
 };
 
 //V2
-exports.isValidImage = (file) => {
+export const isValidImage = (file) => {
   const fileType = file["type"];
   const validImageTypes = [
     "image/gif",
@@ -87,9 +87,9 @@ exports.isValidImage = (file) => {
   }
 }
 
-exports.uploadFile = async (file, folder, width = 1600) => {
+export const uploadFile = async (file, folder, width = 1600) => {
   return new Promise(async (resolve, reject) => {
-    if (!this.isValidImage(file)) {
+    if (!isValidImage(file)) {
       //Upload non image file
       try {
         const ext = path.extname(file.name);

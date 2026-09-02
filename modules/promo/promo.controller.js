@@ -1,8 +1,7 @@
 //TODOS: Handle duplicate errors
-const Promo = require("./promo.model");
-const formidable = require("formidable");
-
-exports.create = async (req, res) => {
+import Promo from "./promo.model.js";
+import formidable from "formidable";
+export const create = async (req, res) => {
     const form = formidable({ multiples: true });
     form.parse(req, async (err, fields, files) => {
         if (err) {
@@ -58,7 +57,7 @@ exports.create = async (req, res) => {
     });
 }
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
     const { id } = req.params;
 
     const promo = await Promo.findOne({ _id: id }).exec();
@@ -66,7 +65,7 @@ exports.read = async (req, res) => {
 
 }
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
     const form = formidable({ multiples: true });
     form.parse(req, async (err, fields, files) => {
         if (err) {
@@ -126,13 +125,13 @@ exports.update = async (req, res) => {
     });
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
     const promos = await Promo.find({}).exec();
 
     return res.json(promos)
 }
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
     const { id } = req.params;
     const promo = await Promo.findOne({ _id: id }).exec();
 
@@ -155,7 +154,7 @@ exports.remove = async (req, res) => {
     }
 }
 
-exports.apply = async (req, res) => {
+export const apply = async (req, res) => {
     const { code, transactionAmount } = req.query;
 
     const promo = await Promo.findOne({ code: code.toUpperCase() })
@@ -195,7 +194,7 @@ exports.apply = async (req, res) => {
     return res.json({ code: promo.code, discount: transactionAmount * promo.percentageDiscount * .01, paymentMethods: promo.acceptedPaymentMethods })
 }
 
-exports.processPromo = async (code, transactionAmount) => {
+export const processPromo = async (code, transactionAmount) => {
     return new Promise(async (resolve, reject) => {
         const promo = await Promo.findOne({ code: code.toUpperCase() })
             .exec();
@@ -217,7 +216,7 @@ exports.processPromo = async (code, transactionAmount) => {
     })
 }
 
-exports.toggle = async (req, res) => {
+export const toggle = async (req, res) => {
     const { id } = req.body;
     const promo = await Promo.findOne({ _id: id })
         .exec();

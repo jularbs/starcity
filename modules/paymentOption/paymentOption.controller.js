@@ -1,8 +1,7 @@
-const slugify = require("slugify");
-const PaymentOption = require("./paymentOption.model");
-const { createEntry } = require("../auditTrail/auditTrail.controller");
-
-exports.create = async (req, res) => {
+import slugify from "slugify";
+import PaymentOption from "./paymentOption.model.js";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+export const create = async (req, res) => {
   const { name } = req.body;
   const slug = slugify(name).toLowerCase();
 
@@ -28,7 +27,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   try {
     const data = await PaymentOption.findOne({ slug: req.params.slug, deletedAt: null })
       .select("name status")
@@ -49,7 +48,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const { f } = req.query;
   if (f) {
     try {
@@ -75,7 +74,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   try {
     const { slug, name, status } = req.body;
 
@@ -101,7 +100,7 @@ exports.update = async (req, res) => {
 
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   try {
     const { slug } = req.body;
     if (!slug) {
@@ -129,7 +128,7 @@ exports.remove = async (req, res) => {
   }
 };
 
-exports.toggleStatus = async (req, res) => {
+export const toggleStatus = async (req, res) => {
   try {
     const { _id } = req.body;
     let paymentOption = await PaymentOption.findOne({ _id }).exec();

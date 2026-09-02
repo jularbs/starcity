@@ -1,4 +1,4 @@
-exports.smartTrim = (str, length, delim, appendix) => {
+export const smartTrim = (str, length, delim, appendix) => {
   if (str.length <= length) return str;
 
   var trimmedStr = str.substr(0, length + delim.length);

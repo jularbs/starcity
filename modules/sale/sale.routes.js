@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   update,
@@ -15,12 +15,10 @@ const {
   syncAP,
   regenerateAccessPass,
   resyncSaleByRefId
-} = require("./sale.controller");
-const { createRateLimiter } = require("../../helpers/rateLimiter");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
-const { paymayaRequestCheckout } = require("../webhooks/webhooks.controller");
-
+} from "./sale.controller.js";
+import { createRateLimiter } from "../../helpers/rateLimiter.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
+import { paymayaRequestCheckout } from "../webhooks/webhooks.controller.js";
 //Version 1.0
 // router.post("/v1/sale", create);
 // router.put("/v1/sale", update);
@@ -42,4 +40,4 @@ router.get("/v1/clean-up", requireSignin, authMiddleware, cleanUp);
 // router.get("/v1/sync-ap", syncAP);
 router.get("/v1/regenerate-sale/:id", requireSignin, authMiddleware, regenerateAccessPass)
 router.get("/v1/resync-sale/:id", requireSignin, authMiddleware, resyncSaleByRefId);
-module.exports = router;
+export default router;

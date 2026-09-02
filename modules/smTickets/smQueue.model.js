@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const smQueueSchema = new mongoose.Schema(
   {
     status: {
@@ -19,4 +18,4 @@ const smQueueSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("SmQueue", smQueueSchema);
+export default mongoose.model("SmQueue", smQueueSchema);

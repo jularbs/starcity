@@ -1,30 +1,30 @@
-const express = require("express");
-const morgan = require("morgan");
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
+import express from "express";
+import morgan from "morgan";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
-require("dotenv").config();
-mongoose.set("strictQuery", true);
+import dotenv from "dotenv";
+dotenv.config();
+import { connectMongoDB, disconnectMongoDB } from "./database/mongodb.js";
 
 //routes
-const rideCategoryRoutes = require("./modules/rideCategory/rideCategory.routes");
-const rideRoutes = require("./modules/ride/ride.routes");
-const ticketRoutes = require("./modules/ticket/ticket.routes");
-const paymentOptionRoutes = require("./modules/paymentOption/paymentOption.routes");
-const optionRoutes = require("./modules/option/option.routes");
-const saleRoutes = require("./modules/sale/sale.routes");
-const accessPassRoutes = require("./modules/accessPass/accessPass.routes");
-const postRoutes = require("./modules/post/post.routes");
-const imageSliderRoutes = require("./modules/imageSlider/imageSlider.routes");
-const authRoutes = require("./modules/auth/auth.routes");
-const bannerRoutes = require("./modules/banner/banner.routes");
-const mediaRoutes = require("./modules/media/media.routes");
-const webhookRoutes = require("./modules/webhooks/webhooks.routes");
-const promoRoutes = require("./modules/promo/promo.routes");
-const { startCronJobs } = require("./helpers/cronScheduler");
+import rideCategoryRoutes from "./modules/rideCategory/rideCategory.routes.js";
+import rideRoutes from "./modules/ride/ride.routes.js";
+import ticketRoutes from "./modules/ticket/ticket.routes.js";
+import paymentOptionRoutes from "./modules/paymentOption/paymentOption.routes.js";
+import optionRoutes from "./modules/option/option.routes.js";
+import saleRoutes from "./modules/sale/sale.routes.js";
+import accessPassRoutes from "./modules/accessPass/accessPass.routes.js";
+import postRoutes from "./modules/post/post.routes.js";
+import imageSliderRoutes from "./modules/imageSlider/imageSlider.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
+import bannerRoutes from "./modules/banner/banner.routes.js";
+import mediaRoutes from "./modules/media/media.routes.js";
+import webhookRoutes from "./modules/webhooks/webhooks.routes.js";
+import promoRoutes from "./modules/promo/promo.routes.js";
+import { startCronJobs } from "./helpers/cronScheduler.js";
 
 const app = express();
 
@@ -49,11 +49,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization", "Origin"],
   })
 );
-
-mongoose
-  .connect(process.env.DB_CONNECTION_STRING)
-  .then(() => console.log(`DB connected`))
-  .catch((error) => console.log("Error in connecting to DB: " + error));
 
 //middlewares
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
@@ -103,9 +98,37 @@ app.use((req, res, next) => {
 
 const port = process.env.PORT || 8000;
 
-startCronJobs();
+const startServer = async () => {
+  await connectMongoDB();
+  startCronJobs();
 
-app.listen(port, () => {
-  console.log(`Environment is ${process.env.NODE_ENV}`);
-  console.log(`Server is running on port ${port}`);
+  const server = app.listen(port, () => {
+    console.log(`Environment is ${process.env.NODE_ENV}`);
+    console.log(`Server is running on port ${port}`);
+  });
+
+  let isShuttingDown = false;
+
+  const shutdown = (signal) => {
+    if (isShuttingDown) {
+      return;
+    }
+
+    isShuttingDown = true;
+    console.log(`${signal} received; shutting down`);
+    const forceExitTimer = setTimeout(() => process.exit(1), 10000);
+    forceExitTimer.unref();
+
+    server.close(() => {
+      disconnectMongoDB().finally(() => process.exit(0));
+    });
+  };
+
+  process.once("SIGINT", () => shutdown("SIGINT"));
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+};
+
+startServer().catch((error) => {
+  console.error("Unable to start server:", error);
+  process.exit(1);
 });

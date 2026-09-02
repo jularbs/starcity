@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const emailQueueSchema = new mongoose.Schema(
   {
     refId: { type: String, required: true },
@@ -7,4 +6,4 @@ const emailQueueSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("EmailQueue", emailQueueSchema);
+export default mongoose.model("EmailQueue", emailQueueSchema);

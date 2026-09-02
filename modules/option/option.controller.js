@@ -1,10 +1,9 @@
-const slugify = require("slugify");
-const Option = require("./option.model");
-const { createEntry } = require("../auditTrail/auditTrail.controller");
-const { uploadFile } = require("../../helpers/s3uploader");
-const formidable = require("formidable");
-
-exports.logoUpload = async (req, res) => {
+import slugify from "slugify";
+import Option from "./option.model.js";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+import { uploadFile } from "../../helpers/s3uploader.js";
+import formidable from "formidable";
+export const logoUpload = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -70,7 +69,7 @@ exports.logoUpload = async (req, res) => {
   });
 };
 
-exports.create = async (req, res) => {
+export const create = async (req, res) => {
   const { name, value, meta } = req.body;
   console.log("Req: ", req.body);
   let option = await Option.findOne({ name }).exec();
@@ -124,7 +123,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   try {
     const data = await Option.findOne({ name: req.params.name })
       .select("name value")
@@ -138,7 +137,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   try {
     const options = await Option.find()
       .select("name value")
@@ -149,7 +148,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.listOptionsv2 = async (req, res) => {
+export const listOptionsv2 = async (req, res) => {
   try {
     const result = await Option.find({})
       .select("name value")
@@ -160,7 +159,7 @@ exports.listOptionsv2 = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const { slug, name, value, meta } = req.body;
 
   const option = await Option.findOne({ slug: slug }).exec();
@@ -180,7 +179,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.body;
 
   if (!slug) {

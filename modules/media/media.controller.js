@@ -1,7 +1,6 @@
-const formidable = require("formidable");
-const { getObjectFromS3, uploadFile } = require("../../helpers/s3uploader")
-
-exports.getMedia = async (req, res) => {
+import formidable from "formidable";
+import { getObjectFromS3, uploadFile } from "../../helpers/s3uploader.js";
+export const getMedia = async (req, res) => {
   const { key, bucket = process.env.AWS_S3_BUCKETNAME } = req.query;
 
   try {
@@ -14,7 +13,7 @@ exports.getMedia = async (req, res) => {
   }
 };
 
-exports.uploadMediaFromEditor = async (req, res) => {
+export const uploadMediaFromEditor = async (req, res) => {
   const form = formidable({ multiples: true });
   form.parse(req, async (err, fields, files) => {
     if (err) {

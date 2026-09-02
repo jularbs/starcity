@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const auditTrailSchema = new mongoose.Schema(
   {
     userName: { type: String },
@@ -13,4 +12,4 @@ const auditTrailSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("AuditTrail", auditTrailSchema);
+export default mongoose.model("AuditTrail", auditTrailSchema);

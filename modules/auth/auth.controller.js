@@ -1,11 +1,9 @@
-const User = require("../user/user.model");
-const shortId = require("shortid");
-const jwt = require("jsonwebtoken");
-
-const { add } = require("date-fns");
-const { createEntry } = require("../auditTrail/auditTrail.controller");
-
-exports.signup = async (req, res) => {
+import User from "../user/user.model.js";
+import shortId from "shortid";
+import jwt from "jsonwebtoken";
+import { add } from "date-fns";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+export const signup = async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
 
   if (password !== confirmPassword)
@@ -54,7 +52,7 @@ exports.signup = async (req, res) => {
 
 };
 
-exports.signin = async (req, res) => {
+export const signin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -119,14 +117,14 @@ exports.signin = async (req, res) => {
   }
 };
 
-exports.signout = (req, res) => {
+export const signout = (req, res) => {
   res.clearCookie("token");
   res.json({
     message: "Signout success",
   });
 };
 
-exports.changePassword = async (req, res) => {
+export const changePassword = async (req, res) => {
   try {
     const { _id, currentPassword, newPassword, confirmation } = req.body;
 
@@ -157,7 +155,7 @@ exports.changePassword = async (req, res) => {
 };
 
 //User CRUD
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -183,7 +181,7 @@ exports.remove = async (req, res) => {
 
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -201,7 +199,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const { _id } = req.body;
 
   const user = await User.findOne({ _id: _id }).exec();
@@ -238,7 +236,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const {
     query = "",
     department = "",
@@ -299,7 +297,7 @@ exports.list = async (req, res) => {
   }
 }
 
-exports.requireSignin = (req, res, next) => {
+export const requireSignin = (req, res, next) => {
   const authHeader = req.headers.authorization;
   let token;
 
@@ -329,7 +327,7 @@ exports.requireSignin = (req, res, next) => {
   }
 }
 
-exports.authMiddleware = async (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
   // const authUserId = req.user._id;
   if (req.user?._id) {
     try {
@@ -351,6 +349,6 @@ exports.authMiddleware = async (req, res, next) => {
 
 };
 
-exports.validateToken = (req, res) => {
+export const validateToken = (req, res) => {
   return res.json({ message: "VALID" });
 };

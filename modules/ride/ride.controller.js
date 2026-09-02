@@ -1,9 +1,9 @@
-const Ride = require("./ride.model");
-const formidable = require("formidable");
-const slugify = require("slugify");
-const { uploadFile } = require("../../helpers/s3uploader.js");
-const { createEntry } = require("../auditTrail/auditTrail.controller");
-exports.create = (req, res) => {
+import Ride from "./ride.model.js";
+import formidable from "formidable";
+import slugify from "slugify";
+import { uploadFile } from "../../helpers/s3uploader.js";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+export const create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -70,7 +70,7 @@ exports.create = (req, res) => {
   });
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   try {
     const data = await Ride.findOne({ slug: req.params.slug })
       .select("name description slug status heightRequirements media")
@@ -85,7 +85,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   try {
     const data = await Ride.find()
       .populate("rideCategoryId", "name")
@@ -99,7 +99,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -160,7 +160,7 @@ exports.update = async (req, res) => {
   });
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.params;
 
   if (!slug) {

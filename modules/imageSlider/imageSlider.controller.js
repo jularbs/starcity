@@ -1,16 +1,15 @@
-const ImageSlider = require("./imageSlider.model");
-
-const slugify = require("slugify");
-const formidable = require("formidable");
-const {
+import ImageSlider from "./imageSlider.model.js";
+import slugify from "slugify";
+import formidable from "formidable";
+import {
   uploadFile,
-} = require("../../helpers/s3uploader");
+} from "../../helpers/s3uploader.js";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+import dateFnsTz from "date-fns-tz";
 
-const { createEntry } = require("../auditTrail/auditTrail.controller");
+const { zonedTimeToUtc } = dateFnsTz;
 
-const { zonedTimeToUtc } = require("date-fns-tz");
-
-exports.create = (req, res) => {
+export const create = (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -100,7 +99,7 @@ exports.create = (req, res) => {
   });
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   const { slug } = req.params;
   const is = await ImageSlider.findOne({ slug }).exec();
 
@@ -113,7 +112,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   try {
     const result = await ImageSlider.find({}).sort({ order: 1 }).exec();
     res.json(result);
@@ -125,7 +124,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const form = formidable({ multiples: true });
 
   form.parse(req, async (err, fields, files) => {
@@ -188,7 +187,7 @@ exports.update = async (req, res) => {
   });
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.params;
 
   if (!slug) {
@@ -209,7 +208,7 @@ exports.remove = async (req, res) => {
 };
 
 //TODOS: Remove and use update
-exports.toggleStatus = async (req, res) => {
+export const toggleStatus = async (req, res) => {
 
   const { id } = req.body;
   let is = await ImageSlider.findOne({ _id: id }).exec();

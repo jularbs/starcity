@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-
+import mongoose from "mongoose";
 const smTicketSchema = new mongoose.Schema(
   {
     tokenId: {
@@ -18,4 +17,4 @@ const smTicketSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("SmTicket", smTicketSchema);
+export default mongoose.model("SmTicket", smTicketSchema);

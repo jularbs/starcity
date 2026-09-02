@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   signup,
   signin,
   signout,
@@ -12,11 +12,9 @@ const {
   update,
   list,
   remove
-} = require("./auth.controller.js");
-
-const { list: audit } = require("../auditTrail/auditTrail.controller");
-const { createRateLimiter } = require("../../helpers/rateLimiter");
-
+} from "./auth.controller.js";
+import { list as listAudit } from "../auditTrail/auditTrail.controller.js";
+import { createRateLimiter } from "../../helpers/rateLimiter.js";
 router.post("/v1/signup",
   createRateLimiter({ windowMs: 60 * 60 * 1000, limit: 5, message: "Too many attempts, please try again in 60 minutes." }),
   signup);
@@ -34,7 +32,7 @@ router.get("/v1/signout", signout);
 
 router.get("/v1/validate-token", requireSignin, authMiddleware, validateToken);
 
-router.get("/v1/audit-trail", requireSignin, authMiddleware, audit);
+router.get("/v1/audit-trail", requireSignin, authMiddleware, listAudit);
 
 router.delete("/v1/user/:id", requireSignin, authMiddleware, remove);
 router.get("/v1/user/:id", requireSignin, authMiddleware, read);
@@ -42,4 +40,4 @@ router.get("/v1/user", requireSignin, authMiddleware, list);
 router.patch("/v1/user", requireSignin, authMiddleware, update);
 
 
-module.exports = router;
+export default router;

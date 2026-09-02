@@ -1,11 +1,9 @@
-const RideCategory = require("./rideCategory.model");
-const Ride = require("../ride/ride.model");
-const slugify = require("slugify");
-const formidable = require("formidable");
-
-const { createEntry } = require("../auditTrail/auditTrail.controller");
-
-exports.create = async (req, res) => {
+import RideCategory from "./rideCategory.model.js";
+import Ride from "../ride/ride.model.js";
+import slugify from "slugify";
+import formidable from "formidable";
+import { createEntry } from "../auditTrail/auditTrail.controller.js";
+export const create = async (req, res) => {
   const { name, description } = req.body;
 
   const slug = slugify(name).toLowerCase();
@@ -27,7 +25,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   try {
     const data = await RideCategory.findOne({ slug: req.params.slug })
       .select("name description slug image meta")
@@ -41,7 +39,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   try {
     const data = await RideCategory.find().exec();
     res.json(data);
@@ -53,7 +51,7 @@ exports.list = async (req, res) => {
   }
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const { slug, name, description } = req.body;
 
   const rideCategory = await RideCategory.findOne({ slug: slug }).exec();
@@ -73,7 +71,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.body;
 
   try {

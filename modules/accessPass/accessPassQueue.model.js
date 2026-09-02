@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { ObjectId } = mongoose.Schema;
 
 const accessPassQueueSchema = new mongoose.Schema(
@@ -17,4 +17,4 @@ const accessPassQueueSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("AccessPassQueue", accessPassQueueSchema);
+export default mongoose.model("AccessPassQueue", accessPassQueueSchema);

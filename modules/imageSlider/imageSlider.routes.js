@@ -1,15 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   list,
   update,
   remove,
   toggleStatus,
   read,
-} = require("./imageSlider.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
+} from "./imageSlider.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/image-slider", requireSignin, authMiddleware, create);
 
@@ -26,4 +25,4 @@ router.get("/v1/image-slider/:slug", read);
 
 router.delete("/v1/image-slider/:slug", requireSignin, authMiddleware, remove);
 
-module.exports = router;
+export default router;

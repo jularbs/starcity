@@ -1,19 +1,17 @@
-const Sale = require("../sale/sale.model");
-const SmQueue = require("../smTickets/smQueue.model");
-const SmTicket = require("../smTickets/smTickets.model");
-const PaymentOption = require("../paymentOption/paymentOption.model");
-const {
+import Sale from "../sale/sale.model.js";
+import SmQueue from "../smTickets/smQueue.model.js";
+import SmTicket from "../smTickets/smTickets.model.js";
+import PaymentOption from "../paymentOption/paymentOption.model.js";
+import {
   generateAccessPass,
   sendAR,
   getOpenParkExpiry,
-} = require("../sale/sale.controller");
+} from "../sale/sale.controller.js";
+import { pool } from "../../lib/mysql/connect.js";
+import { format } from "date-fns";
+import { cronSyncSMTickets } from "../../helpers/cronjobs.js";
 
-const { pool } = require("../../lib/mysql/connect");
-const { format } = require("date-fns");
-
-const { cronSyncSMTickets } = require("../../helpers/cronjobs.js");
-
-exports.paymayaRequestCheckout = async (req, res) => {
+export const paymayaRequestCheckout = async (req, res) => {
   const paymayaPK = process.env.PAYMAYA_PUBLIC_KEY;
   const PaymayaCredentialsBase64 = Buffer.from(paymayaPK + ":").toString("base64");
   const paymayaEnvironment = process.env.PAYMAYA_ENVIRONMENT || "sandbox";
@@ -109,7 +107,7 @@ exports.paymayaRequestCheckout = async (req, res) => {
   }
 };
 
-exports.paymayaPaymentSuccess = async (req, res) => {
+export const paymayaPaymentSuccess = async (req, res) => {
   console.log("TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS");
   console.log("PAYMAYA PAYLOAD: ", req.body);
 
@@ -219,7 +217,7 @@ exports.paymayaPaymentSuccess = async (req, res) => {
   }
 };
 
-exports.paymayaPaymentFailed = async (req, res) => {
+export const paymayaPaymentFailed = async (req, res) => {
   res.status(200).json({
     function: "PaymayaPaymentFailed",
     resPayload: req.body,
@@ -227,7 +225,7 @@ exports.paymayaPaymentFailed = async (req, res) => {
   });
 };
 
-exports.paymayaPaymentExpired = async (req, res) => {
+export const paymayaPaymentExpired = async (req, res) => {
   res.status(200).json({
     function: "PaymayaPaymentExpired",
     resPayload: req.body,
@@ -235,7 +233,7 @@ exports.paymayaPaymentExpired = async (req, res) => {
   });
 };
 
-exports.dragonPaySuccess = async (req, res) => {
+export const dragonPaySuccess = async (req, res) => {
   console.log("DRAGONPAY POSTBACK RECIEVED...");
   const option = "dragonpay";
   if (req.body.txnid && req.body.refno && req.body.status && req.body.message) {
@@ -300,7 +298,7 @@ exports.dragonPaySuccess = async (req, res) => {
   }
 };
 
-exports.dragonPayReturn = async (req, res) => {
+export const dragonPayReturn = async (req, res) => {
   await setTimeout(function () { }, 3000);
   res.redirect(
     `${process.env.WEBSITE_URL}/?payment=success&refid=${req.query.txnid}`
@@ -441,7 +439,7 @@ const processTickets = (tickets) => {
   });
 };
 
-exports.smTicketTest = async (req, res) => {
+export const smTicketTest = async (req, res) => {
   cronSyncSMTickets();
 
   res.status(200).json({
@@ -449,7 +447,7 @@ exports.smTicketTest = async (req, res) => {
   });
 };
 
-exports.smTicketExpiry = async (req, res) => {
+export const smTicketExpiry = async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.status(200).json({
     // expiry: getOpenParkExpiry(),
@@ -457,7 +455,7 @@ exports.smTicketExpiry = async (req, res) => {
   });
 };
 
-exports.smTicketTransact = async (req, res) => {
+export const smTicketTransact = async (req, res) => {
   console.log("PROCESSING SM TICKETS TRANSACTION...");
   const { tickets, token } = req.body;
 
@@ -501,7 +499,7 @@ exports.smTicketTransact = async (req, res) => {
   }
 };
 
-exports.smTicketVoid = async (req, res) => {
+export const smTicketVoid = async (req, res) => {
   console.log("VOIDING SM TICKET TRANSACTION...");
   const { token, tickets } = req.body;
 
@@ -578,7 +576,7 @@ exports.smTicketVoid = async (req, res) => {
   });
 };
 
-exports.bpiTransact = async (req, res) => {
+export const bpiTransact = async (req, res) => {
   console.log(`PROCESSING BPI TRANSACTION...`);
   const { transactionReference, confirmationNumber, merchantTransactionReference, transactionStatus } = req.query;
 

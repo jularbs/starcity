@@ -1,31 +1,26 @@
-const Sale = require("./sale.model");
-const Ticket = require("../ticket/ticket.model");
-const AccessPass = require("../accessPass/accessPass.model");
-const crypto = require("crypto");
-const QRCode = require("qrcode");
-const { uploadBase64 } = require("../../helpers/s3uploader");
-const mongoose = require("mongoose");
-const { sendMail } = require("../../helpers/nodemailer");
-const { accessPassEmailNotification } = require("../../helpers/emailTemplates");
-const { pool } = require("../../lib/mysql/connect");
-
-const { format } = require("date-fns");
-const { utcToZonedTime } = require("date-fns-tz");
-const add = require("date-fns/add");
-const moment = require("moment");
-const axios = require("axios");
-
-const { cronSyncAP } = require("../../helpers/cronjobs");
-const { addToQueue } = require("../accessPass/accessPassQueue.controller");
-const EmailQueue = require("../email/emailQueue.model");
-
+import Sale from "./sale.model.js";
+import Ticket from "../ticket/ticket.model.js";
+import AccessPass from "../accessPass/accessPass.model.js";
+import crypto from "crypto";
+import QRCode from "qrcode";
+import { uploadBase64 } from "../../helpers/s3uploader.js";
+import mongoose from "mongoose";
+import { sendMail } from "../../helpers/nodemailer.js";
+import { accessPassEmailNotification } from "../../helpers/emailTemplates.js";
+import { pool } from "../../lib/mysql/connect.js";
+import { add, format, getDay, nextThursday } from "date-fns";
+import dateFnsTz from "date-fns-tz";
+import moment from "moment";
+import axios from "axios";
+import { cronSyncAP } from "../../helpers/cronjobs.js";
+import { addToQueue } from "../accessPass/accessPassQueue.controller.js";
+import EmailQueue from "../email/emailQueue.model.js";
 //TEST
-const getDay = require("date-fns/getDay");
-const nextThursday = require("date-fns/nextThursday");
-const { processPromo } = require("../promo/promo.controller");
-
+import { processPromo } from "../promo/promo.controller.js";
 //HELPERS
-exports.getCurrentTicketPrice = (ticket) => {
+const { utcToZonedTime } = dateFnsTz;
+
+export const getCurrentTicketPrice = (ticket) => {
   return new Promise(async (resolve, reject) => {
     const { ticketId } = ticket;
     const result = await Ticket.findOne({ _id: new mongoose.Types.ObjectId(`${ticketId}`) }).exec();
@@ -34,11 +29,11 @@ exports.getCurrentTicketPrice = (ticket) => {
   });
 };
 
-exports.asyncGetTicketPrice = async (ticket) => {
-  return this.getCurrentTicketPrice(ticket);
+export const asyncGetTicketPrice = async (ticket) => {
+  return getCurrentTicketPrice(ticket);
 };
 
-exports.calculateCartItem = async (item) => {
+export const calculateCartItem = async (item) => {
   return new Promise(async (resolve, reject) => {
     const { ticketId, qty } = item;
     try {
@@ -50,11 +45,11 @@ exports.calculateCartItem = async (item) => {
   });
 };
 
-exports.calculateCart = (cartItems) => {
-  return Promise.all(cartItems.map((item) => this.calculateCartItem(item)));
+export const calculateCart = (cartItems) => {
+  return Promise.all(cartItems.map((item) => calculateCartItem(item)));
 };
 
-exports.generateAccessPass = (sale, accessPasses) => {
+export const generateAccessPass = (sale, accessPasses) => {
   accessPasses.map(async (ap) => {
     let isExisting = [];
     let finalToken = "";
@@ -109,7 +104,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
 
       try {
         const result = await accessPass.save();
-        const syncResult = await this.syncAccessPass(result, ticket.itemCode);
+        const syncResult = await syncAccessPass(result, ticket.itemCode);
         console.log(`Processing ${finalToken}: `, syncResult);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
       } catch (err) {
@@ -119,7 +114,7 @@ exports.generateAccessPass = (sale, accessPasses) => {
   });
 };
 
-exports.getOpenParkExpiry = () => {
+export const getOpenParkExpiry = () => {
   //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
   const adjustDays = [1, 2, 3];
 
@@ -145,10 +140,10 @@ exports.getOpenParkExpiry = () => {
   return expiry;
 };
 
-exports.resendAR = async (req, res) => {
+export const resendAR = async (req, res) => {
   const { refId } = req.body;
 
-  const isSent = await this.sendAR(refId);
+  const isSent = await sendAR(refId);
 
   if (isSent) {
     res.json({ message: "E-mail resent successfully." });
@@ -157,7 +152,7 @@ exports.resendAR = async (req, res) => {
   }
 };
 
-exports.sendAR = async (refId) => {
+export const sendAR = async (refId) => {
   return new Promise(async (resolve, reject) => {
     console.log("SENDING AR FOR ", refId);
     const sale = await Sale.findOne({ refId: refId })
@@ -233,7 +228,7 @@ exports.sendAR = async (refId) => {
   });
 };
 
-exports.syncAccessPass = (accessPass, RideCode) => {
+export const syncAccessPass = (accessPass, RideCode) => {
   if (process.env.NODE_ENV !== "production") {
     console.log("Access Pass Syncing is disabled in non-production environments.");
     return;
@@ -295,7 +290,7 @@ exports.syncAccessPass = (accessPass, RideCode) => {
 };
 
 //REQUESTS
-exports.sync = async (req, res) => {
+export const sync = async (req, res) => {
   const data = await Sale.find({ status: "for sync" })
     .populate({
       path: "cartItems",
@@ -326,7 +321,7 @@ exports.sync = async (req, res) => {
   res.json(data);
 };
 
-exports.create = async (req, res) => {
+export const create = async (req, res) => {
   const { name, email, cartItems, paymentDetails } = req.body;
 
   let isExisting = [];
@@ -343,7 +338,7 @@ exports.create = async (req, res) => {
   sale.refId = refID;
   const cart = await Promise.all(
     cartItems.map(async (item) => {
-      const { price } = await this.getCurrentTicketPrice(item);
+      const { price } = await getCurrentTicketPrice(item);
       return {
         ticketId: item.ticketId,
         qty: item.qty,
@@ -355,7 +350,7 @@ exports.create = async (req, res) => {
   sale.cartItems = cart;
   //compute for order total
   sale.orderTotal = await (
-    await this.calculateCart(cartItems)
+    await calculateCart(cartItems)
   ).reduce((a, b) => a.amount + b.amount);
 
   sale.paymentDetails = paymentDetails;
@@ -382,7 +377,7 @@ exports.create = async (req, res) => {
   }
 };
 
-exports.readBySaltRefID = async (req, res) => {
+export const readBySaltRefID = async (req, res) => {
   const saleDetails = await Sale.findOne({
     salt: req.query.salt,
     refId: req.query.refid,
@@ -403,7 +398,7 @@ exports.readBySaltRefID = async (req, res) => {
   res.json({ details: saleDetails, accessPasses });
 };
 
-exports.read = async (req, res) => {
+export const read = async (req, res) => {
   try {
     const data = await Sale.findOne({ refId: req.params.refid })
       .select(
@@ -427,7 +422,7 @@ exports.read = async (req, res) => {
   }
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const { skip = 0, limit = 10, start, end, search = "" } = req.query;
 
   //check UTC Formatting when in server
@@ -487,7 +482,7 @@ exports.list = async (req, res) => {
   res.json({ count, data });
 };
 
-exports.update = async (req, res) => {
+export const update = async (req, res) => {
   const { name, slug, description, price, status } = req.body;
 
   const ticket = await Ticket.findOne({ slug: slug }).exec();
@@ -509,7 +504,7 @@ exports.update = async (req, res) => {
   }
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   const { slug } = req.body;
 
   try {
@@ -523,7 +518,7 @@ exports.remove = async (req, res) => {
   }
 };
 
-exports.createCheckout = async (req, res) => {
+export const createCheckout = async (req, res) => {
   const {
     cartItems,
     customerName,
@@ -546,7 +541,7 @@ exports.createCheckout = async (req, res) => {
   //error when only 1 item in cart
   const items = await Promise.all(
     cartItems.map(async (item) => {
-      const price = await this.getCurrentTicketPrice({
+      const price = await getCurrentTicketPrice({
         ticketId: item._id,
       });
       return {
@@ -565,7 +560,7 @@ exports.createCheckout = async (req, res) => {
     };
   }
 
-  sale.expiryDate = this.getOpenParkExpiry();
+  sale.expiryDate = getOpenParkExpiry();
   sale.customerName = customerName;
   sale.emailAddress = email;
   sale.refId = refID;
@@ -596,7 +591,7 @@ exports.createCheckout = async (req, res) => {
   }
 };
 
-exports.createDragonPayRequest = async (req, res) => {
+export const createDragonPayRequest = async (req, res) => {
   const { txnId, amount, email } = req.body;
   const token = Buffer.from(
     `${process.env.DRAGONPAY_MERCH_ID}:${process.env.DRAGONPAY_PW}`,
@@ -623,7 +618,7 @@ exports.createDragonPayRequest = async (req, res) => {
 };
 
 //HELPER FUNCTIONS
-exports.cleanUp = async (req, res) => {
+export const cleanUp = async (req, res) => {
   let previous2Months = new Date();
   previous2Months.setDate(previous2Months.getDate() - 90);
 
@@ -650,7 +645,7 @@ exports.cleanUp = async (req, res) => {
   });
 };
 
-exports.syncAP = async (req, res) => {
+export const syncAP = async (req, res) => {
   cronSyncAP();
 
   res.json({
@@ -658,7 +653,7 @@ exports.syncAP = async (req, res) => {
   });
 };
 
-exports.regenerateAccessPass = async (req, res) => {
+export const regenerateAccessPass = async (req, res) => {
   console.log("Regenerating Access Passes for sale with Reference Number: ", req.params.id);
   if (req.params.id) {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
@@ -666,7 +661,7 @@ exports.regenerateAccessPass = async (req, res) => {
       console.log("REMOVING OLD ACCESS PASS");
       await AccessPass.deleteMany({ salesId: sale._id }).exec();
       console.log("GENERATING NEW ACCESS PASS");
-      this.generateAccessPass(sale, sale.cartItems);
+      generateAccessPass(sale, sale.cartItems);
       return res.json({ status: "Success", action: "Access Passes Regenerated" })
     } else {
       return res.json({ status: "404", message: "Sale transaction not found" })
@@ -676,7 +671,7 @@ exports.regenerateAccessPass = async (req, res) => {
   }
 }
 
-exports.resyncSaleByRefId = async (req, res) => {
+export const resyncSaleByRefId = async (req, res) => {
   console.log("Resyncing Access Passes for sale with Reference Number: ", req.params.id);
 
   if (req.params.id) {
@@ -689,7 +684,7 @@ exports.resyncSaleByRefId = async (req, res) => {
         const ticket = await Ticket.findOne({
           _id: ap.ticketId,
         }).exec();
-        const syncResult = await this.syncAccessPass(ap, ticket.itemCode);
+        const syncResult = await syncAccessPass(ap, ticket.itemCode);
         console.log(syncResult);
       });
       return res.json({ status: "Success", action: "Sale Resynced" })

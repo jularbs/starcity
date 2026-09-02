@@ -1,6 +1,5 @@
-const AuditTrail = require("./auditTrail.model");
-
-exports.createEntry = (user, action, payload, req) => {
+import AuditTrail from "./auditTrail.model.js";
+export const createEntry = (user, action, payload, req) => {
   const at = new AuditTrail();
 
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || null;
@@ -15,7 +14,7 @@ exports.createEntry = (user, action, payload, req) => {
   at.save();
 };
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const { skip = 0, limit = 0 } = req.query;
 
   try {
@@ -39,7 +38,7 @@ exports.list = async (req, res) => {
 
 };
 
-exports.addAuditTrailEntry = (data) => {
+export const addAuditTrailEntry = (data) => {
   const { action, user, meta } = data;
 
   let at = new AuditTrail();

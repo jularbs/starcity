@@ -1,8 +1,8 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const { download } = require("./accessPass.controller");
+import { download } from "./accessPass.controller.js";
 
 //Version 1.0
 router.get("/v1/download/:salt/:refId/:ticketId", download);
 
-module.exports = router;
+export default router;

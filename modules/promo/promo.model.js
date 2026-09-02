@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { ObjectId } = mongoose.Schema;
 
 const promoSchema = new mongoose.Schema(
@@ -75,4 +75,4 @@ promoSchema.pre('countDocuments', function () {
   this.where({ deletedAt: null });
 });
 
-module.exports = mongoose.model("Promo", promoSchema);
+export default mongoose.model("Promo", promoSchema);

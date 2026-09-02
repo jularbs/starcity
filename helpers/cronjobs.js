@@ -1,23 +1,23 @@
-const AccessPassQueue = require("../modules/accessPass/accessPassQueue.model");
-const SmQueue = require("../modules/smTickets/smQueue.model");
-const EmailQueue = require("../modules/email/emailQueue.model");
-const Sale = require("../modules/sale/sale.model");
-const AccessPass = require("../modules/accessPass/accessPass.model");
-const PaymentOption = require("../modules/paymentOption/paymentOption.model");
-const Ticket = require("../modules/ticket/ticket.model");
+import AccessPassQueue from "../modules/accessPass/accessPassQueue.model.js";
+import SmQueue from "../modules/smTickets/smQueue.model.js";
+import EmailQueue from "../modules/email/emailQueue.model.js";
+import Sale from "../modules/sale/sale.model.js";
+import AccessPass from "../modules/accessPass/accessPass.model.js";
+import PaymentOption from "../modules/paymentOption/paymentOption.model.js";
+import Ticket from "../modules/ticket/ticket.model.js";
 
-const { pool } = require("../lib/mysql/connect");
-const { addAuditTrailEntry } = require("../modules/auditTrail/auditTrail.controller");
-const { format } = require("date-fns");
-const startOfYesterday = require('date-fns/startOfYesterday')
-const endOfYesterday = require('date-fns/endOfYesterday')
-const { sendMail } = require("../helpers/nodemailer");
-const { convertArrayToCSV } = require('convert-array-to-csv');
-const { zonedTimeToUtc, utcToZonedTime } = require("date-fns-tz");
+import { pool } from "../lib/mysql/connect.js";
+import { addAuditTrailEntry } from "../modules/auditTrail/auditTrail.controller.js";
+import { format } from "date-fns";
+import { sendMail } from "../helpers/nodemailer.js";
+import { convertArrayToCSV } from 'convert-array-to-csv';
+import dateFnsTz from "date-fns-tz";
 
-const sale = require("../modules/sale/sale.controller");
+import { sendAR } from "../modules/sale/sale.controller.js";
 
-exports.cronSyncAP = async () => {
+const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
+
+export const cronSyncAP = async () => {
   const queues = await AccessPassQueue.find({}).populate("accessPass").exec();
 
   if (queues.length > 0) {
@@ -81,7 +81,7 @@ exports.cronSyncAP = async () => {
   }
 };
 
-exports.cronSyncSMTickets = async () => {
+export const cronSyncSMTickets = async () => {
   const queues = await SmQueue.find({}).exec();
 
   if (queues.length > 0) {
@@ -144,7 +144,7 @@ exports.cronSyncSMTickets = async () => {
   }
 };
 
-exports.forceSync = async (skip, limit) => {
+export const forceSync = async (skip, limit) => {
   const queues = await AccessPassQueue.find({})
     .skip(parseInt(skip))
     .limit(parseInt(limit))
@@ -212,7 +212,7 @@ exports.forceSync = async (skip, limit) => {
   }
 };
 
-exports.cronProcessEmailQueues = async () => {
+export const cronProcessEmailQueues = async () => {
   const Qs = await EmailQueue.find().exec();
   if (Qs.length > 0) {
     console.log("**** PROCESSING QUEUED EMAIL ****");
@@ -221,7 +221,7 @@ exports.cronProcessEmailQueues = async () => {
     Qs.map(async (q) => {
       //remove q from database
       await EmailQueue.deleteOne({ _id: q._id }).exec();
-      const isResolved = await sale.sendAR(q.refId);
+      const isResolved = await sendAR(q.refId);
       if (!isResolved) {
         console.log("Email not sent. Refid requeued");
       }
@@ -229,7 +229,7 @@ exports.cronProcessEmailQueues = async () => {
   }
 };
 
-exports.dbcleanup = async () => {
+export const dbcleanup = async () => {
   let previous2Months = new Date();
   previous2Months.setDate(previous2Months.getDate() - parseInt(process.env.DATA_RETENTION_DAYS));
 
@@ -259,7 +259,7 @@ exports.dbcleanup = async () => {
   console.log("Database clean up: Deleted Sales Data -", saleCount);
 }
 
-exports.generateDailyReport = async () => {
+export const generateDailyReport = async () => {
   console.log("Generating Daily Report");
 
   //Works only when server is UTC set.
@@ -422,7 +422,7 @@ exports.generateDailyReport = async () => {
   }
 }
 
-exports.generateQRdeliveryReport = async () => {
+export const generateQRdeliveryReport = async () => {
   console.log("Generating QR Delivery Report");
 
   //Works only when server is UTC set.

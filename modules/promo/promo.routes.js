@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   list,
@@ -8,10 +8,8 @@ const {
   remove,
   apply,
   toggle
-} = require("./promo.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
-
+} from "./promo.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/promo", requireSignin, authMiddleware, create);
 router.post("/v1/promo/toggle", requireSignin, authMiddleware, toggle);
@@ -26,4 +24,4 @@ router.delete("/v1/promo/:id", requireSignin, authMiddleware, remove);
 
 
 
-module.exports = router;
+export default router;

@@ -1,16 +1,14 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
+import {
   create,
   read,
   list,
   update,
   remove,
   uploadImage,
-} = require("./post.controller");
-
-const { requireSignin, authMiddleware } = require("../auth/auth.controller");
-
+} from "./post.controller.js";
+import { requireSignin, authMiddleware } from "../auth/auth.controller.js";
 //Version 1.0
 router.post("/v1/post", requireSignin, authMiddleware, create);
 router.put("/v1/post", requireSignin, authMiddleware, update);
@@ -20,4 +18,4 @@ router.delete("/v1/post", requireSignin, authMiddleware, remove);
 
 router.post("/v1/image-uploader", uploadImage);
 
-module.exports = router;
+export default router;

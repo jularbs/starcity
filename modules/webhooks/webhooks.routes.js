@@ -1,10 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const {
-  paymayaAuthorized,
-  paymayaCheckoutDropout,
-  paymayaCheckoutFailure,
-  paymayaCheckoutSuccess,
+import {
   paymayaPaymentExpired,
   paymayaPaymentFailed,
   paymayaPaymentSuccess,
@@ -15,8 +11,7 @@ const {
   smTicketTransact,
   smTicketVoid,
   bpiTransact,
-} = require("./webhooks.controller");
-
+} from "./webhooks.controller.js";
 //Version 1.0
 router.post("/v1/paymaya/payment-success", paymayaPaymentSuccess);
 router.post("/v1/paymaya/payment-failed", paymayaPaymentFailed);
@@ -30,4 +25,4 @@ router.post("/v1/smticket/transact", smTicketTransact);
 router.patch("/v1/smticket/void", smTicketVoid);
 
 router.get("/v1/bpi", bpiTransact)
-module.exports = router;
+export default router;
