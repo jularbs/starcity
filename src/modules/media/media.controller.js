@@ -11,7 +11,7 @@ export const getMedia = async (req, res) => {
     res.setHeader('Content-Type', data.ContentType);
     res.send(data.Body);
     return;
-  } catch (err) {
+  } catch {
     return res.status(400).json({ error: 'Media not found' });
   }
 };

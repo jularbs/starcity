@@ -3,9 +3,6 @@ import slugify from 'slugify';
 import formidable from 'formidable';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
-import dateFnsTz from 'date-fns-tz';
-
-const { zonedTimeToUtc } = dateFnsTz;
 
 export const create = (req, res) => {
   const form = formidable({ multiples: true });

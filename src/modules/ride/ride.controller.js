@@ -54,7 +54,7 @@ export const create = (req, res) => {
           res.status(200).json({ data: r, success: 'Ride added successfully' });
 
           createEntry(req.profile.name, `Create new ride`, { result }, req);
-        } catch (err) {
+        } catch {
           return res.status(400).json({
             error: 'Failed to add new ride/attraction. Please try again later',
           });
@@ -174,7 +174,7 @@ export const remove = async (req, res) => {
   }
 
   try {
-    const result = await Ride.findOneAndDelete({ slug }).exec();
+    await Ride.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);
 
     //TODO: DELETE IMAGE

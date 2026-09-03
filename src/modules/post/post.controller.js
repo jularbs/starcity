@@ -68,7 +68,7 @@ export const create = async (req, res) => {
           const result = await post.save();
           res.json(result);
           createEntry(req.profile.name, 'Created new post', result, req);
-        } catch (err) {
+        } catch {
           res.json({
             error: 'Failed to save post. Please try again later.',
           });
@@ -179,7 +179,7 @@ export const remove = async (req, res) => {
     });
   }
 
-  const data = await Post.deleteOne({ slug }).exec();
+  await Post.deleteOne({ slug }).exec();
   //TODO: DELETE IMAGE
 
   res.json({ message: 'Post deleted successfully' });

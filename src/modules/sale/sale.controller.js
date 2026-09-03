@@ -11,8 +11,6 @@ import { pool } from '../../database/mysql/index.js';
 import { add, format, getDay, nextThursday } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
 import moment from 'moment';
-import axios from 'axios';
-import { cronSyncAP } from '../../common/cron/cronjobs.js';
 import { addToQueue } from '../accessPass/accessPassQueue.controller.js';
 import EmailQueue from '../email/emailQueue.model.js';
 //TEST
@@ -31,26 +29,10 @@ const getCurrentTicketPrice = (ticket) => {
   });
 };
 
-const calculateCartItem = async (item) => {
-  return new Promise(async (resolve, reject) => {
-    const { ticketId, qty } = item;
-    try {
-      const result = await Ticket.findOne({ _id: ticketId }).exec();
-      return resolve({ amount: qty * result.price });
-    } catch (err) {
-      reject(err);
-    }
-  });
-};
-
-const calculateCart = (cartItems) => {
-  return Promise.all(cartItems.map((item) => calculateCartItem(item)));
-};
-
 export const generateAccessPass = (sale, accessPasses) => {
   accessPasses.map(async (ap) => {
-    let isExisting = [];
-    let finalToken = '';
+    let isExisting;
+    let finalToken;
 
     //get ticketDetails
     const ticket = await Ticket.findOne({
@@ -64,7 +46,7 @@ export const generateAccessPass = (sale, accessPasses) => {
           .randomBytes(4)
           .toString('hex')}`;
 
-        finalToken.toUpperCase();
+        finalToken = finalToken.toUpperCase();
         isExisting = await AccessPass.find({
           accessToken: finalToken,
         }).exec();
@@ -105,7 +87,7 @@ export const generateAccessPass = (sale, accessPasses) => {
         const syncResult = await syncAccessPass(result, ticket.itemCode);
         console.log(`Processing ${finalToken}: `, syncResult);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
-      } catch (err) {
+      } catch {
         console.log('FAILED TO SAVE TOKEN IN DATABASE: ', finalToken);
       }
     }
@@ -127,7 +109,7 @@ export const getOpenParkExpiry = () => {
 
   const inAdjustDays = adjustDays.indexOf(dayValue);
   const shouldAdjust = inAdjustDays >= 0 ? true : false;
-  let expiry = null;
+  let expiry;
 
   if (shouldAdjust) {
     expiry = format(nextThursday(expiryDate), 'MMMM dd, yyyy');
@@ -151,7 +133,7 @@ export const resendAR = async (req, res) => {
 };
 
 export const sendAR = async (refId) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     console.log('SENDING AR FOR ', refId);
     const sale = await Sale.findOne({ refId: refId })
       .populate({
@@ -171,20 +153,6 @@ export const sendAR = async (refId) => {
         },
       })
       .exec();
-
-    const saleId = sale._id;
-
-    const accessPasses = await AccessPass.find({ salesId: saleId })
-      .populate('ticketId', 'slug')
-      .select('ticketId accessToken QRcode')
-      .exec();
-
-    // const APattachments = accessPasses.map((item, key) => {
-    //   return {
-    //     filename: `${key + 1}-${item.ticketId.slug}-${item.accessToken}.jpeg`,
-    //     path: `${process.env.DOMAIN}api/v1/media?key=${item.QRcode.key}&bucket=${item.QRcode.bucket}`,
-    //   };
-    // });
 
     const details = {
       to: sale.emailAddress,
@@ -233,7 +201,7 @@ const syncAccessPass = (accessPass, RideCode) => {
     return;
   }
   console.log('SYNCING ACCESS PASS: ', accessPass.accessToken);
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     try {
       pool.getConnection(async (err, connection) => {
         if (err) {
@@ -261,7 +229,7 @@ const syncAccessPass = (accessPass, RideCode) => {
           const sql =
             'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
 
-          connection.query(sql, [values], function (error, results, fields) {
+          connection.query(sql, [values], function (error, results) {
             if (error) {
               console.log(
                 'UNABLE TO SYNC ACCESSPASS: ',
@@ -286,6 +254,7 @@ const syncAccessPass = (accessPass, RideCode) => {
         }
       });
     } catch (e) {
+      console.log('ERROR IN MYSQL: ', e);
       resolve('ERROR IN MYSQL.');
     }
   });
@@ -407,8 +376,8 @@ export const createCheckout = async (req, res) => {
     promoCode,
   } = req.body;
 
-  let isExisting = [];
-  let refID = '';
+  let isExisting;
+  let refID;
 
   do {
     refID = crypto.randomBytes(6).toString('hex').toUpperCase();
@@ -483,11 +452,11 @@ export const cleanUp = async (req, res) => {
     createdAt: { $lte: previous2Months },
   });
 
-  const deleteAccessPass = await AccessPass.deleteMany({
+  await AccessPass.deleteMany({
     createdAt: { $lte: previous2Months },
   });
 
-  const deleteSalesData = await Sale.deleteMany({
+  await Sale.deleteMany({
     createdAt: { $lte: previous2Months },
   });
 

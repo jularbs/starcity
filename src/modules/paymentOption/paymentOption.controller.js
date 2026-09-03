@@ -147,7 +147,7 @@ export const toggleStatus = async (req, res) => {
       data: result,
       success: 'Payment Option toggled successfully!',
     });
-  } catch (err) {
+  } catch {
     return res
       .status(400)
       .json({ error: 'Unable to toggle payment option status.' });

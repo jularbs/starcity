@@ -151,7 +151,7 @@ export const toggleStatus = async (req, res) => {
       success: 'Ticket toggled successfully',
       data: result,
     });
-  } catch (err) {
+  } catch {
     return res.status(400).json({ error: 'Unable to toggle ticket status.' });
   }
 };

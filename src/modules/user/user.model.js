@@ -91,7 +91,7 @@ userSchema.methods = {
         .createHmac('sha256', this.salt)
         .update(password)
         .digest('hex');
-    } catch (err) {
+    } catch {
       return '';
     }
   },

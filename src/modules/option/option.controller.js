@@ -143,7 +143,7 @@ export const list = async (req, res) => {
   try {
     const options = await Option.find().select('name value').exec();
     res.json(options);
-  } catch (err) {
+  } catch {
     res.status(400).json({ error: 'Unable to retrieve options' });
   }
 };

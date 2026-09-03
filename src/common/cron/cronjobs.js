@@ -51,31 +51,27 @@ export const cronSyncAP = async () => {
             const sql =
               'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;';
 
-            connection.query(
-              sql,
-              [values],
-              async function (error, results, fields) {
-                if (error) {
-                  console.log('FAILED TO SYNC: ', q.accessPass.accessToken);
-                  addAuditTrailEntry({
-                    action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
-                    meta: error,
-                  });
-                } else if (results.affectedRows < 1) {
-                  console.log(
-                    `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                    q.accessPass.accessToken,
-                  );
-                } else {
-                  //remove in queue;
-                  await AccessPassQueue.deleteOne({ _id: q._id }).exec();
-                  console.log(
-                    'ACCESSPASS SUCCESS FOR ID: ',
-                    q.accessPass.accessToken,
-                  );
-                }
-              },
-            );
+            connection.query(sql, [values], async function (error, results) {
+              if (error) {
+                console.log('FAILED TO SYNC: ', q.accessPass.accessToken);
+                addAuditTrailEntry({
+                  action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
+                  meta: error,
+                });
+              } else if (results.affectedRows < 1) {
+                console.log(
+                  `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
+                  q.accessPass.accessToken,
+                );
+              } else {
+                //remove in queue;
+                await AccessPassQueue.deleteOne({ _id: q._id }).exec();
+                console.log(
+                  'ACCESSPASS SUCCESS FOR ID: ',
+                  q.accessPass.accessToken,
+                );
+              }
+            });
           });
         }
       });
@@ -121,27 +117,23 @@ export const cronSyncSMTickets = async () => {
           const sql =
             'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
 
-          connection.query(
-            sql,
-            [values],
-            async function (error, results, fields) {
-              //if Error: do not remove in queue
-              if (error) {
-                console.log('Unable to process SM Queue: ', error);
-                return 0;
-              }
+          connection.query(sql, [values], async function (error, results) {
+            //if Error: do not remove in queue
+            if (error) {
+              console.log('Unable to process SM Queue: ', error);
+              return 0;
+            }
 
-              if (results.affectedRows < 1) {
-                console.log('Unable to process SM Queue: no affected rows');
-                return 0;
-              }
+            if (results.affectedRows < 1) {
+              console.log('Unable to process SM Queue: no affected rows');
+              return 0;
+            }
 
-              // no error (remove from queue);
-              console.log('SM Queue Processed for tokenID: ', q.tokenID);
-              await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
-              return 1;
-            },
-          );
+            // no error (remove from queue);
+            console.log('SM Queue Processed for tokenID: ', q.tokenID);
+            await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
+            return 1;
+          });
         });
       });
     } catch (e) {
@@ -190,31 +182,27 @@ export const forceSync = async (skip, limit) => {
             const sql =
               'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;';
 
-            connection.query(
-              sql,
-              [values],
-              async function (error, results, fields) {
-                if (error) {
-                  console.log('FAILED TO SYNC: ', q.accessPass.accessToken);
-                  addAuditTrailEntry({
-                    action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
-                    meta: error,
-                  });
-                } else if (results.affectedRows < 1) {
-                  console.log(
-                    `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                    q.accessPass.accessToken,
-                  );
-                } else {
-                  //remove in queue;
-                  await AccessPassQueue.deleteOne({ _id: q._id }).exec();
-                  console.log(
-                    'ACCESSPASS SUCCESS FOR ID: ',
-                    q.accessPass.accessToken,
-                  );
-                }
-              },
-            );
+            connection.query(sql, [values], async function (error, results) {
+              if (error) {
+                console.log('FAILED TO SYNC: ', q.accessPass.accessToken);
+                addAuditTrailEntry({
+                  action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
+                  meta: error,
+                });
+              } else if (results.affectedRows < 1) {
+                console.log(
+                  `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
+                  q.accessPass.accessToken,
+                );
+              } else {
+                //remove in queue;
+                await AccessPassQueue.deleteOne({ _id: q._id }).exec();
+                console.log(
+                  'ACCESSPASS SUCCESS FOR ID: ',
+                  q.accessPass.accessToken,
+                );
+              }
+            });
           });
         }
       });
@@ -264,7 +252,7 @@ export const dbcleanup = async () => {
   //   function (err) { }
   // );
 
-  const deleteSalesData = await Sale.deleteMany({
+  await Sale.deleteMany({
     createdAt: { $lte: previous2Months },
   });
 
@@ -329,18 +317,18 @@ export const generateDailyReport = async () => {
   //Initialize Tickets Summary Values
   const ticketsData = await Ticket.find({}).select('name').exec();
 
-  let ticketsArray = ticketsData.map((ticket, key) => {
+  let ticketsArray = ticketsData.map((ticket) => {
     return { id: ticket._id, name: ticket.name, qty: 0 };
   });
 
   //Initialize Payment Details Summary
   const paymentsData = await PaymentOption.find({}).select('name').exec();
 
-  let paymentsArray = paymentsData.map((po, key) => {
+  let paymentsArray = paymentsData.map((po) => {
     return { id: po._id, name: po.name, qty: 0, amount: 0 };
   });
 
-  const dataArray = salesData.map((data, key) => {
+  const dataArray = salesData.map((data) => {
     numOfTransaction += 1;
     totalTransactionPrice += data.orderTotal;
 
@@ -362,7 +350,7 @@ export const generateDailyReport = async () => {
       transactionNumber: data.refId,
       paymentGateway: data.paymentDetails?.option?.name,
       ticketType: `${convertArrayToCSV(
-        data.cartItems.map((ticket, key) => {
+        data.cartItems.map((ticket) => {
           ticketsSold += ticket.qty;
 
           //update tickets counter
@@ -403,7 +391,7 @@ export const generateDailyReport = async () => {
     <h2>Payment Channel Summary</h2>
     ${paymentsArray
       .map((row) => {
-        const ticketCounter = ticketsData.map((ticket, key) => {
+        const ticketCounter = ticketsData.map((ticket) => {
           return { name: ticket.name, qty: 0 };
         });
 
@@ -475,7 +463,7 @@ export const generateQRdeliveryReport = async () => {
     .populate({ path: 'salesId', model: 'Sale', select: 'refId' })
     .exec();
 
-  const dataArray = accessPassData.map((data, key) => {
+  const dataArray = accessPassData.map((data) => {
     return {
       generationDate: format(
         utcToZonedTime(data.createdAt, 'Asia/Manila'),

@@ -261,7 +261,7 @@ const addToQueue = async (
   newQ.ticketExpiry = ticketExpiry;
 
   try {
-    const newQueue = await newQ.save();
+    await newQ.save();
     console.log('QUEUE CREATED FOR SM TICKET: ', tokenID);
   } catch (err) {
     console.log('ERROR IN QUEUEING SM TICKET: ', err);
@@ -278,7 +278,7 @@ const checkExisting = (tickets) => {
         let sql = `SELECT * FROM admission_history WHERE admission_no IN (?) AND status="Purchased";`;
         let values = [idArray];
 
-        connection.query(sql, values, (error, results, fields) => {
+        connection.query(sql, values, (error, results) => {
           if (error) {
             reject({ status: 'Query failed' });
           }
@@ -310,7 +310,7 @@ const processTickets = (tickets) => {
     }
 
     try {
-      const result = await newticket.save();
+      await newticket.save();
       console.log('SM Ticket recorded: ', ticketID);
     } catch (err) {
       console.log(err);
@@ -352,7 +352,7 @@ const processTickets = (tickets) => {
           const sql =
             'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
 
-          connection.query(sql, [values], function (error, results, fields) {
+          connection.query(sql, [values], function (error, results) {
             if (error) {
               addToQueue(ticketID, ticketType, expiry, 'Error in mySQL Insert');
             } else if (results.affectedRows < 1) {
@@ -369,7 +369,7 @@ const processTickets = (tickets) => {
           connection.release();
         }
       });
-    } catch (e) {
+    } catch {
       addToQueue(
         ticketID,
         ticketType,
@@ -420,7 +420,7 @@ export const smTicketTransact = async (req, res) => {
             });
           }
         })
-        .catch((error) => {
+        .catch(() => {
           processTickets(tickets);
           res.status(200).json({
             status: 'Success',
@@ -458,7 +458,7 @@ export const smTicketVoid = async (req, res) => {
         newticket.method = 'Void';
 
         try {
-          const result = await newticket.save();
+          await newticket.save();
           console.log('SM Ticket voided: ', ticketID);
         } catch (err) {
           console.log(err);
@@ -476,7 +476,7 @@ export const smTicketVoid = async (req, res) => {
               let sql = `UPDATE tablebarcode SET status = 0, isSnowWorld = 0 WHERE barcode_number = ?;UPDATE admission_history SET status = "Void" WHERE admission_no=?;`;
               let values = [ticketID, ticketID];
 
-              connection.query(sql, values, function (error, results, fields) {
+              connection.query(sql, values, function (error, results) {
                 if (error) {
                   console.log('Error on executing query...');
                   return res.status(400).json({
@@ -492,7 +492,7 @@ export const smTicketVoid = async (req, res) => {
               connection.release();
             }
           });
-        } catch (e) {
+        } catch {
           console.log('ERROR IN VOIDING TICKET...');
           return res.status(500).json({
             status: 'Internal Server Error',

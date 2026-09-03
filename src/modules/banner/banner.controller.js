@@ -185,7 +185,7 @@ export const update = async (req, res) => {
         },
         req,
       );
-    } catch (err) {
+    } catch {
       res.status(400).json({
         error: 'Failed to add banner. Please try again later.',
       });
@@ -202,7 +202,7 @@ export const remove = async (req, res) => {
     });
   }
 
-  const data = await Banner.deleteOne({ slug }).exec();
+  await Banner.deleteOne({ slug }).exec();
   res.json({ message: 'Banner deleted successfully' });
   //TODO: DELETE IMAGE IN S3
   createEntry(req.profile.name, `Deleted banner ${slug}`, {}, req);
@@ -222,7 +222,7 @@ export const toggleStatus = async (req, res) => {
       { status: banner.status },
       req,
     );
-  } catch (err) {
+  } catch {
     res.status(400).json({ error: 'Unable to toggle banner status.' });
   }
 };

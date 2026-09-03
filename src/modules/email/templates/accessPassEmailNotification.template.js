@@ -1,5 +1,3 @@
-import { format } from 'date-fns';
-
 export const accessPassEmailNotification = (data) => {
   const {
     salt,

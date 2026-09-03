@@ -148,7 +148,7 @@ export const changePassword = async (req, res) => {
     await user.save();
     createEntry(user.name, `Changed Password`, {}, req);
     return res.json({ success: 'Password successfully changed' });
-  } catch (error) {
+  } catch {
     return res
       .status(400)
       .json({ error: 'Unable to change password. Please try again later' });

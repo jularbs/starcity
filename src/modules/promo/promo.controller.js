@@ -3,7 +3,7 @@ import Promo from './promo.model.js';
 import formidable from 'formidable';
 export const create = async (req, res) => {
   const form = formidable({ multiples: true });
-  form.parse(req, async (err, fields, files) => {
+  form.parse(req, async (err, fields) => {
     if (err) {
       console.log(err);
       return res
@@ -70,7 +70,7 @@ export const read = async (req, res) => {
 
 export const update = async (req, res) => {
   const form = formidable({ multiples: true });
-  form.parse(req, async (err, fields, files) => {
+  form.parse(req, async (err, fields) => {
     if (err) {
       console.log(err);
       return res
@@ -208,7 +208,7 @@ export const apply = async (req, res) => {
 };
 
 export const processPromo = async (code, transactionAmount) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     const promo = await Promo.findOne({ code: code.toUpperCase() }).exec();
 
     //revalidate promo code on transaction

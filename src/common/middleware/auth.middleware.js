@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import User from '../../modules/user/user.model.js';
 
 export const requireSignin = (req, res, next) => {
   const authHeader = req.headers.authorization;

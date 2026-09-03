@@ -1,7 +1,6 @@
 import RideCategory from './rideCategory.model.js';
 import Ride from '../ride/ride.model.js';
 import slugify from 'slugify';
-import formidable from 'formidable';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
 export const create = async (req, res) => {
   const { name, description } = req.body;
@@ -21,7 +20,7 @@ export const create = async (req, res) => {
       data: result,
       success: 'Ride Category added successfully!',
     });
-  } catch (err) {
+  } catch {
     return res.status(400).json({
       error: 'Failed to add new ride category. Please try again!',
     });
@@ -100,7 +99,7 @@ export const remove = async (req, res) => {
       });
     }
 
-    const result = await RideCategory.findOneAndDelete({ slug }).exec();
+    await RideCategory.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted Ride Category`, { slug }, req);
     res.json({ success: 'Ride Category deleted successfully' });
   } catch (err) {
