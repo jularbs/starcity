@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+
+    /* Flags essential for gradual migration */
+    "allowJs": true, // Allows compiled .js files alongside .ts files
+    "checkJs": false, // Don't report type errors in existing .js files yet
+    "strict": false, // Disable strict mode so TypeScript is forgiving initially
+    "noImplicitAny": false, // Don't crash if variables default to the 'any' type
+
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

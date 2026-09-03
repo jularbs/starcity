@@ -8,3 +8,5 @@ security-cert
 !.elasticbeanstalk/*.global.yml
 
 dump
+
+dist
