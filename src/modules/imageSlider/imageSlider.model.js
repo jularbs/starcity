@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const imageSliderSchema = new mongoose.Schema(
   {
     order: {
@@ -10,7 +10,7 @@ const imageSliderSchema = new mongoose.Schema(
     },
     slug: {
       type: String,
-      unique: [true, "Slug is already used."],
+      unique: [true, 'Slug is already used.'],
       index: true,
       required: true,
     },
@@ -27,7 +27,7 @@ const imageSliderSchema = new mongoose.Schema(
       type: Boolean,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("ImageSlider", imageSliderSchema);
+export default mongoose.model('ImageSlider', imageSliderSchema);

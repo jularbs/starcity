@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema;
 
 const accessPassQueueSchema = new mongoose.Schema(
@@ -6,15 +6,15 @@ const accessPassQueueSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      default: "for delivery",
+      default: 'for delivery',
     },
     accessPass: {
       type: ObjectId,
-      ref: "AccessPass",
+      ref: 'AccessPass',
     },
     meta: Object,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("AccessPassQueue", accessPassQueueSchema);
+export default mongoose.model('AccessPassQueue', accessPassQueueSchema);

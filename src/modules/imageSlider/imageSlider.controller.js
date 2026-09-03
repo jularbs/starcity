@@ -1,11 +1,9 @@
-import ImageSlider from "./imageSlider.model.js";
-import slugify from "slugify";
-import formidable from "formidable";
-import {
-  uploadFile,
-} from "../../common/object-storage/amazon-s3.js";
-import { createEntry } from "../auditTrail/auditTrail.controller.js";
-import dateFnsTz from "date-fns-tz";
+import ImageSlider from './imageSlider.model.js';
+import slugify from 'slugify';
+import formidable from 'formidable';
+import { uploadFile } from '../../common/object-storage/amazon-s3.js';
+import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import dateFnsTz from 'date-fns-tz';
 
 const { zonedTimeToUtc } = dateFnsTz;
 
@@ -18,19 +16,19 @@ export const create = (req, res) => {
 
     if (!name || !name.length) {
       return res.status(400).json({
-        error: "Name identifier is required",
+        error: 'Name identifier is required',
       });
     }
 
     if (!startDate || !startDate.length) {
       return res.status(400).json({
-        error: "Start date is required",
+        error: 'Start date is required',
       });
     }
 
     if (!endDate || !endDate.length) {
       return res.status(400).json({
-        error: "End date is required",
+        error: 'End date is required',
       });
     }
 
@@ -39,7 +37,7 @@ export const create = (req, res) => {
     if (image) {
       if (image.size > 1000000) {
         return res.status(400).json({
-          error: "Image too large. ( > 1MB ).",
+          error: 'Image too large. ( > 1MB ).',
         });
       }
 
@@ -52,11 +50,13 @@ export const create = (req, res) => {
       try {
         imageInfo = await uploadFile(
           image,
-          `image-slider/${year}/${month}/${slug}`
+          `image-slider/${year}/${month}/${slug}`,
         );
       } catch (err) {
         console.log(err);
-        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+        return res
+          .status(400)
+          .json({ error: 'Error on uploading image to Amazon S3' });
       }
 
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
@@ -71,29 +71,31 @@ export const create = (req, res) => {
           is.status = false;
 
           const result = await is.save();
-          res.json({ data: result, success: "Slider Item added successfully!" });
+          res.json({
+            data: result,
+            success: 'Slider Item added successfully!',
+          });
           createEntry(
             req.profile.name,
-            "Created new Image Slider Item",
+            'Created new Image Slider Item',
             { ...result, image: null },
-            req
+            req,
           );
         } catch (err) {
-          console.log("Error on save: ", err)
+          console.log('Error on save: ', err);
           res.status(400).json({
             error:
-              "Failed to add item in image slider. Please try again later.",
+              'Failed to add item in image slider. Please try again later.',
           });
         }
-
       } else {
         res
           .status(400)
-          .json({ error: "Error on uploading image to Amazon S3" });
+          .json({ error: 'Error on uploading image to Amazon S3' });
       }
     } else {
       return res.status(400).json({
-        error: "Image is required",
+        error: 'Image is required',
       });
     }
   });
@@ -104,11 +106,11 @@ export const read = async (req, res) => {
   const is = await ImageSlider.findOne({ slug }).exec();
 
   if (is) {
-    return res.json(is)
+    return res.json(is);
   } else {
     return res.status(400).json({
-      error: "Image Slider item not found"
-    })
+      error: 'Image Slider item not found',
+    });
   }
 };
 
@@ -117,10 +119,10 @@ export const list = async (req, res) => {
     const result = await ImageSlider.find({}).sort({ order: 1 }).exec();
     res.json(result);
   } catch (err) {
-    console.log("Error: ", err)
+    console.log('Error: ', err);
     return res.status(400).json({
-      error: "Error on getting image slider items"
-    })
+      error: 'Error on getting image slider items',
+    });
   }
 };
 
@@ -140,7 +142,7 @@ export const update = async (req, res) => {
       if (image) {
         if (image.size > 1000000) {
           return res.status(400).json({
-            error: "Image too large. ( > 1MB ).",
+            error: 'Image too large. ( > 1MB ).',
           });
         }
 
@@ -152,18 +154,20 @@ export const update = async (req, res) => {
         try {
           imageInfo = await uploadFile(
             image,
-            `image-slider/${year}/${month}/${slug}`
+            `image-slider/${year}/${month}/${slug}`,
           );
         } catch (err) {
-          console.log("Error on upload: ", err);
-          return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+          console.log('Error on upload: ', err);
+          return res
+            .status(400)
+            .json({ error: 'Error on uploading image to Amazon S3' });
         }
         if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
           is.image = imageInfo;
         } else {
           return res
             .status(400)
-            .json({ error: "Error on uploading image to Amazon S3" });
+            .json({ error: 'Error on uploading image to Amazon S3' });
         }
       }
       try {
@@ -172,17 +176,20 @@ export const update = async (req, res) => {
           req.profile.name,
           `Updated Image Slider Item ${slug}`,
           { ...result, image: null },
-          req
+          req,
         );
-        return res.json({ data: result, success: "Image Slider item updated successfully!" });
+        return res.json({
+          data: result,
+          success: 'Image Slider item updated successfully!',
+        });
       } catch (err) {
-        console.log("Error: ", err);
+        console.log('Error: ', err);
         return res.status(400).json({
-          error: "Failed to add item in image slider. Please try again later.",
+          error: 'Failed to add item in image slider. Please try again later.',
         });
       }
     } else {
-      return res.status(400).json({ error: "Image Slider item not found" })
+      return res.status(400).json({ error: 'Image Slider item not found' });
     }
   });
 };
@@ -192,7 +199,7 @@ export const remove = async (req, res) => {
 
   if (!slug) {
     return res.status(400).json({
-      error: "Image Slider item slug is required",
+      error: 'Image Slider item slug is required',
     });
   }
 
@@ -200,16 +207,14 @@ export const remove = async (req, res) => {
 
   if (data) {
     createEntry(req.profile.name, `Deleted Image Slider Item ${slug}`, {}, req);
-    return res.json({ success: "Image Slider Item deleted successfully" });
+    return res.json({ success: 'Image Slider Item deleted successfully' });
   } else {
-    return res.status(400).json({ error: "Image Slider Item not found" });
-
+    return res.status(400).json({ error: 'Image Slider Item not found' });
   }
 };
 
 //TODOS: Remove and use update
 export const toggleStatus = async (req, res) => {
-
   const { id } = req.body;
   let is = await ImageSlider.findOne({ _id: id }).exec();
 
@@ -221,17 +226,19 @@ export const toggleStatus = async (req, res) => {
         req.profile.name,
         `Toggled Image Slider Item ${result.name}`,
         { status: result.status },
-        req
+        req,
       );
-      return res.json({ data: result, success: "Image Slider Item toggled successfully!" });
+      return res.json({
+        data: result,
+        success: 'Image Slider Item toggled successfully!',
+      });
     } catch (err) {
-      console.log("Error: ", err);
+      console.log('Error: ', err);
       return res.status(400).json({
-        error: "Failed to toggle item in image slider. Please try again later.",
+        error: 'Failed to toggle item in image slider. Please try again later.',
       });
     }
   } else {
-    return res.status(404).json({ error: "Image Slider Item not found." });
+    return res.status(404).json({ error: 'Image Slider Item not found.' });
   }
-
 };

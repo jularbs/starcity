@@ -1,7 +1,7 @@
-import dotenv from "dotenv";
-import { connectMongoDB, disconnectMongoDB } from "./database/mongodb/index.js";
-import app from "./app.js";
-import { startCronJobs } from "./common/cron/cronScheduler.js";
+import dotenv from 'dotenv';
+import { connectMongoDB, disconnectMongoDB } from './database/mongodb/index.js';
+import app from './app.js';
+import { startCronJobs } from './common/cron/cronScheduler.js';
 
 dotenv.config();
 
@@ -33,11 +33,11 @@ const startServer = async () => {
     });
   };
 
-  process.once("SIGINT", () => shutdown("SIGINT"));
-  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
 };
 
 startServer().catch((error) => {
-  console.error("Unable to start server:", error);
+  console.error('Unable to start server:', error);
   process.exit(1);
 });

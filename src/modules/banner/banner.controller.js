@@ -1,11 +1,9 @@
-import Banner from "./banner.model.js";
-import slugify from "slugify";
-import formidable from "formidable";
-import {
-  uploadFile,
-} from "../../common/object-storage/amazon-s3.js";
-import { createEntry } from "../auditTrail/auditTrail.controller.js";
-import dateFnsTz from "date-fns-tz";
+import Banner from './banner.model.js';
+import slugify from 'slugify';
+import formidable from 'formidable';
+import { uploadFile } from '../../common/object-storage/amazon-s3.js';
+import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import dateFnsTz from 'date-fns-tz';
 
 const { zonedTimeToUtc } = dateFnsTz;
 
@@ -18,19 +16,19 @@ export const create = async (req, res) => {
 
     if (!name || !name.length) {
       return res.status(400).json({
-        error: "Name identifier is required",
+        error: 'Name identifier is required',
       });
     }
 
     if (!startDate || !startDate.length) {
       return res.status(400).json({
-        error: "Start date is required",
+        error: 'Start date is required',
       });
     }
 
     if (!endDate || !endDate.length) {
       return res.status(400).json({
-        error: "End date is required",
+        error: 'End date is required',
       });
     }
 
@@ -39,7 +37,7 @@ export const create = async (req, res) => {
     if (image) {
       if (image.size > 1000000) {
         return res.status(400).json({
-          error: "Image too large. ( > 1MB ).",
+          error: 'Image too large. ( > 1MB ).',
         });
       }
 
@@ -50,14 +48,12 @@ export const create = async (req, res) => {
       let imageInfo;
 
       try {
-        imageInfo = await uploadFile(
-          image,
-          `banners/${year}/${month}/${slug}`
-        );
+        imageInfo = await uploadFile(image, `banners/${year}/${month}/${slug}`);
       } catch (err) {
         console.log(err);
         return res.status(400).json({
-          error: "Failed to add banner due to failed upload. Please try again later.",
+          error:
+            'Failed to add banner due to failed upload. Please try again later.',
         });
       }
 
@@ -67,8 +63,8 @@ export const create = async (req, res) => {
           b.name = name;
           b.link = link;
           b.slug = slug;
-          b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
-          b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
+          b.startDate = zonedTimeToUtc(startDate, 'Asia/Manila');
+          b.endDate = zonedTimeToUtc(endDate, 'Asia/Manila');
           b.image = imageInfo;
           b.status = false;
           b.sizeCategory = sizeCategory;
@@ -77,31 +73,31 @@ export const create = async (req, res) => {
           res.json(banner);
           createEntry(
             req.profile.name,
-            "Created new banner",
+            'Created new banner',
             {
               name,
               startDate,
               endDate,
               sizeCategory,
             },
-            req
+            req,
           );
         } catch (err) {
           console.log(err);
           return res.status(400).json({
-            error: "Failed to add banner. Please try again later.",
+            error: 'Failed to add banner. Please try again later.',
           });
         }
       } else {
-        console.log("error at image upload");
+        console.log('error at image upload');
         return res
           .status(400)
-          .json({ error: "Error on uploading image to Amazon S3" });
+          .json({ error: 'Error on uploading image to Amazon S3' });
       }
     } else {
-      console.log("error at no image");
+      console.log('error at no image');
       return res.status(400).json({
-        error: "Image is required",
+        error: 'Image is required',
       });
     }
   });
@@ -114,7 +110,9 @@ export const read = async (req, res) => {
     res.json(result);
   } catch (err) {
     console.log(err);
-    return res.status(400).json({ error: "Error on getting banner information" });
+    return res
+      .status(400)
+      .json({ error: 'Error on getting banner information' });
   }
 };
 
@@ -124,7 +122,7 @@ export const list = async (req, res) => {
     res.json(result);
   } catch (err) {
     console.log(err);
-    return res.status(400).json({ error: "Error on getting banners list" });
+    return res.status(400).json({ error: 'Error on getting banners list' });
   }
 };
 
@@ -137,15 +135,15 @@ export const update = async (req, res) => {
     let b = await Banner.findOne({ slug: slug }).exec();
     b.name = name;
 
-    b.startDate = zonedTimeToUtc(startDate, "Asia/Manila");
-    b.endDate = zonedTimeToUtc(endDate, "Asia/Manila");
+    b.startDate = zonedTimeToUtc(startDate, 'Asia/Manila');
+    b.endDate = zonedTimeToUtc(endDate, 'Asia/Manila');
     b.sizeCategory = sizeCategory;
     b.link = link;
 
     if (image) {
       if (image.size > 1000000) {
         return res.status(400).json({
-          error: "Image too large. ( > 1MB ).",
+          error: 'Image too large. ( > 1MB ).',
         });
       }
 
@@ -155,13 +153,12 @@ export const update = async (req, res) => {
 
       let imageInfo;
       try {
-        imageInfo = await uploadFile(
-          image,
-          `banners/${year}/${month}/${slug}`
-        );
+        imageInfo = await uploadFile(image, `banners/${year}/${month}/${slug}`);
       } catch (err) {
         console.log(err);
-        return res.status(400).json({ error: "Error on uploading image to Amazon S3" });
+        return res
+          .status(400)
+          .json({ error: 'Error on uploading image to Amazon S3' });
       }
 
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
@@ -169,7 +166,7 @@ export const update = async (req, res) => {
       } else {
         res
           .status(400)
-          .json({ error: "Error on uploading image to Amazon S3" });
+          .json({ error: 'Error on uploading image to Amazon S3' });
       }
     }
 
@@ -186,11 +183,11 @@ export const update = async (req, res) => {
           endDate,
           sizeCategory,
         },
-        req
+        req,
       );
     } catch (err) {
       res.status(400).json({
-        error: "Failed to add banner. Please try again later.",
+        error: 'Failed to add banner. Please try again later.',
       });
     }
   });
@@ -201,12 +198,12 @@ export const remove = async (req, res) => {
 
   if (!slug) {
     return res.status(400).json({
-      error: "Banner slug is required",
+      error: 'Banner slug is required',
     });
   }
 
   const data = await Banner.deleteOne({ slug }).exec();
-  res.json({ message: "Banner deleted successfully" });
+  res.json({ message: 'Banner deleted successfully' });
   //TODO: DELETE IMAGE IN S3
   createEntry(req.profile.name, `Deleted banner ${slug}`, {}, req);
 };
@@ -223,9 +220,9 @@ export const toggleStatus = async (req, res) => {
       req.profile.name,
       `Toggled banner status ${banner.name}`,
       { status: banner.status },
-      req
+      req,
     );
   } catch (err) {
-    res.status(400).json({ error: "Unable to toggle banner status." });
+    res.status(400).json({ error: 'Unable to toggle banner status.' });
   }
 };

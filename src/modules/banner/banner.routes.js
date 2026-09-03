@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 const router = express.Router();
 import {
   create,
@@ -7,35 +7,45 @@ import {
   update,
   remove,
   toggleStatus,
-} from "./banner.controller.js";
-import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
-import { ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE } from "../auth/auth.constants.js";
+} from './banner.controller.js';
+import {
+  requireSignin,
+  authzMiddleware,
+} from '../../common/middleware/auth.middleware.js';
+import {
+  ADMIN_ROLE,
+  CONTENT_MANAGER_ROLE,
+  ECOMMERCE_MANAGER_ROLE,
+} from '../auth/auth.constants.js';
 
-router.post("/v1/banner",
+router.post(
+  '/v1/banner',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  create
-);
-
-router.put("/v1/banner",
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  update
+  create,
 );
 
 router.put(
-  "/v1/banner/toggle-status",
+  '/v1/banner',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  toggleStatus
+  update,
 );
 
-router.get("/v1/banner", list);
-
-router.delete("/v1/banner",
+router.put(
+  '/v1/banner/toggle-status',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  remove
+  toggleStatus,
+);
+
+router.get('/v1/banner', list);
+
+router.delete(
+  '/v1/banner',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
+  remove,
 );
 
 export default router;

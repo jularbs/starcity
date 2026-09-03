@@ -1,42 +1,47 @@
-import jwt from "jsonwebtoken";
-import User from "../../modules/user/user.model.js";
+import jwt from 'jsonwebtoken';
+import User from '../../modules/user/user.model.js';
 
 export const requireSignin = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    let token;
+  const authHeader = req.headers.authorization;
+  let token;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.split(' ')[1];
-        jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-            //Handle Errors
-            if (err) {
-                if (err.name === 'TokenExpiredError')
-                    return res.status(401).json({ error: "Authentication Expired" })
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      //Handle Errors
+      if (err) {
+        if (err.name === 'TokenExpiredError')
+          return res.status(401).json({ error: 'Authentication Expired' });
 
-                if (err.name === 'JsonWebTokenError')
-                    return res.status(401).json({ error: "Invalid Authentication" })
+        if (err.name === 'JsonWebTokenError')
+          return res.status(401).json({ error: 'Invalid Authentication' });
 
-                if (err.name === 'NotBeforeError')
-                    return res.status(401).json({ error: "Invalid Authentication" })
+        if (err.name === 'NotBeforeError')
+          return res.status(401).json({ error: 'Invalid Authentication' });
+      } else {
+        //proceed
+        req.profile = decoded;
+        next();
+      }
+    });
+  } else {
+    // Handle the case where the token is missing or invalid
+    return res
+      .status(400)
+      .json({ error: 'Auth token required for this request' });
+  }
+};
 
-            } else {
-                //proceed
-                req.profile = decoded;
-                next();
-            }
-        });
-    } else {
-        // Handle the case where the token is missing or invalid
-        return res.status(400).json({ error: 'Auth token required for this request' });
-    }
-}
-
-export const authzMiddleware = (...department) => async (req, res, next) => {
+export const authzMiddleware =
+  (...department) =>
+  async (req, res, next) => {
     const userRole = req.profile?.department;
 
     if (!userRole || (department.length && !department.includes(userRole))) {
-        return res.status(403).json({ error: "You don't have permission to make this request" });
+      return res
+        .status(403)
+        .json({ error: "You don't have permission to make this request" });
     }
 
     next();
-};
+  };

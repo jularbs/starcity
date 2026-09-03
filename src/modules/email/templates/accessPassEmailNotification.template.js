@@ -1,20 +1,20 @@
-import { format } from "date-fns";
+import { format } from 'date-fns';
 
 export const accessPassEmailNotification = (data) => {
-    const {
-        salt,
-        refId,
-        contactNumber,
-        customerName,
-        emailAddress,
-        orderTotal,
-        cartItems,
-        paymentDetails,
-    } = data;
+  const {
+    salt,
+    refId,
+    contactNumber,
+    customerName,
+    emailAddress,
+    orderTotal,
+    cartItems,
+    paymentDetails,
+  } = data;
 
-    const showParticulars = () => {
-        return cartItems.map((item) => {
-            return `<tr
+  const showParticulars = () => {
+    return cartItems.map((item) => {
+      return `<tr
       style="
         padding-bottom: 0;
         padding-left: 0;
@@ -103,10 +103,10 @@ export const accessPassEmailNotification = (data) => {
         Php ${item.priceAcquired}
       </td>
     </tr>`;
-        });
-    };
+    });
+  };
 
-    return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html
   xmlns="http://www.w3.org/1999/xhtml"
   lang="en"
@@ -559,8 +559,9 @@ export const accessPassEmailNotification = (data) => {
                                         text-align: left;
                                       "
                                     >  
-                                      These QR Codes are your tickets to the park and are <strong>valid until ${data.expiryDate
-        }.</strong> 
+                                      These QR Codes are your tickets to the park and are <strong>valid until ${
+                                        data.expiryDate
+                                      }.</strong> 
                                       Please download the QR codes and print or save in your mobile phone for scanning 
                                       at the park's main entrance turnstiles. One QR code per person. 
                                     </p>
@@ -794,9 +795,10 @@ export const accessPassEmailNotification = (data) => {
                                                     >
                                                       <a
                                                         align="center"
-                                                        href="${process.env
-            .WEBSITE_URL
-        }/accesspass?s=${salt}&r=${refId}"
+                                                        href="${
+                                                          process.env
+                                                            .WEBSITE_URL
+                                                        }/accesspass?s=${salt}&r=${refId}"
                                                         style="
                                                           border: 0 solid
                                                             #ffae00;
@@ -1176,9 +1178,10 @@ export const accessPassEmailNotification = (data) => {
                                                       ><br /><span
                                                         class="tw-light"
                                                         style="font-weight: 300"
-                                                        >${paymentDetails.option
-            .name
-        }</span
+                                                        >${
+                                                          paymentDetails.option
+                                                            .name
+                                                        }</span
                                                       >
                                                     </p>
                                                     <p
@@ -1206,8 +1209,9 @@ export const accessPassEmailNotification = (data) => {
                                                       ><br /><span
                                                         class="tw-light"
                                                         style="font-weight: 300"
-                                                        >${paymentDetails.referenceNumber
-        }</span
+                                                        >${
+                                                          paymentDetails.referenceNumber
+                                                        }</span
                                                       >
                                                     </p>
                                                     <p

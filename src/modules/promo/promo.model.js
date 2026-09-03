@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema;
 
 const promoSchema = new mongoose.Schema(
@@ -25,30 +25,32 @@ const promoSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
-      max: 100
+      max: 100,
     },
     fixedDiscount: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
     maxDiscount: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
     minimumRequired: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
-    acceptedPaymentMethods: [{
-      type: ObjectId,
-      ref: "PaymentOption",
-    }],
+    acceptedPaymentMethods: [
+      {
+        type: ObjectId,
+        ref: 'PaymentOption',
+      },
+    ],
     maxUsage: {
       type: Number,
-      default: 0
+      default: 0,
     },
     status: {
       type: Boolean,
@@ -60,7 +62,7 @@ const promoSchema = new mongoose.Schema(
     },
     meta: Object,
   },
-  { timestamps: true, toJSON: { getters: true } }
+  { timestamps: true, toJSON: { getters: true } },
 );
 
 promoSchema.pre('find', function () {
@@ -75,4 +77,4 @@ promoSchema.pre('countDocuments', function () {
   this.where({ deletedAt: null });
 });
 
-export default mongoose.model("Promo", promoSchema);
+export default mongoose.model('Promo', promoSchema);

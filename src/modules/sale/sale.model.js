@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema;
 const { Decimal128 } = mongoose.Schema.Types;
 
 function getPrice(value) {
-  if (typeof value !== "undefined") {
+  if (typeof value !== 'undefined') {
     return parseFloat(value.toString());
   }
   return value;
@@ -13,7 +13,7 @@ const cartItem = new mongoose.Schema(
   {
     ticketId: {
       type: ObjectId,
-      ref: "Ticket",
+      ref: 'Ticket',
       required: true,
     },
     priceAcquired: {
@@ -31,7 +31,7 @@ const cartItem = new mongoose.Schema(
     toJSON: { getters: true },
     id: false,
     _id: false,
-  }
+  },
 );
 
 const saleSchema = new mongoose.Schema(
@@ -57,7 +57,7 @@ const saleSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      default: "for sync",
+      default: 'for sync',
     },
     refId: {
       type: String,
@@ -70,7 +70,7 @@ const saleSchema = new mongoose.Schema(
     paymentDetails: {
       option: {
         type: ObjectId,
-        ref: "PaymentOption",
+        ref: 'PaymentOption',
       },
       amountPaid: {
         type: Decimal128,
@@ -82,12 +82,12 @@ const saleSchema = new mongoose.Schema(
     },
     promoCode: {
       type: ObjectId,
-      ref: "Promo",
-      default: null
+      ref: 'Promo',
+      default: null,
     },
     discount: {
       type: Decimal128,
-      default: null
+      default: null,
     },
     meta: Object,
     expiryDate: String,
@@ -96,7 +96,7 @@ const saleSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { getters: true },
     id: false,
-  }
+  },
 );
 
-export default mongoose.model("Sale", saleSchema);
+export default mongoose.model('Sale', saleSchema);

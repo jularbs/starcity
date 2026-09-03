@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const emailQueueSchema = new mongoose.Schema(
   {
     refId: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("EmailQueue", emailQueueSchema);
+export default mongoose.model('EmailQueue', emailQueueSchema);

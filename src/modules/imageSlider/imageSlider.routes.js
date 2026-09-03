@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 const router = express.Router();
 import {
   create,
@@ -7,36 +7,42 @@ import {
   remove,
   toggleStatus,
   read,
-} from "./imageSlider.controller.js";
-import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
-import { ADMIN_ROLE, CONTENT_MANAGER_ROLE } from "../auth/auth.constants.js";
+} from './imageSlider.controller.js';
+import {
+  requireSignin,
+  authzMiddleware,
+} from '../../common/middleware/auth.middleware.js';
+import { ADMIN_ROLE, CONTENT_MANAGER_ROLE } from '../auth/auth.constants.js';
 
-router.post("/v1/image-slider",
+router.post(
+  '/v1/image-slider',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  create
-);
-
-router.put("/v1/image-slider",
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  update
+  create,
 );
 
 router.put(
-  "/v1/image-slider/toggle-status",
+  '/v1/image-slider',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  toggleStatus
+  update,
 );
 
-router.get("/v1/image-slider", list);
-router.get("/v1/image-slider/:slug", read);
-
-router.delete("/v1/image-slider/:slug",
+router.put(
+  '/v1/image-slider/toggle-status',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  remove
+  toggleStatus,
+);
+
+router.get('/v1/image-slider', list);
+router.get('/v1/image-slider/:slug', read);
+
+router.delete(
+  '/v1/image-slider/:slug',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
+  remove,
 );
 
 export default router;

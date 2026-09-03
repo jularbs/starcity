@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 const router = express.Router();
 import {
   signup,
@@ -6,39 +6,34 @@ import {
   signout,
   changePassword,
   validateToken,
-} from "./auth.controller.js";
-import { requireSignin } from "../../common/middleware/auth.middleware.js";
-import { createRateLimiter } from "../../common/middleware/rate-limit.middleware.js";
+} from './auth.controller.js';
+import { requireSignin } from '../../common/middleware/auth.middleware.js';
+import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 
-router.post("/v1/signup",
+router.post(
+  '/v1/signup',
   createRateLimiter({
     windowMs: 60 * 60 * 1000,
     limit: 5,
-    message: "Too many attempts, please try again in 60 minutes."
+    message: 'Too many attempts, please try again in 60 minutes.',
   }),
-  signup
-);
-
-router.post("/v1/signin",
-  createRateLimiter({
-    windowMs: 15 * 60 * 1000,
-    limit: 5,
-    message: "Too many attempts, please try again in 15 minutes."
-  }),
-  signin
+  signup,
 );
 
 router.post(
-  "/v1/change-password",
-  requireSignin,
-  changePassword
+  '/v1/signin',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
+  signin,
 );
 
-router.get("/v1/signout", signout);
+router.post('/v1/change-password', requireSignin, changePassword);
 
-router.get("/v1/validate-token",
-  requireSignin,
-  validateToken
-);
+router.get('/v1/signout', signout);
+
+router.get('/v1/validate-token', requireSignin, validateToken);
 
 export default router;

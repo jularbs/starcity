@@ -1,30 +1,32 @@
-import Sale from "./sale.model.js";
-import Ticket from "../ticket/ticket.model.js";
-import AccessPass from "../accessPass/accessPass.model.js";
-import crypto from "crypto";
-import QRCode from "qrcode";
-import { uploadBase64 } from "../../common/object-storage/amazon-s3.js";
-import mongoose from "mongoose";
-import { sendMail } from "../email/email.service.js";
-import { accessPassEmailNotification } from "../email/templates/index.js";
-import { pool } from "../../database/mysql/index.js";
-import { add, format, getDay, nextThursday } from "date-fns";
-import dateFnsTz from "date-fns-tz";
-import moment from "moment";
-import axios from "axios";
-import { cronSyncAP } from "../../common/cron/cronjobs.js";
-import { addToQueue } from "../accessPass/accessPassQueue.controller.js";
-import EmailQueue from "../email/emailQueue.model.js";
+import Sale from './sale.model.js';
+import Ticket from '../ticket/ticket.model.js';
+import AccessPass from '../accessPass/accessPass.model.js';
+import crypto from 'crypto';
+import QRCode from 'qrcode';
+import { uploadBase64 } from '../../common/object-storage/amazon-s3.js';
+import mongoose from 'mongoose';
+import { sendMail } from '../email/email.service.js';
+import { accessPassEmailNotification } from '../email/templates/index.js';
+import { pool } from '../../database/mysql/index.js';
+import { add, format, getDay, nextThursday } from 'date-fns';
+import dateFnsTz from 'date-fns-tz';
+import moment from 'moment';
+import axios from 'axios';
+import { cronSyncAP } from '../../common/cron/cronjobs.js';
+import { addToQueue } from '../accessPass/accessPassQueue.controller.js';
+import EmailQueue from '../email/emailQueue.model.js';
 //TEST
-import { processPromo } from "../promo/promo.controller.js";
+import { processPromo } from '../promo/promo.controller.js';
 //HELPERS
 const { utcToZonedTime } = dateFnsTz;
 
 const getCurrentTicketPrice = (ticket) => {
   return new Promise(async (resolve, reject) => {
     const { ticketId } = ticket;
-    const result = await Ticket.findOne({ _id: new mongoose.Types.ObjectId(`${ticketId}`) }).exec();
-    if (!result) reject(new Error("Ticket not found"));
+    const result = await Ticket.findOne({
+      _id: new mongoose.Types.ObjectId(`${ticketId}`),
+    }).exec();
+    if (!result) reject(new Error('Ticket not found'));
     return resolve({ price: result.price });
   });
 };
@@ -48,7 +50,7 @@ const calculateCart = (cartItems) => {
 export const generateAccessPass = (sale, accessPasses) => {
   accessPasses.map(async (ap) => {
     let isExisting = [];
-    let finalToken = "";
+    let finalToken = '';
 
     //get ticketDetails
     const ticket = await Ticket.findOne({
@@ -60,7 +62,7 @@ export const generateAccessPass = (sale, accessPasses) => {
       do {
         finalToken = `W-${ticket.itemCode}-${crypto
           .randomBytes(4)
-          .toString("hex")}`;
+          .toString('hex')}`;
 
         finalToken.toUpperCase();
         isExisting = await AccessPass.find({
@@ -70,8 +72,8 @@ export const generateAccessPass = (sale, accessPasses) => {
 
       let base64 = await QRCode.toDataURL(finalToken, {
         version: 4,
-        errorCorrectionLevel: "H",
-        type: "image/jpeg",
+        errorCorrectionLevel: 'H',
+        type: 'image/jpeg',
         quality: 1,
         margin: 5,
         width: 300,
@@ -84,7 +86,7 @@ export const generateAccessPass = (sale, accessPasses) => {
 
       const upload = await uploadBase64(
         await base64,
-        `access-pass/${year}/${month}/${sale.customerName}/${sale.refId}/${finalToken}`
+        `access-pass/${year}/${month}/${sale.customerName}/${sale.refId}/${finalToken}`,
       );
 
       //save data to accesspassmodel
@@ -95,7 +97,7 @@ export const generateAccessPass = (sale, accessPasses) => {
       accessPass.QRcode = await upload;
       accessPass.expiryDate = `${format(
         new Date(sale.expiryDate),
-        "yyyy-LL-dd"
+        'yyyy-LL-dd',
       )} 23:59:59`;
 
       try {
@@ -104,7 +106,7 @@ export const generateAccessPass = (sale, accessPasses) => {
         console.log(`Processing ${finalToken}: `, syncResult);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
       } catch (err) {
-        console.log("FAILED TO SAVE TOKEN IN DATABASE: ", finalToken);
+        console.log('FAILED TO SAVE TOKEN IN DATABASE: ', finalToken);
       }
     }
   });
@@ -118,7 +120,7 @@ export const getOpenParkExpiry = () => {
     add(new Date(), {
       months: 1,
     }),
-    "Asia/Manila"
+    'Asia/Manila',
   );
 
   const dayValue = getDay(expiryDate);
@@ -128,9 +130,9 @@ export const getOpenParkExpiry = () => {
   let expiry = null;
 
   if (shouldAdjust) {
-    expiry = format(nextThursday(expiryDate), "MMMM dd, yyyy");
+    expiry = format(nextThursday(expiryDate), 'MMMM dd, yyyy');
   } else {
-    expiry = format(expiryDate, "MMMM dd, yyyy");
+    expiry = format(expiryDate, 'MMMM dd, yyyy');
   }
 
   return expiry;
@@ -142,30 +144,30 @@ export const resendAR = async (req, res) => {
   const isSent = await sendAR(refId);
 
   if (isSent) {
-    res.json({ message: "E-mail resent successfully." });
+    res.json({ message: 'E-mail resent successfully.' });
   } else {
-    res.json({ message: "E-mail failed. Please try again later." });
+    res.json({ message: 'E-mail failed. Please try again later.' });
   }
 };
 
 export const sendAR = async (refId) => {
   return new Promise(async (resolve, reject) => {
-    console.log("SENDING AR FOR ", refId);
+    console.log('SENDING AR FOR ', refId);
     const sale = await Sale.findOne({ refId: refId })
       .populate({
-        path: "cartItems",
+        path: 'cartItems',
         populate: {
-          path: "ticketId",
-          model: "Ticket",
-          select: "name -_id",
+          path: 'ticketId',
+          model: 'Ticket',
+          select: 'name -_id',
         },
       })
       .populate({
-        path: "paymentDetails",
+        path: 'paymentDetails',
         populate: {
-          path: "option",
-          model: "PaymentOption",
-          select: "name -_id",
+          path: 'option',
+          model: 'PaymentOption',
+          select: 'name -_id',
         },
       })
       .exec();
@@ -173,8 +175,8 @@ export const sendAR = async (refId) => {
     const saleId = sale._id;
 
     const accessPasses = await AccessPass.find({ salesId: saleId })
-      .populate("ticketId", "slug")
-      .select("ticketId accessToken QRcode")
+      .populate('ticketId', 'slug')
+      .select('ticketId accessToken QRcode')
       .exec();
 
     // const APattachments = accessPasses.map((item, key) => {
@@ -188,89 +190,93 @@ export const sendAR = async (refId) => {
       to: sale.emailAddress,
       from: process.env.EMAIL_ADDRESS,
       subject:
-        "Your acknowledgement receipt for your Star City ticket purchase",
+        'Your acknowledgement receipt for your Star City ticket purchase',
       html: accessPassEmailNotification(sale),
-      bcc: ["accounting@starcity.com.ph"],
+      bcc: ['accounting@starcity.com.ph'],
     };
 
     try {
       sendMail(details).then((info) => {
-        console.log("EMAIL STACK: ", info);
+        console.log('EMAIL STACK: ', info);
         //check info if undefined
         if (info === undefined) {
-          console.log("EMAIL SENT FAILED");
+          console.log('EMAIL SENT FAILED');
           //add to email queue
           let q = new EmailQueue();
           q.refId = refId;
-          q
-            .save()
+          q.save()
             .then(() => {
-              console.log("QUEUE CREATED FOR REF ID: ", refId);
+              console.log('QUEUE CREATED FOR REF ID: ', refId);
             })
             .catch((err) => {
-              console.log("ERROR IN QUEUEING EMAIL: ", err);
+              console.log('ERROR IN QUEUEING EMAIL: ', err);
             });
           resolve(false);
         } else {
-          console.log("EMAIL SENT SUCCESSFULLY");
+          console.log('EMAIL SENT SUCCESSFULLY');
           resolve(true);
         }
       });
     } catch (e) {
-      console.log("ERROR IN MAILER: ", e);
-      console.log("EMAIL SENT FAILED");
+      console.log('ERROR IN MAILER: ', e);
+      console.log('EMAIL SENT FAILED');
       resolve(false);
     }
   });
 };
 
 const syncAccessPass = (accessPass, RideCode) => {
-  if (process.env.NODE_ENV !== "production") {
-    console.log("Access Pass Syncing is disabled in non-production environments.");
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(
+      'Access Pass Syncing is disabled in non-production environments.',
+    );
     return;
   }
-  console.log("SYNCING ACCESS PASS: ", accessPass.accessToken);
+  console.log('SYNCING ACCESS PASS: ', accessPass.accessToken);
   return new Promise((resolve, reject) => {
     try {
       pool.getConnection(async (err, connection) => {
         if (err) {
-          console.log("ERROR: ", err);
-          addToQueue(accessPass, "Failed Connection");
-          resolve("Failed Connection, added to queue.");
+          console.log('ERROR: ', err);
+          addToQueue(accessPass, 'Failed Connection');
+          resolve('Failed Connection, added to queue.');
         } else {
-          const date = format(accessPass.createdAt, "yyyy-MM-dd");
-          const time = format(accessPass.createdAt, "HH:mm:ss");
+          const date = format(accessPass.createdAt, 'yyyy-MM-dd');
+          const time = format(accessPass.createdAt, 'HH:mm:ss');
 
           const values = [
             [
               accessPass.accessToken,
-              "Pop Tag",
+              'Pop Tag',
               date,
               time,
-              "Purchased",
-              "web",
-              "1",
+              'Purchased',
+              'web',
+              '1',
               RideCode,
               accessPass.expiryDate,
             ],
           ];
 
           const sql =
-            "INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;";
+            'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
 
           connection.query(sql, [values], function (error, results, fields) {
             if (error) {
-              console.log("UNABLE TO SYNC ACCESSPASS: ", accessPass.accessToken);
-              console.log("ERROR MESSAGE: ", error);
-              addToQueue(accessPass, "Failed Query");
-              resolve("Failed Query, added to queue");
+              console.log(
+                'UNABLE TO SYNC ACCESSPASS: ',
+                accessPass.accessToken,
+              );
+              console.log('ERROR MESSAGE: ', error);
+              addToQueue(accessPass, 'Failed Query');
+              resolve('Failed Query, added to queue');
             } else if (results.affectedRows < 1) {
               console.log(
                 `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                accessPass.accessToken
+                accessPass.accessToken,
               );
-              addToQueue(accessPass, "Failed insert");
-              resolve("Failed Insert, added to queue");
+              addToQueue(accessPass, 'Failed insert');
+              resolve('Failed Insert, added to queue');
             } else {
               resolve(`ACCESS PASS SYNCED: ${accessPass.accessToken}`);
             }
@@ -280,7 +286,7 @@ const syncAccessPass = (accessPass, RideCode) => {
         }
       });
     } catch (e) {
-      resolve("ERROR IN MYSQL.");
+      resolve('ERROR IN MYSQL.');
     }
   });
 };
@@ -291,17 +297,17 @@ export const readBySaltRefID = async (req, res) => {
     salt: req.query.salt,
     refId: req.query.refid,
   })
-    .select("_id customerName emailAddress contactNumber expiryDate createdAt")
+    .select('_id customerName emailAddress contactNumber expiryDate createdAt')
     .exec();
 
   if (saleDetails == null)
-    return res.status(400).json({ error: "Invalid Data" });
+    return res.status(400).json({ error: 'Invalid Data' });
 
   const accessPasses = await AccessPass.find({
     salesId: saleDetails._id,
   })
-    .populate("ticketId", "name slug -_id")
-    .select("ticketId QRcode accessToken -_id")
+    .populate('ticketId', 'name slug -_id')
+    .select('ticketId QRcode accessToken -_id')
     .exec();
 
   res.json({ details: saleDetails, accessPasses });
@@ -311,35 +317,35 @@ export const read = async (req, res) => {
   try {
     const data = await Sale.findOne({ refId: req.params.refid })
       .select(
-        "customerName emailAddress contactNumber orderTotal refId salt paymentDetails"
+        'customerName emailAddress contactNumber orderTotal refId salt paymentDetails',
       )
       .populate({
-        path: "paymentDetails",
+        path: 'paymentDetails',
         populate: {
-          path: "option",
-          model: "PaymentOption",
-          select: "name",
+          path: 'option',
+          model: 'PaymentOption',
+          select: 'name',
         },
       })
       .exec();
     res.json(data);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
 };
 
 export const list = async (req, res) => {
-  const { skip = 0, limit = 10, start, end, search = "" } = req.query;
+  const { skip = 0, limit = 10, start, end, search = '' } = req.query;
 
   //check UTC Formatting when in server
   const startDate = moment(start).toISOString();
   const endDate = moment(end).toISOString();
 
-  console.log("Start Date: ", startDate);
-  console.log("End Date: ", endDate);
+  console.log('Start Date: ', startDate);
+  console.log('End Date: ', endDate);
 
   const data = await Sale.find({
     createdAt: {
@@ -347,30 +353,30 @@ export const list = async (req, res) => {
       $lte: endDate,
     },
     status: {
-      $nin: ["awaiting payment", "P", "p"],
+      $nin: ['awaiting payment', 'P', 'p'],
     },
     $or: [
-      { refId: { $regex: search, $options: "i" } },
-      { customerName: { $regex: search, $options: "i" } },
+      { refId: { $regex: search, $options: 'i' } },
+      { customerName: { $regex: search, $options: 'i' } },
     ],
   })
     .populate({
-      path: "cartItems",
+      path: 'cartItems',
       populate: {
-        path: "ticketId",
-        model: "Ticket",
-        select: "name price",
+        path: 'ticketId',
+        model: 'Ticket',
+        select: 'name price',
       },
     })
     .populate({
-      path: "paymentDetails",
+      path: 'paymentDetails',
       populate: {
-        path: "option",
-        model: "PaymentOption",
-        select: "name",
+        path: 'option',
+        model: 'PaymentOption',
+        select: 'name',
       },
     })
-    .sort("-createdAt")
+    .sort('-createdAt')
     .skip(parseInt(skip))
     .limit(parseInt(limit))
     .exec();
@@ -381,11 +387,11 @@ export const list = async (req, res) => {
       $lte: endDate,
     },
     status: {
-      $nin: ["awaiting payment", "P", "p"],
+      $nin: ['awaiting payment', 'P', 'p'],
     },
     $or: [
-      { refId: { $regex: search, $options: "i" } },
-      { customerName: { $regex: search, $options: "i" } },
+      { refId: { $regex: search, $options: 'i' } },
+      { customerName: { $regex: search, $options: 'i' } },
     ],
   });
   res.json({ count, data });
@@ -398,14 +404,14 @@ export const createCheckout = async (req, res) => {
     email,
     contactNumber,
     paymentDetails,
-    promoCode
+    promoCode,
   } = req.body;
 
   let isExisting = [];
-  let refID = "";
+  let refID = '';
 
   do {
-    refID = crypto.randomBytes(6).toString("hex").toUpperCase();
+    refID = crypto.randomBytes(6).toString('hex').toUpperCase();
     isExisting = await Sale.find({ refId: refID }).exec();
   } while (isExisting.length !== 0);
 
@@ -422,14 +428,14 @@ export const createCheckout = async (req, res) => {
         qty: item.qty,
         priceAcquired: price.price,
       };
-    })
+    }),
   );
 
   if (paymentDetails) {
     sale.paymentDetails = {
-      option: "",
-      referenceNumber: "",
-      status: "",
+      option: '',
+      referenceNumber: '',
+      status: '',
     };
   }
 
@@ -439,7 +445,7 @@ export const createCheckout = async (req, res) => {
   sale.refId = refID;
   sale.contactNumber = contactNumber;
   sale.cartItems = items;
-  sale.status = "awaiting payment";
+  sale.status = 'awaiting payment';
 
   let transactionAmount = items.reduce((sum, item) => {
     return sum + item.qty * item.priceAcquired;
@@ -451,14 +457,14 @@ export const createCheckout = async (req, res) => {
 
   sale.orderTotal = transactionAmount - sale.discount;
 
-  sale.salt = Math.round(new Date().valueOf() * Math.random()) + "";
+  sale.salt = Math.round(new Date().valueOf() * Math.random()) + '';
   try {
     const result = await sale.save();
     res.json(result);
   } catch (err) {
     console.log(err);
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -486,37 +492,46 @@ export const cleanUp = async (req, res) => {
   });
 
   res.json({
-    date: format(previous2Months, "PPpp"),
+    date: format(previous2Months, 'PPpp'),
     AccessPassDeletedCount: accessPassCount,
     saleDeletedCount: saleCount,
   });
 };
 
 export const regenerateAccessPass = async (req, res) => {
-  console.log("Regenerating Access Passes for sale with Reference Number: ", req.params.id);
+  console.log(
+    'Regenerating Access Passes for sale with Reference Number: ',
+    req.params.id,
+  );
   if (req.params.id) {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
     if (sale) {
-      console.log("REMOVING OLD ACCESS PASS");
+      console.log('REMOVING OLD ACCESS PASS');
       await AccessPass.deleteMany({ salesId: sale._id }).exec();
-      console.log("GENERATING NEW ACCESS PASS");
+      console.log('GENERATING NEW ACCESS PASS');
       generateAccessPass(sale, sale.cartItems);
-      return res.json({ status: "Success", action: "Access Passes Regenerated" })
+      return res.json({
+        status: 'Success',
+        action: 'Access Passes Regenerated',
+      });
     } else {
-      return res.json({ status: "404", message: "Sale transaction not found" })
+      return res.json({ status: '404', message: 'Sale transaction not found' });
     }
   } else {
-    return res.json({ status: "404", message: "Reference ID not found" })
+    return res.json({ status: '404', message: 'Reference ID not found' });
   }
-}
+};
 
 export const resyncSaleByRefId = async (req, res) => {
-  console.log("Resyncing Access Passes for sale with Reference Number: ", req.params.id);
+  console.log(
+    'Resyncing Access Passes for sale with Reference Number: ',
+    req.params.id,
+  );
 
   if (req.params.id) {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
     if (sale) {
-      console.log("Getting Access Passes...");
+      console.log('Getting Access Passes...');
       const accesspasses = await AccessPass.find({ salesId: sale._id }).exec();
       accesspasses.map(async (ap) => {
         //get ticketDetails
@@ -526,10 +541,10 @@ export const resyncSaleByRefId = async (req, res) => {
         const syncResult = await syncAccessPass(ap, ticket.itemCode);
         console.log(syncResult);
       });
-      return res.json({ status: "Success", action: "Sale Resynced" })
+      return res.json({ status: 'Success', action: 'Sale Resynced' });
     } else {
-      return res.json({ status: "404", message: "Sale transaction not found" })
+      return res.json({ status: '404', message: 'Sale transaction not found' });
     }
   }
-  return res.json({ status: "404", message: "Reference ID not found" })
-}
+  return res.json({ status: '404', message: 'Reference ID not found' });
+};

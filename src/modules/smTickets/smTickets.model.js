@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const smTicketSchema = new mongoose.Schema(
   {
     tokenId: {
@@ -14,7 +14,7 @@ const smTicketSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("SmTicket", smTicketSchema);
+export default mongoose.model('SmTicket', smTicketSchema);

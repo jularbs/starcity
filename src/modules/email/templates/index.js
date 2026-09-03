@@ -1,1 +1,1 @@
-export * from "./accessPassEmailNotification.template.js";
+export * from './accessPassEmailNotification.template.js';

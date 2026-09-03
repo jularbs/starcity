@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema;
 
 const rideSchema = new mongoose.Schema(
@@ -21,7 +21,7 @@ const rideSchema = new mongoose.Schema(
     meta: Object,
     status: {
       type: String,
-      default: "Open",
+      default: 'Open',
       required: true,
     },
     media: {
@@ -34,12 +34,12 @@ const rideSchema = new mongoose.Schema(
     },
     rideCategoryId: {
       type: ObjectId,
-      ref: "RideCategory",
+      ref: 'RideCategory',
       required: true,
       index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("Ride", rideSchema);
+export default mongoose.model('Ride', rideSchema);

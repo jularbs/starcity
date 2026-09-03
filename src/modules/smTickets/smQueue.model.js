@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const smQueueSchema = new mongoose.Schema(
   {
     status: {
       type: String,
       required: true,
-      default: "for delivery",
+      default: 'for delivery',
     },
     tokenID: {
       type: String,
@@ -15,7 +15,7 @@ const smQueueSchema = new mongoose.Schema(
     },
     RideCode: { type: String, require: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("SmQueue", smQueueSchema);
+export default mongoose.model('SmQueue', smQueueSchema);

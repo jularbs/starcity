@@ -1,5 +1,5 @@
-export const ADMIN_ROLE = "admin";
-export const CONTENT_MANAGER_ROLE = "content-manager";
-export const ECOMMERCE_MANAGER_ROLE = "ecommerce-manager";
+export const ADMIN_ROLE = 'admin';
+export const CONTENT_MANAGER_ROLE = 'content-manager';
+export const ECOMMERCE_MANAGER_ROLE = 'ecommerce-manager';
 
 export const ROLES = [ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE];

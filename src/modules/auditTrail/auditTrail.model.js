@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const auditTrailSchema = new mongoose.Schema(
   {
     userName: { type: String },
@@ -9,7 +9,7 @@ const auditTrailSchema = new mongoose.Schema(
   {
     timestamps: true,
     capped: { size: 20000000, max: 60000, autoIndexId: true },
-  }
+  },
 );
 
-export default mongoose.model("AuditTrail", auditTrailSchema);
+export default mongoose.model('AuditTrail', auditTrailSchema);

@@ -1,4 +1,4 @@
-import express from "express";
+import express from 'express';
 const router = express.Router();
 import {
   create,
@@ -7,41 +7,51 @@ import {
   update,
   remove,
   apply,
-  toggle
-} from "./promo.controller.js";
-import { requireSignin, authzMiddleware } from "../../common/middleware/auth.middleware.js";
-import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from "../auth/auth.constants.js";
+  toggle,
+} from './promo.controller.js';
+import {
+  requireSignin,
+  authzMiddleware,
+} from '../../common/middleware/auth.middleware.js';
+import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from '../auth/auth.constants.js';
 //Version 1.0
-router.post("/v1/promo",
+router.post(
+  '/v1/promo',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  create
+  create,
 );
 
-router.post("/v1/promo/toggle",
+router.post(
+  '/v1/promo/toggle',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  toggle
+  toggle,
 );
 
-router.patch("/v1/promo",
+router.patch(
+  '/v1/promo',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  update
+  update,
 );
 
-router.get("/v1/promo/apply", apply);
+router.get('/v1/promo/apply', apply);
 
-router.get("/v1/promo/:id", read);
+router.get('/v1/promo/:id', read);
 
-router.get("/v1/promo", requireSignin, authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE), list);
-
-router.delete("/v1/promo/:id",
+router.get(
+  '/v1/promo',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  remove
+  list,
 );
 
-
+router.delete(
+  '/v1/promo/:id',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  remove,
+);
 
 export default router;

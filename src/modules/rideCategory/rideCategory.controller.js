@@ -1,8 +1,8 @@
-import RideCategory from "./rideCategory.model.js";
-import Ride from "../ride/ride.model.js";
-import slugify from "slugify";
-import formidable from "formidable";
-import { createEntry } from "../auditTrail/auditTrail.controller.js";
+import RideCategory from './rideCategory.model.js';
+import Ride from '../ride/ride.model.js';
+import slugify from 'slugify';
+import formidable from 'formidable';
+import { createEntry } from '../auditTrail/auditTrail.controller.js';
 export const create = async (req, res) => {
   const { name, description } = req.body;
 
@@ -17,10 +17,13 @@ export const create = async (req, res) => {
   try {
     const result = await rideCategory.save();
     createEntry(req.profile.name, `Created new Ride Category`, result, req);
-    return res.json({ data: result, success: "Ride Category added successfully!" });
+    return res.json({
+      data: result,
+      success: 'Ride Category added successfully!',
+    });
   } catch (err) {
     return res.status(400).json({
-      error: "Failed to add new ride category. Please try again!",
+      error: 'Failed to add new ride category. Please try again!',
     });
   }
 };
@@ -28,12 +31,12 @@ export const create = async (req, res) => {
 export const read = async (req, res) => {
   try {
     const data = await RideCategory.findOne({ slug: req.params.slug })
-      .select("name description slug image meta")
+      .select('name description slug image meta')
       .exec();
     res.json(data);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -45,7 +48,7 @@ export const list = async (req, res) => {
     res.json(data);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -61,11 +64,11 @@ export const update = async (req, res) => {
 
   try {
     const result = await rideCategory.save();
-    res.json({ result, status: "success" });
+    res.json({ result, status: 'success' });
     createEntry(req.profile.name, `Updated Ride Category ${name}`, result, req);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -77,30 +80,32 @@ export const remove = async (req, res) => {
   try {
     if (!slug) {
       return res.status(400).json({
-        error: "Slug is required",
+        error: 'Slug is required',
       });
     }
 
     const rideCategory = await RideCategory.findOne({ slug }).exec();
     if (!rideCategory) {
       return res.status(404).json({
-        error: "Ride Category not found",
+        error: 'Ride Category not found',
       });
     }
 
-    const referencedRides = await Ride.find({ rideCategoryId: rideCategory._id }).exec();
+    const referencedRides = await Ride.find({
+      rideCategoryId: rideCategory._id,
+    }).exec();
     if (referencedRides.length > 0) {
       return res.status(400).json({
-        error: "Cannot delete ride category with existing rides",
+        error: 'Cannot delete ride category with existing rides',
       });
     }
 
     const result = await RideCategory.findOneAndDelete({ slug }).exec();
     createEntry(req.profile.name, `Deleted Ride Category`, { slug }, req);
-    res.json({ success: "Ride Category deleted successfully" });
+    res.json({ success: 'Ride Category deleted successfully' });
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }

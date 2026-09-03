@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const bannerSchema = new mongoose.Schema(
   {
     name: {
@@ -6,7 +6,7 @@ const bannerSchema = new mongoose.Schema(
     },
     slug: {
       type: String,
-      unique: [true, "Slug is already used."],
+      unique: [true, 'Slug is already used.'],
       index: true,
       required: true,
     },
@@ -27,7 +27,7 @@ const bannerSchema = new mongoose.Schema(
     },
     sizeCategory: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("Banner", bannerSchema);
+export default mongoose.model('Banner', bannerSchema);

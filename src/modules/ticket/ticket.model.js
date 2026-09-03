@@ -1,8 +1,8 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { Decimal128 } = mongoose.Schema.Types;
 
 function getPrice(value) {
-  if (typeof value !== "undefined") {
+  if (typeof value !== 'undefined') {
     return parseFloat(value.toString());
   }
   return value;
@@ -58,7 +58,7 @@ const ticketSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { getters: true },
     id: false,
-  }
+  },
 );
 
-export default mongoose.model("Ticket", ticketSchema);
+export default mongoose.model('Ticket', ticketSchema);

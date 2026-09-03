@@ -1,8 +1,8 @@
-import AuditTrail from "./auditTrail.model.js";
+import AuditTrail from './auditTrail.model.js';
 export const createEntry = (user, action, payload, req) => {
   const at = new AuditTrail();
 
-  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || null;
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
   if (user) {
     at.userName = user;
   }
@@ -19,8 +19,8 @@ export const list = async (req, res) => {
 
   try {
     const auditTrails = await AuditTrail.find({})
-      .select("userName action payload createdAt ipAddress -_id")
-      .sort("-createdAt")
+      .select('userName action payload createdAt ipAddress -_id')
+      .sort('-createdAt')
       .skip(parseInt(skip))
       .limit(parseInt(limit))
       .exec();
@@ -28,14 +28,11 @@ export const list = async (req, res) => {
     const count = await AuditTrail.countDocuments();
     return res.json({ data: auditTrails, count });
   } catch (err) {
-    console.log("Audit Error: ", err)
+    console.log('Audit Error: ', err);
     return res.status(400).json({
-      error: "Error occured",
+      error: 'Error occured',
     });
   }
-
-
-
 };
 
 export const addAuditTrailEntry = (data) => {

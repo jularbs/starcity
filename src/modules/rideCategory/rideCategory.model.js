@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const rideCategorySchema = new mongoose.Schema(
   {
     name: {
@@ -17,7 +17,7 @@ const rideCategorySchema = new mongoose.Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("RideCategory", rideCategorySchema);
+export default mongoose.model('RideCategory', rideCategorySchema);

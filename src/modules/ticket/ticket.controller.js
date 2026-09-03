@@ -1,6 +1,6 @@
-import Ticket from "./ticket.model.js";
-import slugify from "slugify";
-import { createEntry } from "../auditTrail/auditTrail.controller.js";
+import Ticket from './ticket.model.js';
+import slugify from 'slugify';
+import { createEntry } from '../auditTrail/auditTrail.controller.js';
 export const create = async (req, res) => {
   const { name, code, shortDescription, price, details } = req.body;
 
@@ -19,10 +19,10 @@ export const create = async (req, res) => {
   try {
     const result = await ticket.save();
     createEntry(req.profile.name, `Created New Ticket ${name}`, result, req);
-    return res.json({ success: "Ticket created successfully", data: result });
+    return res.json({ success: 'Ticket created successfully', data: result });
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -30,18 +30,21 @@ export const create = async (req, res) => {
 
 export const read = async (req, res) => {
   try {
-    const data = await Ticket.findOne({ slug: req.params.slug, deletedAt: null }).exec();
+    const data = await Ticket.findOne({
+      slug: req.params.slug,
+      deletedAt: null,
+    }).exec();
 
     if (!data) {
       return res.status(404).json({
-        error: "Ticket not found",
+        error: 'Ticket not found',
       });
     }
 
     res.json(data);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -56,7 +59,7 @@ export const list = async (req, res) => {
       res.json(data);
     } catch (err) {
       return res.status(400).json({
-        error: "error occured",
+        error: 'error occured',
         message: err,
       });
     }
@@ -66,7 +69,7 @@ export const list = async (req, res) => {
       res.json(data);
     } catch (err) {
       return res.status(400).json({
-        error: "error occured",
+        error: 'error occured',
         message: err,
       });
     }
@@ -74,7 +77,7 @@ export const list = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  console.log("Updating ticket")
+  console.log('Updating ticket');
   const { name, _id, shortDescription, price, details, code } = req.body;
 
   const ticket = await Ticket.findOne({ _id }).exec();
@@ -87,11 +90,11 @@ export const update = async (req, res) => {
 
   try {
     const result = await ticket.save();
-    res.json({ result, success: "Ticket updated successfully!" });
+    res.json({ result, success: 'Ticket updated successfully!' });
     createEntry(req.profile.name, `Updated ticket ${name}`, result, req);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -103,7 +106,7 @@ export const remove = async (req, res) => {
   try {
     if (!_id) {
       return res.status(400).json({
-        error: "Ticket ID is required",
+        error: 'Ticket ID is required',
       });
     }
 
@@ -111,17 +114,17 @@ export const remove = async (req, res) => {
 
     if (!ticket) {
       return res.status(404).json({
-        error: "Ticket not found",
+        error: 'Ticket not found',
       });
     }
 
     ticket.deletedAt = new Date();
     await ticket.save();
-    res.json({ success: "Ticket deleted successfully" });
+    res.json({ success: 'Ticket deleted successfully' });
     createEntry(req.profile.name, `Deleted ticket ${_id}`, {}, req);
   } catch (err) {
     return res.status(400).json({
-      error: "error occured",
+      error: 'error occured',
       message: err,
     });
   }
@@ -132,8 +135,7 @@ export const toggleStatus = async (req, res) => {
 
   let ticket = await Ticket.findOne({ _id }).exec();
 
-  if (!ticket)
-    return res.status(400).json({ error: "Ticket not found" });
+  if (!ticket) return res.status(400).json({ error: 'Ticket not found' });
 
   ticket.status = !ticket.status;
 
@@ -143,13 +145,13 @@ export const toggleStatus = async (req, res) => {
       req.profile.name,
       `Toggled ticket ${ticket.name}`,
       { status: result.status },
-      req
+      req,
     );
     return res.json({
-      success: "Ticket toggled successfully",
-      data: result
+      success: 'Ticket toggled successfully',
+      data: result,
     });
   } catch (err) {
-    return res.status(400).json({ error: "Unable to toggle ticket status." });
+    return res.status(400).json({ error: 'Unable to toggle ticket status.' });
   }
 };

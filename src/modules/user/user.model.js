@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import crypto from "crypto";
+import mongoose from 'mongoose';
+import crypto from 'crypto';
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      default: "admin",
+      default: 'admin',
     },
     deletedAt: {
       type: Date,
@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre('find', function () {
@@ -69,7 +69,7 @@ userSchema.pre('countDocuments', function () {
 });
 
 userSchema
-  .virtual("password")
+  .virtual('password')
   .set(function (password) {
     this._password = password;
     this.salt = this.makeSalt();
@@ -84,27 +84,27 @@ userSchema.methods = {
     return this.encryptPassword(plainText) === this.hashed_password;
   },
   encryptPassword: function (password) {
-    if (!password) return "";
+    if (!password) return '';
 
     try {
       return crypto
-        .createHmac("sha256", this.salt)
+        .createHmac('sha256', this.salt)
         .update(password)
-        .digest("hex");
+        .digest('hex');
     } catch (err) {
-      return "";
+      return '';
     }
   },
   makeSalt: function () {
-    return Math.round(new Date().valueOf() * Math.random()) + "";
+    return Math.round(new Date().valueOf() * Math.random()) + '';
   },
   //account verification
   makeOTP: function () {
-    const rand = Math.round(new Date().valueOf() * Math.random()) + "";
+    const rand = Math.round(new Date().valueOf() * Math.random()) + '';
     const otp = rand.substr(0, 6);
 
     return otp;
   },
 };
 
-export default mongoose.model("User", userSchema);
+export default mongoose.model('User', userSchema);

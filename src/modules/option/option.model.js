@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const optionSchema = new mongoose.Schema(
   {
     name: {
@@ -18,7 +18,7 @@ const optionSchema = new mongoose.Schema(
     },
     meta: Object,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("Option", optionSchema);
+export default mongoose.model('Option', optionSchema);

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const paymentOptionSchema = new mongoose.Schema(
   {
     name: {
@@ -24,7 +24,7 @@ const paymentOptionSchema = new mongoose.Schema(
     },
     meta: Object,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("PaymentOption", paymentOptionSchema);
+export default mongoose.model('PaymentOption', paymentOptionSchema);

@@ -1,20 +1,20 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Schema;
 
 const accessPassSchema = new mongoose.Schema(
   {
     ticketId: {
       type: ObjectId,
-      ref: "Ticket",
+      ref: 'Ticket',
     },
     salesId: {
       type: ObjectId,
-      ref: "Sale",
+      ref: 'Sale',
     },
     status: {
       type: String,
       required: true,
-      default: "for delivery",
+      default: 'for delivery',
     },
     accessToken: {
       type: String,
@@ -26,7 +26,7 @@ const accessPassSchema = new mongoose.Schema(
     QRcode: Object,
     meta: Object,
   },
-  { timestamps: true, toJSON: { getters: true } }
+  { timestamps: true, toJSON: { getters: true } },
 );
 
-export default mongoose.model("AccessPass", accessPassSchema);
+export default mongoose.model('AccessPass', accessPassSchema);
