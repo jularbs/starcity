@@ -16,9 +16,7 @@
     "dependencies": {
         "aws-sdk": "^2.919.0",
         "axios": "^1.18.1",
-        "body-parser": "^1.19.0",
         "convert-array-to-csv": "^2.0.0",
-        "cookie-parser": "^1.4.5",
         "cors": "^2.8.5",
         "date-fns": "^2.22.1",
         "date-fns-tz": "^1.1.6",

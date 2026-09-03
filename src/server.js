@@ -1,7 +1,5 @@
 import express from "express";
 import morgan from "morgan";
-import bodyParser from "body-parser";
-import cookieParser from "cookie-parser";
 import cors from "cors";
 import { catchAllLimiter } from "./common/middleware/rate-limit.middleware.js";
 import dotenv from "dotenv";
@@ -54,8 +52,7 @@ app.use(
 
 //middlewares
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(cookieParser());
+app.use(express.json({ limit: '200kb' }));
 
 //urlencoded
 app.use(express.urlencoded({ extended: true }));
