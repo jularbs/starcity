@@ -5,10 +5,12 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "tsup src/server.js --format esm --clean --watch --onSuccess \"node --watch dist/server.js\"",
         "build": "tsup src/server.js --format esm --clean",
-        "start": "node dist/server.js"
+        "start": "node dist/server.js",
+        "test": "vitest run --config vitest.config.ts --passWithNoTests",
+        "test:watch": "vitest --config vitest.config.ts --passWithNoTests",
+        "test:coverage": "vitest run --config vitest.config.ts --coverage"
     },
     "keywords": [],
     "author": "",
@@ -44,8 +46,11 @@
     "devDependencies": {
         "@types/express": "^5.0.6",
         "@types/node": "^26.4.1",
+        "@vitest/coverage-v8": "^4.1.11",
         "nodemon": "^3.1.14",
+        "supertest": "^7.2.2",
         "tsup": "^8.5.1",
-        "typescript": "^7.0.2"
+        "typescript": "^7.0.2",
+        "vitest": "^4.1.11"
     }
 }
