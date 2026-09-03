@@ -88,70 +88,68 @@ export const isValidImage = (file) => {
 };
 
 export const uploadFile = async (file, folder, width = 1600) => {
-  return new Promise(async (resolve, reject) => {
-    if (!isValidImage(file)) {
-      //Upload non image file
-      try {
-        const ext = path.extname(file.name);
-        s3.upload(
-          {
-            Key: `${folder}/${nanoid()}${ext}`,
-            Bucket: process.env.AWS_S3_BUCKETNAME,
-            Body: fs.readFileSync(file.path),
-            ContentType: file.type,
-          },
-          (err, data) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            return resolve({
-              location: data.Location,
-              bucket: data.Bucket,
-              key: data.Key,
-              type: file.type,
-            });
-          },
-        );
-      } catch (err) {
-        console.log(err);
-        return reject(err);
-      }
-    } else {
-      //process image
-      try {
-        const fileBuffer = fs.readFileSync(file.path);
-        const metadata = await sharp(fileBuffer).metadata();
-        const resizeWidth = metadata.width < width ? metadata.width : width;
-        const image = await sharp(fileBuffer)
-          .resize({ width: resizeWidth })
-          .avif({ quality: 90 })
-          .toBuffer();
-
-        s3.upload(
-          {
-            Key: `${folder}/${nanoid()}.avif`,
-            Bucket: process.env.AWS_S3_BUCKETNAME,
-            Body: image,
-            ContentType: 'image/avif',
-          },
-          (err, data) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            return resolve({
-              location: data.Location,
-              bucket: data.Bucket,
-              key: data.Key,
-              type: 'image/avif',
-            });
-          },
-        );
-      } catch (err) {
-        console.log(err);
-        return reject(err);
-      }
+  if (!isValidImage(file)) {
+    //Upload non image file
+    try {
+      const ext = path.extname(file.name);
+      s3.upload(
+        {
+          Key: `${folder}/${nanoid()}${ext}`,
+          Bucket: process.env.AWS_S3_BUCKETNAME,
+          Body: fs.readFileSync(file.path),
+          ContentType: file.type,
+        },
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            throw err;
+          }
+          return {
+            location: data.Location,
+            bucket: data.Bucket,
+            key: data.Key,
+            type: file.type,
+          };
+        },
+      );
+    } catch (err) {
+      console.log(err);
+      throw err;
     }
-  });
+  } else {
+    //process image
+    try {
+      const fileBuffer = fs.readFileSync(file.path);
+      const metadata = await sharp(fileBuffer).metadata();
+      const resizeWidth = metadata.width < width ? metadata.width : width;
+      const image = await sharp(fileBuffer)
+        .resize({ width: resizeWidth })
+        .avif({ quality: 90 })
+        .toBuffer();
+
+      s3.upload(
+        {
+          Key: `${folder}/${nanoid()}.avif`,
+          Bucket: process.env.AWS_S3_BUCKETNAME,
+          Body: image,
+          ContentType: 'image/avif',
+        },
+        (err, data) => {
+          if (err) {
+            console.log(err);
+            throw err;
+          }
+          return {
+            location: data.Location,
+            bucket: data.Bucket,
+            key: data.Key,
+            type: 'image/avif',
+          };
+        },
+      );
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+  }
 };
