@@ -420,11 +420,20 @@ export const createCheckout = async (req, res) => {
     return sum + item.qty * item.priceAcquired;
   }, 0);
 
-  const promo = await processPromo(promoCode, transactionAmount);
-  sale.promoCode = promo.promoCode;
-  sale.discount = promo.discount;
+  if (promoCode) {
+    try {
+      const promo = await processPromo(promoCode, transactionAmount);
+      sale.promoCode = promo.promoCode;
+      sale.discount = promo.discount;
+    } catch (error) {
+      console.log('Error processing promo code:', error);
+      return res.status(400).json({
+        error: 'Promo code processing failed, checkout aborted',
+      });
+    }
+  }
 
-  sale.orderTotal = transactionAmount - sale.discount;
+  sale.orderTotal = transactionAmount - (sale.discount || 0);
 
   sale.salt = Math.round(new Date().valueOf() * Math.random()) + '';
   try {

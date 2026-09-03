@@ -208,26 +208,21 @@ export const apply = async (req, res) => {
 };
 
 export const processPromo = async (code, transactionAmount) => {
-  return new Promise(async (resolve) => {
-    const promo = await Promo.findOne({ code: code.toUpperCase() }).exec();
+  const promo = await Promo.findOne({ code: code.toUpperCase() }).exec();
 
-    //revalidate promo code on transaction
-    if (!promo) {
-      resolve({ promoCode: null, discount: 0 });
-      return;
-    }
+  //revalidate promo code on transaction
+  if (!promo) {
+    return { promoCode: null, discount: 0 };
+  }
 
-    if (promo.fixedDiscount > 0) {
-      resolve({ promoCode: promo._id, discount: promo.fixedDiscount });
-      return;
-    }
+  if (promo.fixedDiscount > 0) {
+    return { promoCode: promo._id, discount: promo.fixedDiscount };
+  }
 
-    resolve({
-      promoCode: promo._id,
-      discount: transactionAmount * promo.percentageDiscount * 0.01,
-    });
-    return;
-  });
+  return {
+    promoCode: promo._id,
+    discount: transactionAmount * promo.percentageDiscount * 0.01,
+  };
 };
 
 export const toggle = async (req, res) => {
