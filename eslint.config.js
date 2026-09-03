@@ -10,7 +10,7 @@ export default [
 
   // 2. Base configuration for all JavaScript files
   {
-    files: ['**/*.js', '**/*.jsx'],
+    files: ['src/**/*.js', 'src/**/*.jsx'],
     ...js.configs.recommended,
     languageOptions: {
       ecmaVersion: 'latest',
@@ -26,7 +26,7 @@ export default [
 
   // 3. TypeScript configuration (only runs on .ts files)
   ...tseslint.config({
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       globals: {
