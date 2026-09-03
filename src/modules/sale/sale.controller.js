@@ -18,15 +18,15 @@ import { processPromo } from '../promo/promo.controller.js';
 //HELPERS
 const { utcToZonedTime } = dateFnsTz;
 
-const getCurrentTicketPrice = (ticket) => {
-  return new Promise(async (resolve, reject) => {
-    const { ticketId } = ticket;
-    const result = await Ticket.findOne({
-      _id: new mongoose.Types.ObjectId(`${ticketId}`),
-    }).exec();
-    if (!result) reject(new Error('Ticket not found'));
-    return resolve({ price: result.price });
-  });
+const getCurrentTicketPrice = async (ticket) => {
+  const { ticketId } = ticket;
+
+  const result = await Ticket.findOne({
+    _id: new mongoose.Types.ObjectId(`${ticketId}`),
+  }).exec();
+
+  if (!result) throw new Error('Ticket not found');
+  return { price: result.price };
 };
 
 export const generateAccessPass = (sale, accessPasses) => {
@@ -122,18 +122,23 @@ export const getOpenParkExpiry = () => {
 
 export const resendAR = async (req, res) => {
   const { refId } = req.body;
+  try {
+    const isSent = await sendAR(refId);
 
-  const isSent = await sendAR(refId);
-
-  if (isSent) {
-    res.json({ message: 'E-mail resent successfully.' });
-  } else {
+    if (isSent) {
+      res.json({ message: 'E-mail resent successfully.' });
+    } else {
+      res.json({ message: 'E-mail failed. Please try again later.' });
+    }
+  } catch (error) {
+    console.log('Error resending AR for RefId: ', refId);
+    console.log('Error: ', error);
     res.json({ message: 'E-mail failed. Please try again later.' });
   }
 };
 
 export const sendAR = async (refId) => {
-  return new Promise(async (resolve) => {
+  try {
     console.log('SENDING AR FOR ', refId);
     const sale = await Sale.findOne({ refId: refId })
       .populate({
@@ -163,34 +168,32 @@ export const sendAR = async (refId) => {
       bcc: ['accounting@starcity.com.ph'],
     };
 
-    try {
-      sendMail(details).then((info) => {
-        console.log('EMAIL STACK: ', info);
-        //check info if undefined
-        if (info === undefined) {
-          console.log('EMAIL SENT FAILED');
-          //add to email queue
-          let q = new EmailQueue();
-          q.refId = refId;
-          q.save()
-            .then(() => {
-              console.log('QUEUE CREATED FOR REF ID: ', refId);
-            })
-            .catch((err) => {
-              console.log('ERROR IN QUEUEING EMAIL: ', err);
-            });
-          resolve(false);
-        } else {
-          console.log('EMAIL SENT SUCCESSFULLY');
-          resolve(true);
-        }
-      });
-    } catch (e) {
-      console.log('ERROR IN MAILER: ', e);
-      console.log('EMAIL SENT FAILED');
-      resolve(false);
-    }
-  });
+    sendMail(details).then((info) => {
+      console.log('EMAIL STACK: ', info);
+      //check info if undefined
+      if (info === undefined) {
+        console.log('EMAIL SENT FAILED');
+        //add to email queue
+        let q = new EmailQueue();
+        q.refId = refId;
+        q.save()
+          .then(() => {
+            console.log('QUEUE CREATED FOR REF ID: ', refId);
+          })
+          .catch((err) => {
+            console.log('ERROR IN QUEUEING EMAIL: ', err);
+          });
+        return false;
+      } else {
+        console.log('EMAIL SENT SUCCESSFULLY');
+        return true;
+      }
+    });
+  } catch (e) {
+    console.log('ERROR IN MAILER: ', e);
+    console.log('EMAIL SENT FAILED');
+    return false;
+  }
 };
 
 const syncAccessPass = (accessPass, RideCode) => {
@@ -385,20 +388,26 @@ export const createCheckout = async (req, res) => {
   } while (isExisting.length !== 0);
 
   let sale = new Sale();
-
-  //error when only 1 item in cart
-  const items = await Promise.all(
-    cartItems.map(async (item) => {
-      const price = await getCurrentTicketPrice({
-        ticketId: item._id,
-      });
-      return {
-        ticketId: item._id,
-        qty: item.qty,
-        priceAcquired: price.price,
-      };
-    }),
-  );
+  let items;
+  try {
+    items = await Promise.all(
+      cartItems.map(async (item) => {
+        const price = await getCurrentTicketPrice({
+          ticketId: item._id,
+        });
+        return {
+          ticketId: item._id,
+          qty: item.qty,
+          priceAcquired: price.price,
+        };
+      }),
+    );
+  } catch (error) {
+    console.log('Error acquiring ticket prices:', error);
+    return res.status(400).json({
+      error: 'Error acquiring ticket prices, checkout aborted.',
+    });
+  }
 
   if (paymentDetails) {
     sale.paymentDetails = {

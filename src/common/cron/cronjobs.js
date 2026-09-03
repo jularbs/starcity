@@ -221,9 +221,14 @@ export const cronProcessEmailQueues = async () => {
     Qs.map(async (q) => {
       //remove q from database
       await EmailQueue.deleteOne({ _id: q._id }).exec();
-      const isResolved = await sendAR(q.refId);
-      if (!isResolved) {
-        console.log('Email not sent. Refid requeued');
+      try {
+        const isResolved = await sendAR(q.refId);
+        if (!isResolved) {
+          console.log('Email not sent. Refid requeued');
+        }
+      } catch (error) {
+        console.log('Error processing queued email for RefId: ', q.refId);
+        console.log('Error: ', error);
       }
     });
   }
