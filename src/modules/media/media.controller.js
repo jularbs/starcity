@@ -1,4 +1,5 @@
 import formidable from 'formidable';
+import { pipeline } from 'node:stream/promises';
 import {
   getObjectFromS3,
   uploadFile,
@@ -8,12 +9,27 @@ import { config } from '../../config/index.js';
 export const getMedia = async (req, res) => {
   const { key, bucket = config.aws.s3.bucketName } = req.query;
 
+  if (!key || typeof key !== 'string') {
+    return res.status(400).json({ error: 'Media key is required' });
+  }
+
   try {
     const data = await getObjectFromS3(key, bucket);
-    res.setHeader('Content-Type', data.ContentType);
-    res.send(data.Body);
-    return;
-  } catch {
+    res.setHeader(
+      'Content-Type',
+      data.ContentType || 'application/octet-stream',
+    );
+    if (data.ContentLength) {
+      res.setHeader('Content-Length', data.ContentLength);
+    }
+
+    await pipeline(data.Body, res);
+  } catch (error) {
+    if (res.headersSent) {
+      res.destroy(error);
+      return;
+    }
+
     return res.status(400).json({ error: 'Media not found' });
   }
 };

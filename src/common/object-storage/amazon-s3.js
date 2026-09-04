@@ -1,44 +1,45 @@
 import fs from 'fs';
-import AWS from 'aws-sdk';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import path from 'path';
 import { config } from '../../config/index.js';
 
-const s3 = new AWS.S3({
-  accessKeyId: config.aws.s3.publicKey,
-  secretAccessKey: config.aws.s3.secretKey,
+const s3 = new S3Client({
+  region: config.aws.s3.region,
+  credentials: {
+    accessKeyId: config.aws.s3.publicKey,
+    secretAccessKey: config.aws.s3.secretKey,
+  },
 });
 
 export const deleteObjectFromS3 = async (key, bucket) => {
-  const params = {
-    Bucket: bucket,
-    Key: key,
-  };
-
-  const res = await new Promise((resolve, reject) => {
-    s3.deleteObject(params, (err, data) =>
-      err == null ? resolve(data) : reject(err),
-    );
-  });
-
-  return res;
+  return s3.send(
+    new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    }),
+  );
 };
 
 export const getObjectFromS3 = async (key, bucket) => {
-  const params = {
-    Bucket: bucket,
-    Key: key,
-  };
-
-  const res = await new Promise((resolve, reject) => {
-    s3.getObject(params, function (err, data) {
-      err == null ? resolve(data) : reject(err);
-    });
-  });
-
-  return res;
+  return s3.send(
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    }),
+  );
 };
+
+const getObjectLocation = (bucket, key) =>
+  `https://${bucket}.s3.${config.aws.s3.region}.amazonaws.com/${encodeURIComponent(
+    key,
+  ).replace(/%2F/g, '/')}`;
 
 //V2
 export const isValidImage = (file) => {
@@ -96,19 +97,19 @@ export const uploadFile = async (file, folder, width = 1600) => {
     key = `${folder}/${nanoid()}.avif`;
   }
 
-  const data = await s3
-    .upload({
+  await s3.send(
+    new PutObjectCommand({
       Bucket: config.aws.s3.bucketName,
       Key: key,
       Body: body,
       ContentType: type,
-    })
-    .promise();
+    }),
+  );
 
   return {
-    location: data.Location,
-    bucket: data.Bucket,
-    key: data.Key,
+    location: getObjectLocation(config.aws.s3.bucketName, key),
+    bucket: config.aws.s3.bucketName,
+    key,
     type,
   };
 };
