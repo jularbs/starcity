@@ -383,6 +383,34 @@ export const createCheckout = async (req, res) => {
     promoCode,
   } = req.body;
 
+  if (cartItems.length === 0) {
+    return res.status(400).json({
+      error: 'Cart is empty',
+    });
+  }
+
+  const hasInvalidQuantity = cartItems.some(
+    (item) => !Number.isInteger(item.qty) || item.qty <= 0,
+  );
+
+  if (hasInvalidQuantity) {
+    return res.status(400).json({
+      error: 'Invalid cart item quantity',
+    });
+  }
+
+  if (cartItems.reduce((sum, item) => sum + item.qty, 0) === 0) {
+    return res.status(400).json({
+      error: 'Cart is empty',
+    });
+  }
+
+  if (!customerName || !email || !contactNumber) {
+    return res.status(400).json({
+      error: 'Missing required customer information',
+    });
+  }
+
   let isExisting;
   let refID;
 
