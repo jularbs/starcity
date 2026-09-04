@@ -15,7 +15,12 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:up": "docker compose -f docker/compose.yaml up -d",
+    "docker:down": "docker compose -f docker/compose.yaml down",
+    "docker:down:volumes": "docker compose -f docker/compose.yaml down -v",
+    "docker:logs": "docker compose -f docker/compose.yaml logs -f",
+    "docker:ps": "docker compose -f docker/compose.yaml ps"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [

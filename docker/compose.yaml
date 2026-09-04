@@ -1,0 +1,48 @@
+name: spc-services
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: spc-mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+  minio:
+    image: minio/minio:latest
+    container_name: spc-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniopassword
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-bootstrap:
+    image: minio/mc:latest
+    container_name: spc-minio-bootstrap
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minio miniopassword &&
+      mc mb --ignore-existing local/spc-services &&
+      mc anonymous set none local/spc-services
+      "
+    restart: 'no'
+
+volumes:
+  minio_data:
+  mongo_data:
