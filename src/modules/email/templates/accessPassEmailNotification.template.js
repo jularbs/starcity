@@ -1,3 +1,4 @@
+import { config } from '../../../config/index.js';
 export const accessPassEmailNotification = (data) => {
   const {
     salt,
@@ -793,10 +794,7 @@ export const accessPassEmailNotification = (data) => {
                                                     >
                                                       <a
                                                         align="center"
-                                                        href="${
-                                                          process.env
-                                                            .WEBSITE_URL
-                                                        }/accesspass?s=${salt}&r=${refId}"
+                                                        href="${config.app.websiteUrl}/accesspass?s=${salt}&r=${refId}"
                                                         style="
                                                           border: 0 solid
                                                             #ffae00;

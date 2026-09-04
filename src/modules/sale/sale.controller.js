@@ -1,3 +1,4 @@
+import { config } from '../../config/index.js';
 import Sale from './sale.model.js';
 import Ticket from '../ticket/ticket.model.js';
 import AccessPass from '../accessPass/accessPass.model.js';
@@ -161,7 +162,7 @@ export const sendAR = async (refId) => {
 
     const details = {
       to: sale.emailAddress,
-      from: process.env.EMAIL_ADDRESS,
+      from: config.email.address,
       subject:
         'Your acknowledgement receipt for your Star City ticket purchase',
       html: accessPassEmailNotification(sale),
@@ -197,7 +198,7 @@ export const sendAR = async (refId) => {
 };
 
 const syncAccessPass = (accessPass, RideCode) => {
-  if (process.env.NODE_ENV !== 'production') {
+  if (!config.app.isProduction) {
     console.log(
       'Access Pass Syncing is disabled in non-production environments.',
     );

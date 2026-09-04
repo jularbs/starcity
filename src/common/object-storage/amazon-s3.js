@@ -3,10 +3,11 @@ import AWS from 'aws-sdk';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import path from 'path';
+import { config } from '../../config/index.js';
 
 const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_S3_PUBLICKEY,
-  secretAccessKey: process.env.AWS_S3_SECRETKEY,
+  accessKeyId: config.aws.s3.publicKey,
+  secretAccessKey: config.aws.s3.secretKey,
 });
 
 export const uploadBase64 = (base64, folder) => {
@@ -19,7 +20,7 @@ export const uploadBase64 = (base64, folder) => {
 
     s3.upload(
       {
-        Bucket: process.env.AWS_S3_BUCKETNAME,
+        Bucket: config.aws.s3.bucketName,
         Key: `${folder}`, // type is not required
         Body: base64Data,
         ACL: 'public-read',
@@ -95,7 +96,7 @@ export const uploadFile = async (file, folder, width = 1600) => {
       s3.upload(
         {
           Key: `${folder}/${nanoid()}${ext}`,
-          Bucket: process.env.AWS_S3_BUCKETNAME,
+          Bucket: config.aws.s3.bucketName,
           Body: fs.readFileSync(file.path),
           ContentType: file.type,
         },
@@ -130,7 +131,7 @@ export const uploadFile = async (file, folder, width = 1600) => {
       s3.upload(
         {
           Key: `${folder}/${nanoid()}.avif`,
-          Bucket: process.env.AWS_S3_BUCKETNAME,
+          Bucket: config.aws.s3.bucketName,
           Body: image,
           ContentType: 'image/avif',
         },

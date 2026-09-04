@@ -1,18 +1,16 @@
-import dotenv from 'dotenv';
 import { connectMongoDB, disconnectMongoDB } from './database/mongodb/index.js';
 import app from './app.js';
 import { startCronJobs } from './common/cron/cronScheduler.js';
+import { config } from './config/index.js';
 
-dotenv.config();
-
-const port = process.env.PORT || 8000;
+const port = config.app.port;
 
 const startServer = async () => {
   await connectMongoDB();
   startCronJobs();
 
   const server = app.listen(port, () => {
-    console.log(`Environment is ${process.env.NODE_ENV}`);
+    console.log(`Environment is ${config.app.env}`);
     console.log(`Server is running on port ${port}`);
   });
 

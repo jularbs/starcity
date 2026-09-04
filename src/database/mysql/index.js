@@ -1,10 +1,11 @@
 import mysql from 'mysql';
+import { config } from '../../config/index.js';
 
 export const pool = mysql.createPool({
   connectionLimit: 50,
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DB,
+  host: config.database.turnstile.host,
+  user: config.database.turnstile.user,
+  password: config.database.turnstile.password,
+  database: config.database.turnstile.db,
   multipleStatements: true,
 });

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { config } from '../../config/index.js';
 
 export const requireSignin = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -6,7 +7,7 @@ export const requireSignin = (req, res, next) => {
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+    jwt.verify(token, config.auth.jwtSecret, async (err, decoded) => {
       //Handle Errors
       if (err) {
         if (err.name === 'TokenExpiredError')

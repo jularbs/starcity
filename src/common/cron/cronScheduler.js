@@ -7,6 +7,7 @@ import {
   generateDailyReport,
   generateQRdeliveryReport,
 } from './cronjobs.js';
+import { config } from '../../config/index.js';
 
 let isStarted = false;
 
@@ -24,26 +25,26 @@ export const startCronJobs = () => {
   isStarted = true;
 
   cron.schedule('*/15 * * * *', () => {
-    if (process.env.NODE_ENV === 'production') {
+    if (config.app.isProduction) {
       runJob(cronSyncSMTickets, 'sync SM tickets');
       runJob(cronSyncAP, 'sync access passes');
     }
   });
 
   cron.schedule('*/5 * * * *', () => {
-    if (process.env.NODE_ENV === 'production') {
+    if (config.app.isProduction) {
       runJob(cronProcessEmailQueues, 'process email queues');
     }
   });
 
   cron.schedule('0 0 * * *', () => {
-    if (process.env.NODE_ENV === 'production') {
+    if (config.app.isProduction) {
       runJob(dbcleanup, 'database cleanup');
     }
   });
 
   cron.schedule('5 16 * * *', () => {
-    if (process.env.NODE_ENV === 'production') {
+    if (config.app.isProduction) {
       runJob(generateDailyReport, 'generate daily report');
       runJob(generateQRdeliveryReport, 'generate QR delivery report');
     }

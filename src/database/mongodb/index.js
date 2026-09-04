@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { config } from '../../config/index.js';
 
 mongoose.set('strictQuery', true);
 
@@ -8,7 +9,7 @@ const wait = (duration) =>
   new Promise((resolve) => setTimeout(resolve, duration));
 
 export const connectMongoDB = async () => {
-  const connectionString = process.env.DB_CONNECTION_STRING;
+  const connectionString = config.database.mongodb.url;
 
   if (!connectionString) {
     throw new Error('DB_CONNECTION_STRING is required');

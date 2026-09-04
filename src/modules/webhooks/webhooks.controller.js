@@ -10,13 +10,14 @@ import {
 import { pool } from '../../database/mysql/index.js';
 import { format } from 'date-fns';
 import { cronSyncSMTickets } from '../../common/cron/cronjobs.js';
+import { config } from '../../config/index.js';
 
 export const paymayaRequestCheckout = async (req, res) => {
-  const paymayaPK = process.env.PAYMAYA_PUBLIC_KEY;
+  const paymayaPK = config.paymaya.publicKey;
   const PaymayaCredentialsBase64 = Buffer.from(paymayaPK + ':').toString(
     'base64',
   );
-  const paymayaEnvironment = process.env.PAYMAYA_ENVIRONMENT || 'sandbox';
+  const paymayaEnvironment = config.paymaya.environment || 'sandbox';
   const paymayaBaseURL =
     paymayaEnvironment !== 'prod'
       ? 'https://pg-sandbox.paymaya.com/checkout/v1/checkouts'
@@ -69,9 +70,9 @@ export const paymayaRequestCheckout = async (req, res) => {
       },
     },
     redirectUrl: {
-      success: `${process.env.WEBSITE_URL}/?payment=success&refid=${refId}`,
-      failure: `${process.env.WEBSITE_URL}/?payment=failure&refid=${refId}`,
-      cancel: `${process.env.WEBSITE_URL}/?payment=cancel&refid=${refId}`,
+      success: `${config.app.websiteUrl}/?payment=success&refid=${refId}`,
+      failure: `${config.app.websiteUrl}/?payment=failure&refid=${refId}`,
+      cancel: `${config.app.websiteUrl}/?payment=cancel&refid=${refId}`,
     },
     requestReferenceNumber: refId,
     metadata: {},
@@ -132,7 +133,7 @@ export const paymayaPaymentSuccess = async (req, res) => {
     .trim()
     .replace(/^::ffff:/, '');
   // Comma-separated list of IPs allowed to call the Paymaya webhook, e.g. "18.138.50.235,3.1.207.200"
-  const PAYMAYA_ALLOWED_IPS = (process.env.PAYMAYA_ALLOWED_IPS || '')
+  const PAYMAYA_ALLOWED_IPS = config.paymaya.allowedIps
     .split(',')
     .map((ip) => ip.trim())
     .filter(Boolean);
@@ -402,7 +403,7 @@ export const smTicketTransact = async (req, res) => {
   console.log('PROCESSING SM TICKETS TRANSACTION...');
   const { tickets, token } = req.body;
 
-  if (token == process.env.SM_TOKEN) {
+  if (token == config.sm.token) {
     if (tickets) {
       checkExisting(tickets)
         .then((data) => {
@@ -446,7 +447,7 @@ export const smTicketVoid = async (req, res) => {
   console.log('VOIDING SM TICKET TRANSACTION...');
   const { token, tickets } = req.body;
 
-  if (token == process.env.SM_TOKEN) {
+  if (token == config.sm.token) {
     if (tickets) {
       tickets.map(async (item) => {
         const { ticketID } = item;
@@ -548,7 +549,7 @@ export const bpiTransact = async (req, res) => {
         if (!pOption || pOption.status == false) {
           console.log('BPI PAYMENT OPTION DISABLED: ', pOption.status);
           return res.redirect(
-            `${process.env.WEBSITE_URL}/?payment=error&refid=${merchantTransactionReference}`,
+            `${config.app.websiteUrl}/?payment=error&refid=${merchantTransactionReference}`,
           );
         }
 
@@ -568,7 +569,7 @@ export const bpiTransact = async (req, res) => {
             console.log('SENDING ACKNOWLEDGEMENT RECEIPT');
             sendAR(result.refId);
             return res.redirect(
-              `${process.env.WEBSITE_URL}/?payment=success&refid=${result.refId}`,
+              `${config.app.websiteUrl}/?payment=success&refid=${result.refId}`,
             );
           }
         } catch (err) {
@@ -580,7 +581,7 @@ export const bpiTransact = async (req, res) => {
           `BPI: Reference ID ${transactionReference} ALREADY PROCESSED...`,
         );
         return res.redirect(
-          `${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`,
+          `${config.app.websiteUrl}/?payment=success&refid=${transactionReference}`,
         );
       }
     } else {
@@ -589,7 +590,7 @@ export const bpiTransact = async (req, res) => {
   } else {
     console.log(`BPI: Reference ID ${transactionReference} NOT CONFIRMED`);
     return res.redirect(
-      `${process.env.WEBSITE_URL}/?payment=success&refid=${transactionReference}`,
+      `${config.app.websiteUrl}/?payment=success&refid=${transactionReference}`,
     );
   }
 };

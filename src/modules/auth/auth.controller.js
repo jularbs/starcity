@@ -3,6 +3,7 @@ import shortId from 'shortid';
 import jwt from 'jsonwebtoken';
 import { add } from 'date-fns';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { config } from '../../config/index.js';
 
 export const signup = async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
@@ -87,7 +88,7 @@ export const signin = async (req, res) => {
     //generate JWT
     const token = jwt.sign(
       { _id: user._id, department: user.department, name: user.name },
-      process.env.JWT_SECRET,
+      config.auth.jwtSecret,
       {
         expiresIn: '7d',
       },

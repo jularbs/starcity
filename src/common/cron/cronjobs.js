@@ -14,7 +14,7 @@ import { convertArrayToCSV } from 'convert-array-to-csv';
 import dateFnsTz from 'date-fns-tz';
 
 import { sendAR } from '../../modules/sale/sale.controller.js';
-
+import { config } from '../../config/index.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -237,7 +237,7 @@ export const cronProcessEmailQueues = async () => {
 export const dbcleanup = async () => {
   let previous2Months = new Date();
   previous2Months.setDate(
-    previous2Months.getDate() - parseInt(process.env.DATA_RETENTION_DAYS),
+    previous2Months.getDate() - parseInt(config.app.dataRetentionDays),
   );
 
   console.log('**** CLEANING UP DATABASE ****');
@@ -378,8 +378,8 @@ export const generateDailyReport = async () => {
   const salesDataCSV = convertArrayToCSV(dataArray);
 
   const details = {
-    to: process.env.REPORTS_RECIPIENT,
-    from: process.env.EMAIL_ADDRESS,
+    to: config.email.reportsRecipient,
+    from: config.email.address,
     subject: `Sales Summary for ${datetime}`,
     html: `
     <h1>Sales Summary for ${format(utcToZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(utcToZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>
@@ -483,8 +483,8 @@ export const generateQRdeliveryReport = async () => {
   const accessPassDataCSV = convertArrayToCSV(dataArray);
 
   const details = {
-    to: process.env.REPORTS_RECIPIENT,
-    from: process.env.EMAIL_ADDRESS,
+    to: config.email.reportsRecipient,
+    from: config.email.address,
     subject: `QR Values Delivery Report for ${datetime}`,
     html: `
     <h1>QR Values Delivery Report for ${format(utcToZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(utcToZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>

@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { config } from './config/index.js';
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -22,7 +23,7 @@ import userRoutes from './modules/user/user.routes.js';
 import auditTrailRoutes from './modules/auditTrail/auditTrail.routes.js';
 
 const app = express();
-const allowedDomains = JSON.parse(process.env.CORS_DOMAINS || '[]');
+const allowedDomains = config.cors.origin;
 
 app.set('trust proxy', 1);
 app.use(
@@ -43,7 +44,7 @@ app.use(
   }),
 );
 
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(morgan(config.app.isDevelopment ? 'dev' : 'combined'));
 app.use(express.json({ limit: '200kb' }));
 app.use(express.urlencoded({ extended: true }));
 

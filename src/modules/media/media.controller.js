@@ -3,8 +3,10 @@ import {
   getObjectFromS3,
   uploadFile,
 } from '../../common/object-storage/amazon-s3.js';
+import { config } from '../../config/index.js';
+
 export const getMedia = async (req, res) => {
-  const { key, bucket = process.env.AWS_S3_BUCKETNAME } = req.query;
+  const { key, bucket = config.aws.s3.bucketName } = req.query;
 
   try {
     const data = await getObjectFromS3(key, bucket);
