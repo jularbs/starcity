@@ -4,7 +4,7 @@ import Ticket from '../ticket/ticket.model.js';
 import AccessPass from '../accessPass/accessPass.model.js';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
-import { uploadBase64 } from '../../common/object-storage/amazon-s3.js';
+import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import mongoose from 'mongoose';
 import { sendMail } from '../email/email.service.js';
 import { accessPassEmailNotification } from '../email/templates/index.js';
@@ -67,9 +67,10 @@ export const generateAccessPass = (sale, accessPasses) => {
       var month = date.getUTCMonth() + 1; //months from 1-12
       var year = date.getUTCFullYear();
 
-      const upload = await uploadBase64(
-        await base64,
+      const upload = await uploadFile(
+        base64,
         `access-pass/${year}/${month}/${sale.customerName}/${sale.refId}/${finalToken}`,
+        300,
       );
 
       //save data to accesspassmodel

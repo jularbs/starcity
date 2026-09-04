@@ -10,35 +10,6 @@ const s3 = new AWS.S3({
   secretAccessKey: config.aws.s3.secretKey,
 });
 
-export const uploadBase64 = (base64, folder) => {
-  return new Promise((resolve, reject) => {
-    const base64Data = new Buffer.from(
-      base64.replace(/^data:image\/\w+;base64,/, ''),
-      'base64',
-    );
-    const type = base64.split(';')[0].split('/')[1];
-
-    s3.upload(
-      {
-        Bucket: config.aws.s3.bucketName,
-        Key: `${folder}`, // type is not required
-        Body: base64Data,
-        ACL: 'public-read',
-        ContentEncoding: 'base64', // required
-        ContentType: `image/${type}`, // required. Notice the back ticks
-      },
-      (err, data) => {
-        if (err) return reject(err);
-        return resolve({
-          location: data.Location,
-          bucket: data.Bucket,
-          key: data.Key,
-        });
-      },
-    );
-  });
-};
-
 export const deleteObjectFromS3 = async (key, bucket) => {
   const params = {
     Bucket: bucket,
@@ -71,7 +42,7 @@ export const getObjectFromS3 = async (key, bucket) => {
 
 //V2
 export const isValidImage = (file) => {
-  const fileType = file['type'];
+  const fileType = file.type;
   const validImageTypes = [
     'image/gif',
     'image/avif',
@@ -88,69 +59,56 @@ export const isValidImage = (file) => {
   }
 };
 
-export const uploadFile = async (file, folder, width = 1600) => {
-  if (!isValidImage(file)) {
-    //Upload non image file
-    try {
-      const ext = path.extname(file.name);
-      s3.upload(
-        {
-          Key: `${folder}/${nanoid()}${ext}`,
-          Bucket: config.aws.s3.bucketName,
-          Body: fs.readFileSync(file.path),
-          ContentType: file.type,
-        },
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            throw err;
-          }
-          return {
-            location: data.Location,
-            bucket: data.Bucket,
-            key: data.Key,
-            type: file.type,
-          };
-        },
-      );
-    } catch (err) {
-      console.log(err);
-      throw err;
-    }
-  } else {
-    //process image
-    try {
-      const fileBuffer = fs.readFileSync(file.path);
-      const metadata = await sharp(fileBuffer).metadata();
-      const resizeWidth = metadata.width < width ? metadata.width : width;
-      const image = await sharp(fileBuffer)
-        .resize({ width: resizeWidth })
-        .avif({ quality: 90 })
-        .toBuffer();
+const parseBase64Image = (dataUri) => {
+  const match = dataUri.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
 
-      s3.upload(
-        {
-          Key: `${folder}/${nanoid()}.avif`,
-          Bucket: config.aws.s3.bucketName,
-          Body: image,
-          ContentType: 'image/avif',
-        },
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            throw err;
-          }
-          return {
-            location: data.Location,
-            bucket: data.Bucket,
-            key: data.Key,
-            type: 'image/avif',
-          };
-        },
-      );
-    } catch (err) {
-      console.log(err);
-      throw err;
-    }
+  if (!match) {
+    throw new Error('Expected a base64 image data URI');
   }
+
+  const [, type, encodedData] = match;
+  const extension = type.split('/')[1].replace('jpeg', 'jpg');
+
+  return {
+    buffer: Buffer.from(encodedData, 'base64'),
+    name: `upload.${extension}`,
+    type,
+  };
+};
+
+export const uploadFile = async (file, folder, width = 1600) => {
+  const normalizedFile =
+    typeof file === 'string' ? parseBase64Image(file) : file;
+  const sourceBuffer =
+    normalizedFile.buffer || fs.readFileSync(normalizedFile.path);
+  let body = sourceBuffer;
+  let type = normalizedFile.type;
+  let key = `${folder}/${nanoid()}${path.extname(normalizedFile.name)}`;
+
+  if (isValidImage(normalizedFile)) {
+    const metadata = await sharp(sourceBuffer).metadata();
+    const resizeWidth = Math.min(metadata.width || width, width);
+    body = await sharp(sourceBuffer)
+      .resize({ width: resizeWidth })
+      .avif({ quality: 90 })
+      .toBuffer();
+    type = 'image/avif';
+    key = `${folder}/${nanoid()}.avif`;
+  }
+
+  const data = await s3
+    .upload({
+      Bucket: config.aws.s3.bucketName,
+      Key: key,
+      Body: body,
+      ContentType: type,
+    })
+    .promise();
+
+  return {
+    location: data.Location,
+    bucket: data.Bucket,
+    key: data.Key,
+    type,
+  };
 };
