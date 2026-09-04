@@ -3,10 +3,11 @@ import { config } from '../../config/index.js';
 
 export const requireSignin = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  let token;
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice('Bearer '.length).trim()
+    : null;
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
+  if (token) {
     jwt.verify(token, config.auth.jwtSecret, async (err, decoded) => {
       //Handle Errors
       if (err) {
@@ -25,9 +26,8 @@ export const requireSignin = (req, res, next) => {
       }
     });
   } else {
-    // Handle the case where the token is missing or invalid
     return res
-      .status(400)
+      .status(401)
       .json({ error: 'Auth token required for this request' });
   }
 };

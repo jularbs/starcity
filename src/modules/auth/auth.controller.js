@@ -93,7 +93,6 @@ export const signin = async (req, res) => {
         expiresIn: '7d',
       },
     );
-    res.cookie('token', token, { expiresIn: '1d' });
 
     res.json({
       token,
