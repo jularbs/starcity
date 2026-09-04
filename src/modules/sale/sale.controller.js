@@ -167,7 +167,9 @@ export const sendAR = async (refId) => {
       subject:
         'Your acknowledgement receipt for your Star City ticket purchase',
       html: accessPassEmailNotification(sale),
-      bcc: ['accounting@starcity.com.ph'],
+      ...(config.app.isProduction
+        ? { bcc: ['accounting@starcity.com.ph'] }
+        : {}),
     };
 
     sendMail(details).then((info) => {
