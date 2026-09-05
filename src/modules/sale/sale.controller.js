@@ -11,13 +11,12 @@ import { accessPassEmailNotification } from '../email/templates/index.js';
 import { pool } from '../../database/mysql/index.js';
 import { add, format, getDay, nextThursday } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
-import moment from 'moment';
 import { addToQueue } from '../accessPass/accessPassQueue.controller.js';
 import EmailQueue from '../email/emailQueue.model.js';
 //TEST
 import { processPromo } from '../promo/promo.controller.js';
 //HELPERS
-const { utcToZonedTime } = dateFnsTz;
+const { utcToZonedTime, zonedTimeToUtc } = dateFnsTz;
 
 const getCurrentTicketPrice = async (ticket) => {
   const { ticketId } = ticket;
@@ -316,15 +315,17 @@ export const read = async (req, res) => {
 export const list = async (req, res) => {
   const { skip = 0, limit = 10, start, end, search = '' } = req.query;
 
-  //check UTC Formatting when in server
-  const startDate = moment(start).toISOString();
-  const endDate = moment(end).toISOString();
-
-  console.log('Start Date: ', startDate);
-  console.log('End Date: ', endDate);
+  const startDate = zonedTimeToUtc(
+    `${start}T00:00:00.000`,
+    'Asia/Manila',
+  ).toISOString();
+  const endDate = zonedTimeToUtc(
+    `${end}T23:59:59.999`,
+    'Asia/Manila',
+  ).toISOString();
 
   const data = await Sale.find({
-    createdAt: {
+    updatedAt: {
       $gte: startDate,
       $lte: endDate,
     },
