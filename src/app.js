@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { config } from './config/index.js';
 import express from 'express';
+import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
 import { catchAllLimiter } from './common/middleware/rate-limit.middleware.js';
@@ -43,6 +44,9 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'Origin'],
   }),
 );
+
+app.use(helmet());
+app.disable('x-powered-by');
 
 app.use(morgan(config.app.isDevelopment ? 'dev' : 'combined'));
 app.use(express.json({ limit: '200kb' }));
