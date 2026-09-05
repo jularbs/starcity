@@ -54,7 +54,7 @@
     "node-cron": "^3.0.0",
     "nodemailer": "^9.0.3",
     "qrcode": "^1.4.4",
-    "sharp": "^0.34.1",
+    "sharp": "^0.35.4",
     "shortid": "^2.2.16",
     "slugify": "^1.5.3",
     "string-strip-html": "^8.3.0",

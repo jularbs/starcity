@@ -91,7 +91,7 @@ export const uploadFile = async (file, folder, width = 1600) => {
     const resizeWidth = Math.min(metadata.width || width, width);
     body = await sharp(sourceBuffer)
       .resize({ width: resizeWidth })
-      .avif({ quality: 90 })
+      .avif({ quality: 80 })
       .toBuffer();
     type = 'image/avif';
     key = `${folder}/${nanoid()}.avif`;
