@@ -42,7 +42,7 @@ const getObjectLocation = (bucket, key) =>
   ).replace(/%2F/g, '/')}`;
 
 //V2
-export const isValidImage = (file) => {
+const isValidImage = (file) => {
   const fileType = file.type;
   const validImageTypes = [
     'image/gif',

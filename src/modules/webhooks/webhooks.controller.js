@@ -117,12 +117,6 @@ export const paymayaPaymentSuccess = async (req, res) => {
   console.log('TRIGGERING WEBHOOK: PAYMAYA PAYMENT SUCCESS');
   console.log('PAYMAYA PAYLOAD: ', req.body);
 
-  console.log(
-    '(TEMPORARY) req.headers[cf-connecting-ip]: ',
-    req.headers['cf-connecting-ip'],
-  );
-  console.log('(TEMPORARY) req.ip: ', req.ip);
-
   // req.ip is resolved via Express's trust proxy setting, so it safely
   // handles multi-value X-Forwarded-For instead of treating it as one IP.
   // Take only the first value in case a header was duplicated, and strip
@@ -220,9 +214,7 @@ export const paymayaPaymentSuccess = async (req, res) => {
 
     //send Acknowledgement receipt
     if (status == 'PAYMENT_SUCCESS') {
-      console.log('GENERATING ACCESS PASS');
       generateAccessPass(result, result.cartItems);
-      console.log('SENDING ACKNOWLEDGEMENT RECEIPT');
       sendAR(result.refId);
     }
   } catch (err) {

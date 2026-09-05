@@ -67,7 +67,6 @@ export const logoUpload = async (req, res) => {
 
 export const create = async (req, res) => {
   const { name, value, meta } = req.body;
-  console.log('Req: ', req.body);
   let option = await Option.findOne({ name }).exec();
 
   if (option) {

@@ -551,15 +551,13 @@ export const resyncSaleByRefId = async (req, res) => {
   if (req.params.id) {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
     if (sale) {
-      console.log('Getting Access Passes...');
       const accesspasses = await AccessPass.find({ salesId: sale._id }).exec();
       accesspasses.map(async (ap) => {
         //get ticketDetails
         const ticket = await Ticket.findOne({
           _id: ap.ticketId,
         }).exec();
-        const syncResult = await syncAccessPass(ap, ticket.itemCode);
-        console.log(syncResult);
+        await syncAccessPass(ap, ticket.itemCode);
       });
       return res.json({ status: 'Success', action: 'Sale Resynced' });
     } else {

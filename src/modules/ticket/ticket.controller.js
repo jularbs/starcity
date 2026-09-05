@@ -77,7 +77,6 @@ export const list = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  console.log('Updating ticket');
   const { name, _id, shortDescription, price, details, code } = req.body;
 
   const ticket = await Ticket.findOne({ _id }).exec();
