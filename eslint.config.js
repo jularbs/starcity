@@ -22,6 +22,12 @@ export default [
         ...globals.node,
       },
     },
+    rules: {
+      'no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
   },
 
   // 3. TypeScript configuration (only runs on .ts files)
@@ -39,7 +45,10 @@ export default [
     },
     rules: {
       // Customize your TS specific rules here
-      '@typescript-eslint/no-unused-vars': ['warn'],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/no-explicit-any': 'off', // Helpful during migration
     },
   }),
