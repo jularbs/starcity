@@ -48,6 +48,11 @@ app.use(morgan(config.app.isDevelopment ? 'dev' : 'combined'));
 app.use(express.json({ limit: '200kb' }));
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/robots.txt', (_req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nDisallow: /\n');
+});
+
 app.use('/api', rideCategoryRoutes);
 app.use('/api', rideRoutes);
 app.use('/api', ticketRoutes);
