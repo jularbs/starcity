@@ -23,6 +23,8 @@ import promoRoutes from './modules/promo/promo.routes.js';
 import userRoutes from './modules/user/user.routes.js';
 import auditTrailRoutes from './modules/auditTrail/auditTrail.routes.js';
 
+import { errorHandler } from './common/middleware/error-handler.middleware.js';
+import { notFoundHandler } from './common/middleware/not-found.handler.js';
 const app = express();
 const allowedDomains = config.cors.origin;
 
@@ -75,9 +77,7 @@ app.use('/api', auditTrailRoutes);
 app.use('/webhooks', webhookRoutes);
 
 app.use(catchAllLimiter());
-
-app.use((req, res) => {
-  res.status(404).json({ error: 'Resource Not Found' });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;
