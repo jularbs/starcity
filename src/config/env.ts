@@ -29,6 +29,7 @@ const envSchema = z.object({
   MYSQL_DB: z.string(),
   MYSQL_PORT: z.coerce.number().default(3306),
   JWT_SECRET: z.string(),
+  JWT_ACCESS_EXPIRES_IN_MINUTES: z.coerce.number().default(15),
   JWT_REFRESH_SECRET: z.string(),
   JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().default(7),
   JWT_COOKIE_SECURE: z

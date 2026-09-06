@@ -5,6 +5,7 @@
     "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
+    "types": ["vitest/globals"],
 
     /* Flags essential for gradual migration */
     "allowJs": true, // Allows compiled .js files alongside .ts files

@@ -2,6 +2,8 @@ node_modules
 security-cert
 
 .env
+.env.*
+!.env.example
 
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml

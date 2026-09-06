@@ -39,6 +39,7 @@ export const config = {
   },
   auth: {
     jwtSecret: env.JWT_SECRET,
+    jwtExpiresInMinutes: env.JWT_ACCESS_EXPIRES_IN_MINUTES,
     refreshSecret: env.JWT_REFRESH_SECRET,
     refreshExpiresInDays: env.JWT_REFRESH_EXPIRES_IN_DAYS,
     cookieSecure: env.JWT_COOKIE_SECURE,
