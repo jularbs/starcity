@@ -29,6 +29,12 @@ const envSchema = z.object({
   MYSQL_DB: z.string(),
   MYSQL_PORT: z.coerce.number().default(3306),
   JWT_SECRET: z.string(),
+  JWT_REFRESH_SECRET: z.string(),
+  JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().default(7),
+  JWT_COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .transform((val) => val === 'true')
+    .default(true),
   DOMAIN: z.url(),
   WEBSITE_URL: z.url(),
   AWS_S3_PUBLICKEY: z.string(),

@@ -39,6 +39,9 @@ export const config = {
   },
   auth: {
     jwtSecret: env.JWT_SECRET,
+    refreshSecret: env.JWT_REFRESH_SECRET,
+    refreshExpiresInDays: env.JWT_REFRESH_EXPIRES_IN_DAYS,
+    cookieSecure: env.JWT_COOKIE_SECURE,
   },
   aws: {
     s3: {
