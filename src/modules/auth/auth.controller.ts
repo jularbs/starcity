@@ -1,9 +1,12 @@
 import User from '../user/user.model.js';
-import shortId from 'shortid';
 import jwt from 'jsonwebtoken';
-import { add } from 'date-fns';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
 import { config } from '../../config/index.js';
+import {
+  generateSalt,
+  encryptPassword,
+  authenticate,
+} from './password.helpers.js';
 
 export const signup = async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
@@ -23,20 +26,14 @@ export const signup = async (req, res) => {
       });
     }
 
-    const username = shortId.generate();
+    const salt = generateSalt();
+    const hashed_password = encryptPassword({ password, salt });
     const newUser = new User({
       name,
       email,
-      password,
-      username,
+      hashed_password,
+      salt,
     });
-
-    //create OTP for new user
-    const OTP = newUser.makeOTP();
-    const otpValidity = add(new Date(), {
-      minutes: 10000,
-    });
-    newUser.otp = { token: OTP, validity: otpValidity };
 
     await newUser.save();
 
@@ -71,7 +68,13 @@ export const signin = async (req, res) => {
       });
     }
 
-    if (!user.authenticate(password)) {
+    if (
+      !authenticate({
+        password,
+        salt: user.salt,
+        hashedPassword: user.hashed_password,
+      })
+    ) {
       user.mistakes = user.mistakes + 1;
       await user.save();
       return res.status(400).json({
@@ -90,7 +93,7 @@ export const signin = async (req, res) => {
       { _id: user._id, department: user.department, name: user.name },
       config.auth.jwtSecret,
       {
-        expiresIn: '7d',
+        expiresIn: `${config.auth.jwtExpiresInMinutes}m`,
       },
     );
 
@@ -131,7 +134,13 @@ export const changePassword = async (req, res) => {
     const { _id, currentPassword, newPassword, confirmation } = req.body;
 
     const user = await User.findOne({ _id }).exec();
-    if (!user.authenticate(currentPassword)) {
+    if (
+      !authenticate({
+        password: currentPassword,
+        salt: user.salt,
+        hashedPassword: user.hashed_password,
+      })
+    ) {
       return res.status(400).json({
         error: 'Current password is incorrect.',
       });
@@ -143,7 +152,10 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    user.password = confirmation;
+    const salt = generateSalt();
+    const hashed_password = encryptPassword({ password: confirmation, salt });
+    user.hashed_password = hashed_password;
+    user.salt = salt;
 
     await user.save();
     createEntry(user.name, `Changed Password`, {}, req);
