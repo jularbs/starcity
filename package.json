@@ -36,7 +36,6 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1018.0",
-    "axios": "^1.18.1",
     "convert-array-to-csv": "^2.0.0",
     "cors": "^2.8.5",
     "date-fns": "^2.22.1",
@@ -55,7 +54,6 @@
     "nodemailer": "^9.0.3",
     "qrcode": "^1.4.4",
     "sharp": "^0.35.4",
-    "shortid": "^2.2.16",
     "slugify": "^1.5.3",
     "string-strip-html": "^8.3.0",
     "zod": "^4.5.4"
@@ -73,7 +71,6 @@
     "globals": "^17.12.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "nodemon": "^3.1.14",
     "prettier": "^3.9.6",
     "supertest": "^7.2.2",
     "tsup": "^8.5.1",
