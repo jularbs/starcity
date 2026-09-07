@@ -200,3 +200,26 @@ export const changePassword = async (req, res) => {
 export const validateToken = (_req, res) => {
   return res.json({ message: 'VALID' });
 };
+
+export const unblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await userService.getById(id);
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+
+    await userService.updateById(id, {
+      mistakes: 0,
+    });
+
+    createEntry(user.name, 'Unblocked User', {}, req);
+    return res.json({ success: 'User successfully unblocked' });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({
+      error: 'Unable to unblock user. Please try again later.',
+    });
+  }
+};

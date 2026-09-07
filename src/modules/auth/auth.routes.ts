@@ -6,9 +6,12 @@ import {
   signout,
   changePassword,
   validateToken,
+  unblockUser,
 } from './auth.controller.js';
 import { requireSignin } from '../../common/middleware/auth.middleware.js';
 import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
+import { authzMiddleware } from '../../common/middleware/auth.middleware.js';
+import { ADMIN_ROLE } from './auth.constants.js';
 
 router.post(
   '/v1/signup',
@@ -31,6 +34,13 @@ router.post(
 );
 
 router.post('/v1/change-password', requireSignin, changePassword);
+
+router.post(
+  '/v1/unblock/:id',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE),
+  unblockUser,
+);
 
 router.get('/v1/signout', signout);
 
