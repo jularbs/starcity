@@ -26,7 +26,7 @@ export const create = async (req, res) => {
     } = fields;
 
     const promo = new Promo();
-    promo.code = code;
+    promo.code = code.toUpperCase();
     promo.campaignName = campaignName;
     promo.startDate = startDate;
     promo.endDate = endDate;
@@ -96,7 +96,7 @@ export const update = async (req, res) => {
     const promo = await Promo.findOne({ _id: _id }).exec();
     if (!promo) return res.status(400).json({ error: 'Promo code not found.' });
 
-    promo.code = code;
+    promo.code = code.toUpperCase();
     promo.campaignName = campaignName;
     promo.startDate = startDate;
     promo.endDate = endDate;
