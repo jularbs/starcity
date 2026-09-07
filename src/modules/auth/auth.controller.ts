@@ -1,4 +1,3 @@
-import User from '../user/user.model.js';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
 import {
   generateSalt,
@@ -12,6 +11,7 @@ import {
 } from './token.helpers.js';
 import { config } from '../../config/index.js';
 import { refreshTokenRepository } from './refreshToken.repository.js';
+import { userService } from '../user/user.service.js';
 
 export const signup = async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
@@ -22,7 +22,7 @@ export const signup = async (req, res) => {
       .json({ error: 'Password and Confirm Password should match' });
 
   try {
-    const user = await User.findOne({ email }).exec();
+    const user = await userService.getByEmail(email);
 
     if (user) {
       return res.status(400).json({
@@ -33,14 +33,12 @@ export const signup = async (req, res) => {
 
     const salt = generateSalt();
     const hashed_password = encryptPassword({ password, salt });
-    const newUser = new User({
+    await userService.create({
       name,
       email,
       hashed_password,
       salt,
     });
-
-    await newUser.save();
 
     return res.json({
       success: 'Signup Success! Please wait for your acccount to be processed.',
@@ -58,7 +56,7 @@ export const signin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).exec();
+    const user = await userService.getByEmail(email);
 
     if (!user) {
       return res.status(400).json({
@@ -80,8 +78,10 @@ export const signin = async (req, res) => {
         hashedPassword: user.hashed_password,
       })
     ) {
-      user.mistakes = user.mistakes + 1;
-      await user.save();
+      await userService.updateById(user._id, {
+        mistakes: user.mistakes + 1,
+      });
+
       return res.status(400).json({
         error: 'Email and password do not match.',
       });
@@ -128,10 +128,10 @@ export const signin = async (req, res) => {
       },
     });
 
-    user.mistakes = 0;
-    user.lastLogin = new Date();
-
-    await user.save();
+    await userService.updateById(user._id, {
+      mistakes: 0,
+      lastLogin: new Date(),
+    });
 
     createEntry(user.name, 'Logged in to system', { email: email }, req);
   } catch (error) {
@@ -145,9 +145,14 @@ export const signin = async (req, res) => {
 
 export const signout = async (req, res) => {
   const token = req.cookies.token;
+  if (!token) {
+    return res.json({
+      error: 'No token provided.',
+    });
+  }
+
   const hashedRefreshToken = hashRefreshToken(token);
   await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
-
   res.clearCookie('token');
   res.json({
     message: 'Signout success',
@@ -158,7 +163,7 @@ export const changePassword = async (req, res) => {
   try {
     const { _id, currentPassword, newPassword, confirmation } = req.body;
 
-    const user = await User.findOne({ _id }).exec();
+    const user = await userService.getById(_id);
     if (
       !authenticate({
         password: currentPassword,
@@ -179,10 +184,10 @@ export const changePassword = async (req, res) => {
 
     const salt = generateSalt();
     const hashed_password = encryptPassword({ password: confirmation, salt });
-    user.hashed_password = hashed_password;
-    user.salt = salt;
-
-    await user.save();
+    await userService.updateById(user._id, {
+      hashed_password,
+      salt,
+    });
     createEntry(user.name, `Changed Password`, {}, req);
     return res.json({ success: 'Password successfully changed' });
   } catch {
@@ -192,6 +197,6 @@ export const changePassword = async (req, res) => {
   }
 };
 
-export const validateToken = (req, res) => {
+export const validateToken = (_req, res) => {
   return res.json({ message: 'VALID' });
 };
