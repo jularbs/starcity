@@ -1,12 +1,18 @@
-import { connectMongoDB, disconnectMongoDB } from './database/mongodb/index.js';
+import {
+  connectMongoDB,
+  disconnectMongoDB,
+  syncModelIndexes,
+} from './database/mongodb/index.js';
 import app from './app.js';
 import { startCronJobs } from './common/cron/cronScheduler.js';
 import { config } from './config/index.js';
+import User from './modules/user/user.model.js';
 
 const port = config.app.port;
 
 const startServer = async () => {
   await connectMongoDB();
+  await syncModelIndexes(User);
   startCronJobs();
 
   const server = app.listen(port, () => {

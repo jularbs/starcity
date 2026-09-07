@@ -42,4 +42,19 @@ export const connectMongoDB = async () => {
   }
 };
 
+// Drops/creates indexes to match the current schema; fixes stale unique indexes left by removed fields.
+export const syncModelIndexes = async (model) => {
+  try {
+    const dropped = await model.syncIndexes();
+    if (dropped.length > 0) {
+      console.log(`Synced indexes for ${model.modelName}, dropped:`, dropped);
+    }
+  } catch (error) {
+    console.error(
+      `Failed to sync indexes for ${model.modelName}:`,
+      error.message,
+    );
+  }
+};
+
 export const disconnectMongoDB = () => mongoose.disconnect();
