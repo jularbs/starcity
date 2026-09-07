@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { InferSchemaType } from 'mongoose';
 const { ObjectId } = mongoose.Schema;
 
 const rideSchema = new mongoose.Schema(
@@ -41,5 +41,8 @@ const rideSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+export type RideAttributes = InferSchemaType<typeof rideSchema>;
+export type CreateRide = Omit<RideAttributes, 'createdAt' | 'updatedAt'>;
 
 export default mongoose.model('Ride', rideSchema);

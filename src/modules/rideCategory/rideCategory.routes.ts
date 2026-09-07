@@ -14,8 +14,8 @@ router.post(
   create,
 );
 
-router.put(
-  '/v1/ride-category',
+router.patch(
+  '/v1/ride-category/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
   update,
@@ -24,7 +24,7 @@ router.put(
 router.get('/v1/ride-categories', list);
 
 router.delete(
-  '/v1/ride-category',
+  '/v1/ride-category/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
   remove,
