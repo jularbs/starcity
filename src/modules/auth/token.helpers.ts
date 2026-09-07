@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { config } from '../../config/index.js';
+import { Types } from 'mongoose';
 
 export interface AccessTokenPayload {
-  _id: string;
+  _id: Types.ObjectId;
   department: string;
   name: string;
 }

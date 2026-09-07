@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { config } from './config/index.js';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -53,6 +54,7 @@ app.disable('x-powered-by');
 app.use(morgan(config.app.isDevelopment ? 'dev' : 'combined'));
 app.use(express.json({ limit: '200kb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.get('/robots.txt', (_req, res) => {
   res.type('text/plain');

@@ -1,12 +1,17 @@
 import User from '../user/user.model.js';
-import jwt from 'jsonwebtoken';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
-import { config } from '../../config/index.js';
 import {
   generateSalt,
   encryptPassword,
   authenticate,
 } from './password.helpers.js';
+import {
+  generateRefreshToken,
+  hashRefreshToken,
+  signAccessToken,
+} from './token.helpers.js';
+import { config } from '../../config/index.js';
+import { refreshTokenRepository } from './refreshToken.repository.js';
 
 export const signup = async (req, res) => {
   const { name, email, password, confirmPassword } = req.body;
@@ -89,13 +94,29 @@ export const signin = async (req, res) => {
     }
 
     //generate JWT
-    const token = jwt.sign(
-      { _id: user._id, department: user.department, name: user.name },
-      config.auth.jwtSecret,
-      {
-        expiresIn: `${config.auth.jwtExpiresInMinutes}m`,
-      },
+    const payload = {
+      _id: user._id,
+      department: user.department,
+      name: user.name,
+    };
+    const token = signAccessToken(payload);
+
+    const refreshToken = generateRefreshToken();
+    const hashedRefreshToken = hashRefreshToken(refreshToken);
+
+    // Store hashed refresh token in the database
+
+    await refreshTokenRepository.storeRefreshToken(
+      user._id,
+      hashedRefreshToken,
     );
+
+    res.cookie('token', refreshToken, {
+      httpOnly: true,
+      secure: config.auth.cookieSecure,
+      sameSite: 'Strict',
+      maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
       token,
@@ -122,7 +143,11 @@ export const signin = async (req, res) => {
   }
 };
 
-export const signout = (req, res) => {
+export const signout = async (req, res) => {
+  const token = req.cookies.token;
+  const hashedRefreshToken = hashRefreshToken(token);
+  await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
+
   res.clearCookie('token');
   res.json({
     message: 'Signout success',

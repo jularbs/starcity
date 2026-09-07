@@ -37,6 +37,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1018.0",
     "convert-array-to-csv": "^2.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "date-fns": "^2.22.1",
     "date-fns-tz": "^1.1.6",
