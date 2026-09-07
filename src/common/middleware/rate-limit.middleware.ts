@@ -1,4 +1,11 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import type { Request } from 'express';
+
+function getClientIp(req: Request): string {
+  const cfIp = req.headers['cf-connecting-ip'];
+  const ip = Array.isArray(cfIp) ? cfIp[0] : cfIp;
+  return ipKeyGenerator(ip || req.ip || '');
+}
 
 export function createRateLimiter({
   windowMs,
@@ -14,8 +21,7 @@ export function createRateLimiter({
       error: 'RATE_LIMIT_EXCEEDED',
       message,
     },
-    keyGenerator: (req) =>
-      ipKeyGenerator(req.headers['cf-connecting-ip'] || req.ip),
+    keyGenerator: (req) => getClientIp(req),
   });
 }
 
@@ -31,7 +37,6 @@ export function catchAllLimiter() {
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     skipSuccessfulRequests: true,
-    keyGenerator: (req) =>
-      ipKeyGenerator(req.headers['cf-connecting-ip'] || req.ip),
+    keyGenerator: (req) => getClientIp(req),
   });
 }
