@@ -1,6 +1,5 @@
 //TODOS: Needs regression testing for all.
 // Focus on currency amounts for accuracy (Number vs ParseFloat)
-import AccessPassQueue from '../../modules/accessPass/accessPassQueue.model.js';
 import SmQueue from '../../modules/smTickets/smQueue.model.js';
 import EmailQueue from '../../modules/email/emailQueue.model.js';
 import Sale from '../../modules/sale/sale.model.js';
@@ -17,10 +16,11 @@ import dateFnsTz from 'date-fns-tz';
 
 import { sendAR } from '../../modules/sale/sale.controller.js';
 import { config } from '../../config/index.js';
+import { accessPassQueueService } from '../../modules/accessPassQueue/accessPassQueue.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
-  const queues = await AccessPassQueue.find({}).populate('accessPass').exec();
+  const queues = await accessPassQueueService.listQueues();
 
   if (queues.length > 0) {
     console.log('**** RUNNING ACCESS PASS SYNC WITH TURNSTILE ****');
@@ -70,7 +70,7 @@ export const cronSyncAP = async () => {
                 );
               } else {
                 //remove in queue;
-                await AccessPassQueue.deleteOne({ _id: accessPass._id }).exec();
+                await accessPassQueueService.removeQueue(q._id);
                 console.log(
                   'ACCESSPASS SUCCESS FOR ID: ',
                   accessPass.accessToken,

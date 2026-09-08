@@ -11,8 +11,8 @@ import { accessPassEmailNotification } from '../email/templates/index.js';
 import { pool } from '../../database/mysql/index.js';
 import { add, format, getDay, nextThursday } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
-import { addToQueue } from '../accessPass/accessPassQueue.controller.js';
 import EmailQueue from '../email/emailQueue.model.js';
+import { accessPassQueueService } from '../accessPassQueue/accessPassQueue.service.js';
 //TEST
 import { processPromo } from '../promo/promo.controller.js';
 //HELPERS
@@ -210,7 +210,10 @@ const syncAccessPass = (accessPass, RideCode) => {
       pool.getConnection(async (err, connection) => {
         if (err) {
           console.log('ERROR: ', err);
-          addToQueue(accessPass, 'Failed Connection');
+          await accessPassQueueService.createQueue(
+            accessPass._id,
+            'Failed Connection',
+          );
           resolve('Failed Connection, added to queue.');
         } else {
           const date = format(accessPass.createdAt, 'yyyy-MM-dd');
@@ -240,14 +243,20 @@ const syncAccessPass = (accessPass, RideCode) => {
                 accessPass.accessToken,
               );
               console.log('ERROR MESSAGE: ', error);
-              addToQueue(accessPass, 'Failed Query');
+              accessPassQueueService.createQueue(
+                accessPass._id,
+                'Failed Query',
+              );
               resolve('Failed Query, added to queue');
             } else if (results.affectedRows < 1) {
               console.log(
                 `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
                 accessPass.accessToken,
               );
-              addToQueue(accessPass, 'Failed insert');
+              accessPassQueueService.createQueue(
+                accessPass._id,
+                'Failed Insert',
+              );
               resolve('Failed Insert, added to queue');
             } else {
               resolve(`ACCESS PASS SYNCED: ${accessPass.accessToken}`);
