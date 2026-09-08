@@ -17,6 +17,7 @@ import dateFnsTz from 'date-fns-tz';
 import { sendAR } from '../../modules/sale/sale.controller.js';
 import { config } from '../../config/index.js';
 import { accessPassQueueService } from '../../modules/accessPassQueue/accessPassQueue.service.js';
+import { accessPassService } from '../../modules/accessPass/accessPass.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -406,16 +407,10 @@ export const generateQRdeliveryReport = async () => {
   const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila');
   const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila');
 
-  const accessPassData = await AccessPass.find({
-    createdAt: {
-      $gte: start,
-      $lte: end,
-    },
-  })
-    .select('accessToken salesId ticketId createdAt')
-    .populate({ path: 'ticketId', model: 'Ticket', select: 'name' })
-    .populate({ path: 'salesId', model: 'Sale', select: 'refId' })
-    .exec();
+  const accessPassData = await accessPassService.getInRange(
+    start.toISOString(),
+    end.toISOString(),
+  );
 
   const dataArray = accessPassData.map((data) => {
     return {

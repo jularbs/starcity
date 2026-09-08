@@ -1,7 +1,7 @@
 import { config } from '../../config/index.js';
 import Sale from './sale.model.js';
 import Ticket from '../ticket/ticket.model.js';
-import AccessPass from '../accessPass/accessPass.model.js';
+import { accessPassService } from '../accessPass/accessPass.service.js';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
@@ -47,9 +47,7 @@ export const generateAccessPass = (sale, accessPasses) => {
           .toString('hex')}`;
 
         finalToken = finalToken.toUpperCase();
-        isExisting = await AccessPass.find({
-          accessToken: finalToken,
-        }).exec();
+        isExisting = await accessPassService.getByAccessToken(finalToken);
       } while (isExisting.length !== 0);
 
       let base64 = await QRCode.toDataURL(finalToken, {
@@ -72,19 +70,18 @@ export const generateAccessPass = (sale, accessPasses) => {
         300,
       );
 
-      //save data to accesspassmodel
-      let accessPass = new AccessPass();
-      accessPass.ticketId = ap.ticketId;
-      accessPass.salesId = sale._id;
-      accessPass.accessToken = finalToken;
-      accessPass.QRcode = await upload;
-      accessPass.expiryDate = `${format(
-        new Date(sale.expiryDate),
-        'yyyy-LL-dd',
-      )} 23:59:59`;
-
+      const accessPassData = {
+        ticketId: ap.ticketId,
+        salesId: sale._id,
+        accessToken: finalToken,
+        expiryDate: `${format(
+          new Date(sale.expiryDate),
+          'yyyy-LL-dd',
+        )} 23:59:59`,
+        QRcode: upload,
+      };
       try {
-        const result = await accessPass.save();
+        const result = await accessPassService.create(accessPassData);
         const syncResult = await syncAccessPass(result, ticket.itemCode);
         console.log(`Processing ${finalToken}: `, syncResult);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
@@ -285,12 +282,7 @@ export const readBySaltRefID = async (req, res) => {
   if (saleDetails == null)
     return res.status(400).json({ error: 'Invalid Data' });
 
-  const accessPasses = await AccessPass.find({
-    salesId: saleDetails._id,
-  })
-    .populate('ticketId', 'name slug -_id')
-    .select('ticketId QRcode accessToken -_id')
-    .exec();
+  const accessPasses = await accessPassService.getBySalesId(saleDetails._id);
 
   res.json({ details: saleDetails, accessPasses });
 };
@@ -502,17 +494,15 @@ export const cleanUp = async (req, res) => {
   let previous2Months = new Date();
   previous2Months.setDate(previous2Months.getDate() - 90);
 
-  const accessPassCount = await AccessPass.countDocuments({
-    createdAt: { $lte: previous2Months },
-  });
+  //TODOS: create count documents service
+  const accessPassCount =
+    await accessPassService.getCountByBeforeDate(previous2Months);
 
   const saleCount = await Sale.countDocuments({
     createdAt: { $lte: previous2Months },
   });
 
-  await AccessPass.deleteMany({
-    createdAt: { $lte: previous2Months },
-  });
+  await accessPassService.removeByBeforeDate(previous2Months);
 
   await Sale.deleteMany({
     createdAt: { $lte: previous2Months },
@@ -534,7 +524,7 @@ export const regenerateAccessPass = async (req, res) => {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
     if (sale) {
       console.log('REMOVING OLD ACCESS PASS');
-      await AccessPass.deleteMany({ salesId: sale._id }).exec();
+      await accessPassService.removeBySalesId(sale._id);
       console.log('GENERATING NEW ACCESS PASS');
       generateAccessPass(sale, sale.cartItems);
       return res.json({
@@ -558,7 +548,7 @@ export const resyncSaleByRefId = async (req, res) => {
   if (req.params.id) {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
     if (sale) {
-      const accesspasses = await AccessPass.find({ salesId: sale._id }).exec();
+      const accesspasses = await accessPassService.getBySalesId(sale._id);
       accesspasses.map(async (ap) => {
         //get ticketDetails
         const ticket = await Ticket.findOne({
