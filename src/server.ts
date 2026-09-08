@@ -4,6 +4,10 @@ import {
   syncModelIndexes,
 } from './database/mongodb/index.js';
 import app from './app.js';
+import {
+  closeMySqlPool,
+  verifyMySqlConnection,
+} from './database/mysql/mysql2.js';
 import { startCronJobs } from './common/cron/cronScheduler.js';
 import { config } from './config/index.js';
 import User from './modules/user/user.model.js';
@@ -12,6 +16,7 @@ const port = config.app.port;
 
 const startServer = async () => {
   await connectMongoDB();
+  await verifyMySqlConnection();
   await syncModelIndexes(User);
   startCronJobs();
 
@@ -34,6 +39,7 @@ const startServer = async () => {
 
     server.close(() => {
       disconnectMongoDB().finally(() => process.exit(0));
+      closeMySqlPool().finally(() => process.exit(0));
     });
   };
 
