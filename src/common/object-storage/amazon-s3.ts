@@ -1,3 +1,4 @@
+//TODOS: Test uploadFile with different image types and base64 strings
 import fs from 'fs';
 import {
   DeleteObjectCommand,
@@ -9,6 +10,9 @@ import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import path from 'path';
 import { config } from '../../config/index.js';
+import { File } from 'formidable';
+
+type Base64ImageFile = { buffer: Buffer; name: string; type: string };
 
 const s3 = new S3Client({
   region: config.aws.s3.region,
@@ -18,7 +22,7 @@ const s3 = new S3Client({
   },
 });
 
-export const deleteObjectFromS3 = async (key, bucket) => {
+export const deleteObjectFromS3 = async (key: string, bucket: string) => {
   return s3.send(
     new DeleteObjectCommand({
       Bucket: bucket,
@@ -27,7 +31,7 @@ export const deleteObjectFromS3 = async (key, bucket) => {
   );
 };
 
-export const getObjectFromS3 = async (key, bucket) => {
+export const getObjectFromS3 = async (key: string, bucket: string) => {
   return s3.send(
     new GetObjectCommand({
       Bucket: bucket,
@@ -36,13 +40,12 @@ export const getObjectFromS3 = async (key, bucket) => {
   );
 };
 
-const getObjectLocation = (bucket, key) =>
+const getObjectLocation = (bucket: string, key: string): string =>
   `https://${bucket}.s3.${config.aws.s3.region}.amazonaws.com/${encodeURIComponent(
     key,
   ).replace(/%2F/g, '/')}`;
 
-//V2
-const isValidImage = (file) => {
+const isValidImage = (file: File | Base64ImageFile) => {
   const fileType = file.type;
   const validImageTypes = [
     'image/gif',
@@ -60,7 +63,7 @@ const isValidImage = (file) => {
   }
 };
 
-const parseBase64Image = (dataUri) => {
+const parseBase64Image = (dataUri: string): Base64ImageFile => {
   const match = dataUri.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
 
   if (!match) {
@@ -77,11 +80,17 @@ const parseBase64Image = (dataUri) => {
   };
 };
 
-export const uploadFile = async (file, folder, width = 1600) => {
+export const uploadFile = async (
+  file: string | File,
+  folder: string,
+  width = 1600,
+) => {
   const normalizedFile =
     typeof file === 'string' ? parseBase64Image(file) : file;
   const sourceBuffer =
-    normalizedFile.buffer || fs.readFileSync(normalizedFile.path);
+    'buffer' in normalizedFile
+      ? normalizedFile.buffer
+      : fs.readFileSync(normalizedFile.path);
   let body = sourceBuffer;
   let type = normalizedFile.type;
   let key = `${folder}/${nanoid()}${path.extname(normalizedFile.name)}`;
