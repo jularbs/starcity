@@ -11,7 +11,9 @@ import { config } from '../../config/index.js';
 
 let isStarted = false;
 
-const runJob = (job, name) => {
+type CronJob = () => Promise<void>;
+
+const runJob = (job: CronJob, name: string) => {
   Promise.resolve(job()).catch((error) => {
     console.error(`Cron job failed (${name}):`, error);
   });
@@ -37,16 +39,28 @@ export const startCronJobs = () => {
     }
   });
 
-  cron.schedule('0 0 * * *', () => {
-    if (config.app.isProduction) {
-      runJob(dbcleanup, 'database cleanup');
-    }
-  });
+  cron.schedule(
+    '0 0 * * *',
+    () => {
+      if (config.app.isProduction) {
+        runJob(dbcleanup, 'database cleanup');
+      }
+    },
+    {
+      timezone: 'Asia/Manila',
+    },
+  );
 
-  cron.schedule('5 16 * * *', () => {
-    if (config.app.isProduction) {
-      runJob(generateDailyReport, 'generate daily report');
-      runJob(generateQRdeliveryReport, 'generate QR delivery report');
-    }
-  });
+  cron.schedule(
+    '5 0 * * *',
+    () => {
+      if (config.app.isProduction) {
+        runJob(generateDailyReport, 'generate daily report');
+        runJob(generateQRdeliveryReport, 'generate QR delivery report');
+      }
+    },
+    {
+      timezone: 'Asia/Manila',
+    },
+  );
 };

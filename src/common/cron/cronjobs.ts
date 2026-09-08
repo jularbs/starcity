@@ -1,3 +1,5 @@
+//TODOS: Needs regression testing for all.
+// Focus on currency amounts for accuracy (Number vs ParseFloat)
 import AccessPassQueue from '../../modules/accessPass/accessPassQueue.model.js';
 import SmQueue from '../../modules/smTickets/smQueue.model.js';
 import EmailQueue from '../../modules/email/emailQueue.model.js';
@@ -29,15 +31,18 @@ export const cronSyncAP = async () => {
           console.log('CONNECTION ERRER: ', err);
         } else {
           queues.map((q) => {
-            const date = format(q.accessPass.createdAt, 'yyyy-MM-dd');
-            const time = format(q.accessPass.createdAt, 'HH:mm:ss');
+            const accessPass = q.accessPass as unknown as InstanceType<
+              typeof AccessPass
+            >;
+            const date = format(accessPass.createdAt, 'yyyy-MM-dd');
+            const time = format(accessPass.createdAt, 'HH:mm:ss');
 
             //extract itemCode from AccessToken
-            const RideCode = q.accessPass.accessToken.match('-(.*)-')[1];
+            const RideCode = accessPass.accessToken.match('-(.*)-')[1];
 
             const values = [
               [
-                q.accessPass.accessToken,
+                accessPass.accessToken,
                 'Pop Tag',
                 date,
                 time,
@@ -53,22 +58,22 @@ export const cronSyncAP = async () => {
 
             connection.query(sql, [values], async function (error, results) {
               if (error) {
-                console.log('FAILED TO SYNC: ', q.accessPass.accessToken);
+                console.log('FAILED TO SYNC: ', accessPass.accessToken);
                 addAuditTrailEntry({
-                  action: `System failed to sync Access Pass: ${q.accessPass.accessToken}`,
+                  action: `System failed to sync Access Pass: ${accessPass.accessToken}`,
                   meta: error,
                 });
               } else if (results.affectedRows < 1) {
                 console.log(
                   `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                  q.accessPass.accessToken,
+                  accessPass.accessToken,
                 );
               } else {
                 //remove in queue;
-                await AccessPassQueue.deleteOne({ _id: q._id }).exec();
+                await AccessPassQueue.deleteOne({ _id: accessPass._id }).exec();
                 console.log(
                   'ACCESSPASS SUCCESS FOR ID: ',
-                  q.accessPass.accessToken,
+                  accessPass.accessToken,
                 );
               }
             });
@@ -92,14 +97,14 @@ export const cronSyncSMTickets = async () => {
       pool.getConnection((err, connection) => {
         if (err) {
           console.log('CONNECTION ERRER: ', err);
-          return 0;
+          return;
         }
 
         queues.map((q) => {
           const date = format(q.createdAt, 'yyyy-MM-dd');
           const time = format(q.createdAt, 'HH:mm:ss');
           const expiry = q.ticketExpiry;
-          const ticketType = q.Ridecode;
+          const ticketType = q.RideCode;
           const values = [
             [
               q.tokenID,
@@ -121,25 +126,25 @@ export const cronSyncSMTickets = async () => {
             //if Error: do not remove in queue
             if (error) {
               console.log('Unable to process SM Queue: ', error);
-              return 0;
+              return;
             }
 
             if (results.affectedRows < 1) {
               console.log('Unable to process SM Queue: no affected rows');
-              return 0;
+              return;
             }
 
             // no error (remove from queue);
             console.log('SM Queue Processed for tokenID: ', q.tokenID);
             await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
-            return 1;
+            return;
           });
         });
       });
     } catch (e) {
       console.log('Error on MySQL Connection: ');
       console.log(e);
-      return 0;
+      return;
     }
   }
 };
@@ -167,9 +172,9 @@ export const cronProcessEmailQueues = async () => {
 };
 
 export const dbcleanup = async () => {
-  let previous2Months = new Date();
+  const previous2Months = new Date();
   previous2Months.setDate(
-    previous2Months.getDate() - parseInt(config.app.dataRetentionDays),
+    previous2Months.getDate() - config.app.dataRetentionDays,
   );
 
   console.log('**** CLEANING UP DATABASE ****');
@@ -242,28 +247,36 @@ export const generateDailyReport = async () => {
   //Initialize Tickets Summary Values
   const ticketsData = await Ticket.find({}).select('name').exec();
 
-  let ticketsArray = ticketsData.map((ticket) => {
+  const ticketsArray = ticketsData.map((ticket) => {
     return { id: ticket._id, name: ticket.name, qty: 0 };
   });
 
   //Initialize Payment Details Summary
   const paymentsData = await PaymentOption.find({}).select('name').exec();
 
-  let paymentsArray = paymentsData.map((po) => {
+  const paymentsArray = paymentsData.map((po) => {
     return { id: po._id, name: po.name, qty: 0, amount: 0 };
   });
 
   const dataArray = salesData.map((data) => {
     numOfTransaction += 1;
-    totalTransactionPrice += data.orderTotal;
+    totalTransactionPrice += Number(data.orderTotal);
 
     //update payment option counter
     const paymentOptionIndex = paymentsArray.findIndex(
-      (obj) => obj.name == data.paymentDetails?.option?.name,
+      (obj) =>
+        obj.name ==
+        (
+          data.paymentDetails?.option as unknown as InstanceType<
+            typeof PaymentOption
+          >
+        )?.name,
     );
     if (paymentOptionIndex !== -1) {
       paymentsArray[paymentOptionIndex].qty += 1;
-      paymentsArray[paymentOptionIndex].amount += data.orderTotal;
+      paymentsArray[paymentOptionIndex].amount += Number(
+        data.orderTotal.toString(),
+      );
     }
 
     return {
@@ -273,23 +286,31 @@ export const generateDailyReport = async () => {
       ),
       customerName: data.customerName,
       transactionNumber: data.refId,
-      paymentGateway: data.paymentDetails?.option?.name,
+      paymentGateway: (
+        data.paymentDetails?.option as unknown as InstanceType<
+          typeof PaymentOption
+        >
+      )?.name,
       ticketType: `${convertArrayToCSV(
         data.cartItems.map((ticket) => {
           ticketsSold += ticket.qty;
 
+          const populatedTicket = ticket.ticketId as unknown as InstanceType<
+            typeof Ticket
+          >;
+
           //update tickets counter
           const ticketIndex = ticketsArray.findIndex(
-            (obj) => obj.name == ticket.ticketId?.name,
+            (obj) => obj.name == populatedTicket?.name,
           );
           if (ticketIndex !== -1) {
             ticketsArray[ticketIndex].qty += ticket.qty;
           }
 
-          return [ticket.ticketId?.name, ticket.qty, ticket.ticketId?.price];
+          return [populatedTicket?.name, ticket.qty, populatedTicket?.price];
         }),
       )}\n`,
-      price: parseFloat(data.orderTotal).toFixed(2),
+      price: Number(data.orderTotal).toFixed(2),
       emailAddress: data.emailAddress,
       mobileNumber: data.contactNumber,
     };
@@ -298,13 +319,13 @@ export const generateDailyReport = async () => {
   const salesDataCSV = convertArrayToCSV(dataArray);
 
   const details = {
-    to: config.email.reportsRecipient,
+    to: config.app.reportsRecipient,
     from: config.email.address,
     subject: `Sales Summary for ${datetime}`,
     html: `
     <h1>Sales Summary for ${format(utcToZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(utcToZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>
     <p>Total Number of Transactions: ${numOfTransaction}</p>
-    <p>Total Price of Transactions: ₱${parseFloat(totalTransactionPrice).toFixed(2)}</p>
+    <p>Total Price of Transactions: ₱${Number(totalTransactionPrice).toFixed(2)}</p>
     <p>Total Number of Tickets Sold: ${ticketsSold}</p>
 
     <h2>Tickets Summary</h2>
@@ -321,10 +342,18 @@ export const generateDailyReport = async () => {
         });
 
         salesData.map((data) => {
-          if (data.paymentDetails?.option?.name === row.name) {
+          if (
+            (
+              data.paymentDetails?.option as unknown as InstanceType<
+                typeof PaymentOption
+              >
+            )?.name === row.name
+          ) {
             data.cartItems.map((ticket) => {
+              const populatedTicket =
+                ticket.ticketId as unknown as InstanceType<typeof Ticket>;
               const ticketIndex = ticketCounter.findIndex(
-                (obj) => obj.name == ticket.ticketId?.name,
+                (obj) => obj.name == populatedTicket?.name,
               );
               if (ticketIndex !== -1) {
                 ticketCounter[ticketIndex].qty += ticket.qty;
@@ -335,7 +364,7 @@ export const generateDailyReport = async () => {
 
         return `<h4>${row.name}</h4>
               <p style="margin-left: 20px">Transactions: ${row.qty}</p>
-              <p style="margin-left: 20px">Amount: ₱${parseFloat(row.amount).toFixed(2)}</p>
+              <p style="margin-left: 20px">Amount: ₱${Number(row.amount).toFixed(2)}</p>
               ${ticketCounter
                 .map((counter) => {
                   return `<p style="margin-left: 20px">${counter.name}: ${counter.qty}</p>`;
@@ -394,8 +423,10 @@ export const generateQRdeliveryReport = async () => {
         utcToZonedTime(data.createdAt, 'Asia/Manila'),
         'PPp',
       ),
-      referenceNumber: data.salesId?.refId,
-      ticketType: data.ticketId?.name,
+      referenceNumber: (data.salesId as unknown as InstanceType<typeof Sale>)
+        ?.refId,
+      ticketType: (data.ticketId as unknown as InstanceType<typeof Ticket>)
+        ?.name,
       accessToken: data.accessToken,
     };
   });
@@ -403,7 +434,7 @@ export const generateQRdeliveryReport = async () => {
   const accessPassDataCSV = convertArrayToCSV(dataArray);
 
   const details = {
-    to: config.email.reportsRecipient,
+    to: config.app.reportsRecipient,
     from: config.email.address,
     subject: `QR Values Delivery Report for ${datetime}`,
     html: `
