@@ -10,6 +10,27 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
+
+  mysql:
+    image: mysql:8.4
+    container_name: spc-mysql
+    restart: unless-stopped
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: starcity_test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'test', '-ptest']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   minio:
     image: minio/minio:latest
     container_name: spc-minio
@@ -46,3 +67,4 @@ services:
 volumes:
   minio_data:
   mongo_data:
+  mysql_data:
