@@ -12,6 +12,7 @@ export const config = {
     isDevelopment: env.NODE_ENV === 'development',
     isTest: env.NODE_ENV === 'test',
     isProduction: env.NODE_ENV === 'production',
+    isTurnstileSyncEnabled: env.TURNSTILE_SYNC_ENABLED,
   },
   cors: {
     origin: env.CORS_DOMAINS,

@@ -55,6 +55,9 @@ const envSchema = z.object({
   PAYMAYA_PUBLIC_KEY: z.string(),
   PAYMAYA_ENVIRONMENT: z.string(),
   PAYMAYA_ALLOWED_IPS: z.string().default('13.229.160.234,3.1.199.75'),
+  TURNSTILE_SYNC_ENABLED: z
+    .enum(['true', 'false'])
+    .transform((val) => val === 'true'),
 });
 
 // Validate process.env against the schema

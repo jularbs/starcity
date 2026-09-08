@@ -200,10 +200,8 @@ export const sendAR = async (refId) => {
 };
 
 const syncAccessPass = (accessPass, RideCode) => {
-  if (!config.app.isProduction) {
-    console.log(
-      'Access Pass Syncing is disabled in non-production environments.',
-    );
+  if (!config.app.isTurnstileSyncEnabled) {
+    console.log('Access Pass Syncing is disabled');
     return;
   }
   console.log('SYNCING ACCESS PASS: ', accessPass.accessToken);
