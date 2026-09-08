@@ -2,6 +2,7 @@ import { rideService } from './ride.service.js';
 import formidable from 'formidable';
 import slugify from 'slugify';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
+import type { Types } from 'mongoose';
 import { createEntry } from '../auditTrail/auditTrail.controller.js';
 export const create = (req, res) => {
   const form = formidable({ multiples: true });
@@ -11,10 +12,11 @@ export const create = (req, res) => {
       fields;
     const { image } = files;
 
-    const slug = slugify.default(name).toLowerCase();
+    const slug = slugify.default(name as string).toLowerCase();
 
     if (image) {
-      if (image.size > 1000000) {
+      const imageFile = Array.isArray(image) ? image[0] : image;
+      if (imageFile.size > 1000000) {
         return res.status(400).json({
           error: 'Image too large. ( > 1MB ).',
         });
@@ -27,7 +29,7 @@ export const create = (req, res) => {
       let imageInfo;
       try {
         imageInfo = await uploadFile(
-          image,
+          imageFile,
           `ride/${year}/${month}/${slug}`,
           600,
         );
@@ -41,12 +43,18 @@ export const create = (req, res) => {
       if (imageInfo.location && imageInfo.bucket && imageInfo.key) {
         try {
           const rideData = {
-            name,
-            description,
+            name: Array.isArray(name) ? name[0] : name,
+            description: Array.isArray(description)
+              ? description[0]
+              : description,
             slug,
-            status,
-            heightRequirements,
-            rideCategoryId: categoryId,
+            status: Array.isArray(status) ? status[0] : status,
+            heightRequirements: Array.isArray(heightRequirements)
+              ? heightRequirements[0]
+              : heightRequirements,
+            rideCategoryId: Array.isArray(categoryId)
+              ? (categoryId[0] as unknown as Types.ObjectId)
+              : (categoryId as unknown as Types.ObjectId),
             media: imageInfo,
           };
           const result = await rideService.create(rideData);
@@ -97,7 +105,9 @@ export const update = async (req, res) => {
       fields;
     const { image } = files;
 
-    const ride = await rideService.getBySlug(slug);
+    const ride = await rideService.getBySlug(
+      Array.isArray(slug) ? slug[0] : slug,
+    );
 
     if (!ride) {
       return res.status(400).json({
@@ -109,7 +119,8 @@ export const update = async (req, res) => {
 
     let imageInfo;
     if (image) {
-      if (image.size > 1000000) {
+      const imageFile = Array.isArray(image) ? image[0] : image;
+      if (imageFile.size > 1000000) {
         return res.status(400).json({
           error: 'Image too large. ( > 1MB ).',
         });
@@ -119,15 +130,19 @@ export const update = async (req, res) => {
       const month = date.getUTCMonth() + 1; //months from 1-12
       const year = date.getUTCFullYear();
 
-      imageInfo = await uploadFile(image, `ride/${year}/${month}/${slug}`);
+      imageInfo = await uploadFile(imageFile, `ride/${year}/${month}/${slug}`);
     }
 
     const rideData = {
-      name,
-      description,
-      status,
-      heightRequirements,
-      rideCategoryId: categoryId,
+      name: Array.isArray(name) ? name[0] : name,
+      description: Array.isArray(description) ? description[0] : description,
+      status: Array.isArray(status) ? status[0] : status,
+      heightRequirements: Array.isArray(heightRequirements)
+        ? heightRequirements[0]
+        : heightRequirements,
+      rideCategoryId: Array.isArray(categoryId)
+        ? (categoryId[0] as unknown as Types.ObjectId)
+        : (categoryId as unknown as Types.ObjectId),
       ...(imageInfo && imageInfo.location && { media: imageInfo }),
     };
 
