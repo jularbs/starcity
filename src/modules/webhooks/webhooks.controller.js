@@ -2,12 +2,13 @@ import Sale from '../sale/sale.model.js';
 import SmQueue from '../smTickets/smQueue.model.js';
 import SmTicket from '../smTickets/smTickets.model.js';
 import { paymentOptionService } from '../paymentOption/paymentOption.service.js';
-import { sendAR, getOpenParkExpiry } from '../sale/sale.controller.js';
+import { sendAR } from '../sale/sale.controller.js';
 import { accessPassService } from '../accessPass/accessPass.service.js';
 import { format } from 'date-fns';
 import { cronSyncSMTickets } from '../../common/cron/cronjobs.js';
 import { config } from '../../config/index.js';
 import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js';
+import { getOpenParkExpiry } from '../../common/utils/get-expiry.js';
 
 export const paymayaRequestCheckout = async (req, res) => {
   const paymayaPK = config.paymaya.publicKey;

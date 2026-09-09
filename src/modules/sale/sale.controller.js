@@ -5,39 +5,12 @@ import { accessPassService } from '../accessPass/accessPass.service.js';
 import crypto from 'crypto';
 import { sendMail } from '../email/email.service.js';
 import { accessPassEmailNotification } from '../email/templates/index.js';
-import { add, format, getDay, nextThursday } from 'date-fns';
+import { format } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
 import EmailQueue from '../email/emailQueue.model.js';
-//TEST
 import { promoService } from '../promo/promo.service.js';
-//HELPERS
-const { utcToZonedTime, zonedTimeToUtc } = dateFnsTz;
-
-export const getOpenParkExpiry = () => {
-  //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
-  const adjustDays = [1, 2, 3];
-
-  const expiryDate = utcToZonedTime(
-    add(new Date(), {
-      months: 1,
-    }),
-    'Asia/Manila',
-  );
-
-  const dayValue = getDay(expiryDate);
-
-  const inAdjustDays = adjustDays.indexOf(dayValue);
-  const shouldAdjust = inAdjustDays >= 0 ? true : false;
-  let expiry;
-
-  if (shouldAdjust) {
-    expiry = format(nextThursday(expiryDate), 'MMMM dd, yyyy');
-  } else {
-    expiry = format(expiryDate, 'MMMM dd, yyyy');
-  }
-
-  return expiry;
-};
+import { getOpenParkExpiry } from '../../common/utils/get-expiry.js';
+const { zonedTimeToUtc } = dateFnsTz;
 
 export const resendAR = async (req, res) => {
   const { refId } = req.body;
