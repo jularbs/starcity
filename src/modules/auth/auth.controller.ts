@@ -111,7 +111,7 @@ export const signin = async (req, res) => {
       hashedRefreshToken,
     );
 
-    res.cookie('token', refreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.auth.cookieSecure,
       sameSite: 'Strict',
@@ -149,7 +149,7 @@ export const signin = async (req, res) => {
 };
 
 export const signout = async (req, res) => {
-  const token = req.cookies.token;
+  const token = req.cookies.refreshToken;
   if (!token) {
     return res.json({
       error: 'No token provided.',
@@ -158,7 +158,7 @@ export const signout = async (req, res) => {
 
   const hashedRefreshToken = hashRefreshToken(token);
   await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
-  res.clearCookie('token');
+  res.clearCookie('refreshToken');
   res.json({
     message: 'Signout success',
   });
