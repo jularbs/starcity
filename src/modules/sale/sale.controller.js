@@ -11,19 +11,11 @@ import { add, format, getDay, nextThursday } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
 import EmailQueue from '../email/emailQueue.model.js';
 import { accessPassQueueService } from '../accessPassQueue/accessPassQueue.service.js';
+import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js';
 //TEST
 import { promoService } from '../promo/promo.service.js';
 //HELPERS
 const { utcToZonedTime, zonedTimeToUtc } = dateFnsTz;
-
-const getCurrentTicketPrice = async (ticket) => {
-  const { ticketId } = ticket;
-
-  const result = await ticketService.getById(ticketId);
-
-  if (!result) throw new Error('Ticket not found');
-  return { price: result.price };
-};
 
 const generateValidToken = async (itemCode) => {
   let isExisting = [];
@@ -66,7 +58,7 @@ export const generateAccessPass = (sale, accessPasses) => {
 
       const upload = await uploadFile(
         base64,
-        `access-pass/${year}/${month}/${sale.customerName}/${sale.refId}/${finalToken}`,
+        `access-pass/${year}/${month}/${sale.refId}`,
         300,
       );
 
@@ -82,8 +74,7 @@ export const generateAccessPass = (sale, accessPasses) => {
       };
       try {
         const result = await accessPassService.create(accessPassData);
-        const syncResult = await syncAccessPass(result, ticket.itemCode);
-        console.log(`Processing ${finalToken}: `, syncResult);
+        await syncAccessPass(result, ticket.itemCode);
         console.log(`ACCESS PASS ${finalToken} CREATED`);
       } catch {
         console.log('FAILED TO SAVE TOKEN IN DATABASE: ', finalToken);
@@ -203,7 +194,7 @@ const syncAccessPass = async (accessPass, _RideCode) => {
   }
   try {
     await turnstileSyncService.addAccessPassToTurnstile({
-      accessPassCode: accessPass.accessToken,
+      accesspassCode: accessPass.accessToken,
       origin: 'web',
       expiry: accessPass.expiryDate,
       date: accessPass.createdAt,
@@ -368,13 +359,11 @@ export const createCheckout = async (req, res) => {
   try {
     items = await Promise.all(
       cartItems.map(async (item) => {
-        const price = await getCurrentTicketPrice({
-          ticketId: item._id,
-        });
+        const currentPrice = await ticketService.getCurrentPriceById(item._id);
         return {
           ticketId: item._id,
           qty: item.qty,
-          priceAcquired: price.price,
+          priceAcquired: currentPrice,
         };
       }),
     );

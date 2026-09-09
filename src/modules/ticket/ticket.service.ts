@@ -59,10 +59,19 @@ const list = async (filters: { status?: boolean }) => {
   return ticketRepository.list(filters);
 };
 
+const getCurrentPriceById = async (id: Types.ObjectId) => {
+  const ticket = await ticketRepository.findById(id);
+  if (!ticket) {
+    throw new Error('Ticket not found');
+  }
+  return ticket.price;
+};
+
 export const ticketService = {
   create,
   updateById,
   getById,
   getBySlug,
   list,
+  getCurrentPriceById,
 };
