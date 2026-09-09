@@ -1,11 +1,10 @@
 import { config } from '../../config/index.js';
 import Sale from './sale.model.js';
-import Ticket from '../ticket/ticket.model.js';
+import { ticketService } from '../ticket/ticket.service.js';
 import { accessPassService } from '../accessPass/accessPass.service.js';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
-import mongoose from 'mongoose';
 import { sendMail } from '../email/email.service.js';
 import { accessPassEmailNotification } from '../email/templates/index.js';
 import { pool } from '../../database/mysql/index.js';
@@ -21,9 +20,7 @@ const { utcToZonedTime, zonedTimeToUtc } = dateFnsTz;
 const getCurrentTicketPrice = async (ticket) => {
   const { ticketId } = ticket;
 
-  const result = await Ticket.findOne({
-    _id: new mongoose.Types.ObjectId(`${ticketId}`),
-  }).exec();
+  const result = await ticketService.getById(ticketId);
 
   if (!result) throw new Error('Ticket not found');
   return { price: result.price };
@@ -57,9 +54,7 @@ const generateQRCode = async (text) => {
 export const generateAccessPass = (sale, accessPasses) => {
   accessPasses.map(async (ap) => {
     //get ticketDetails
-    const ticket = await Ticket.findOne({
-      _id: ap.ticketId,
-    }).exec();
+    const ticket = await ticketService.getById(ap.ticketId);
 
     for (let i = 0; i < ap.qty; i++) {
       //check for dupes
@@ -557,9 +552,7 @@ export const resyncSaleByRefId = async (req, res) => {
       const accesspasses = await accessPassService.getBySalesId(sale._id);
       accesspasses.map(async (ap) => {
         //get ticketDetails
-        const ticket = await Ticket.findOne({
-          _id: ap.ticketId,
-        }).exec();
+        const ticket = await ticketService.getById(ap.ticketId);
         await syncAccessPass(ap, ticket.itemCode);
       });
       return res.json({ status: 'Success', action: 'Sale Resynced' });

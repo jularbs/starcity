@@ -1,23 +1,25 @@
-import Ticket from './ticket.model.js';
 import slugify from 'slugify';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+import { ticketService } from './ticket.service.js';
+
 export const create = async (req, res) => {
   const { name, code, shortDescription, price, details } = req.body;
 
-  const slug = slugify(name).toLowerCase();
+  const slug = slugify.default(name).toLowerCase();
 
-  let ticket = new Ticket();
-
-  ticket.name = name;
-  ticket.slug = slug;
-  ticket.itemCode = code;
-
-  ticket.price = price;
-  ticket.shortDescription = shortDescription;
-  ticket.details = details;
+  const ticketData = {
+    name,
+    slug,
+    itemCode: code,
+    shortDescription,
+    price,
+    details,
+    status: false,
+    meta: undefined,
+  };
 
   try {
-    const result = await ticket.save();
+    const result = await ticketService.create(ticketData);
     auditTrailService.create({
       action: `Created New Ticket ${name}`,
       payload: result,
@@ -34,10 +36,7 @@ export const create = async (req, res) => {
 
 export const read = async (req, res) => {
   try {
-    const data = await Ticket.findOne({
-      slug: req.params.slug,
-      deletedAt: null,
-    }).exec();
+    const data = await ticketService.getBySlug(req.params.slug);
 
     if (!data) {
       return res.status(404).json({
@@ -59,7 +58,7 @@ export const list = async (req, res) => {
 
   if (f) {
     try {
-      const data = await Ticket.find({ status: true, deletedAt: null }).exec();
+      const data = await ticketService.list({ status: true });
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -69,7 +68,7 @@ export const list = async (req, res) => {
     }
   } else {
     try {
-      const data = await Ticket.find({ deletedAt: null }).exec();
+      const data = await ticketService.list({});
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -83,16 +82,23 @@ export const list = async (req, res) => {
 export const update = async (req, res) => {
   const { name, _id, shortDescription, price, details, code } = req.body;
 
-  const ticket = await Ticket.findOne({ _id }).exec();
+  const ticket = await ticketService.getById(_id);
 
-  ticket.name = name;
-  ticket.itemCode = code;
-  ticket.shortDescription = shortDescription;
-  ticket.price = price;
-  ticket.details = details;
+  const updatedData = {
+    name,
+    slug: ticket.slug,
+    itemCode: code,
+    shortDescription,
+    price,
+    details,
+  };
+
+  if (name !== ticket.name) {
+    updatedData.slug = slugify.default(name).toLowerCase();
+  }
 
   try {
-    const result = await ticket.save();
+    const result = await ticketService.updateById(_id, updatedData);
     res.json({ result, success: 'Ticket updated successfully!' });
     auditTrailService.create({
       action: `Updated ticket ${name}`,
@@ -117,16 +123,7 @@ export const remove = async (req, res) => {
       });
     }
 
-    const ticket = await Ticket.findOne({ _id }).exec();
-
-    if (!ticket) {
-      return res.status(404).json({
-        error: 'Ticket not found',
-      });
-    }
-
-    ticket.deletedAt = new Date();
-    await ticket.save();
+    await ticketService.updateById(_id, { deletedAt: new Date() });
     res.json({ success: 'Ticket deleted successfully' });
     auditTrailService.create({
       action: `Deleted ticket ${_id}`,
@@ -144,14 +141,12 @@ export const remove = async (req, res) => {
 export const toggleStatus = async (req, res) => {
   const { _id } = req.body;
 
-  let ticket = await Ticket.findOne({ _id }).exec();
-
-  if (!ticket) return res.status(400).json({ error: 'Ticket not found' });
-
-  ticket.status = !ticket.status;
+  const ticket = await ticketService.getById(_id);
 
   try {
-    const result = await ticket.save();
+    const result = await ticketService.updateById(_id, {
+      status: !ticket.status,
+    });
     auditTrailService.create({
       action: `Toggled ticket ${ticket.name}`,
       payload: { status: result.status },

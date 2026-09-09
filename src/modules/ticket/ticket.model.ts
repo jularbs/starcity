@@ -33,11 +33,6 @@ const ticketSchema = new mongoose.Schema(
       get: getPrice,
       default: 0,
     },
-    media: {
-      contentType: String,
-      location: String,
-      key: String,
-    },
     status: {
       type: Boolean,
       default: true,

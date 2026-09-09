@@ -18,6 +18,7 @@ import { sendAR } from '../../modules/sale/sale.controller.js';
 import { config } from '../../config/index.js';
 import { accessPassQueueService } from '../../modules/accessPassQueue/accessPassQueue.service.js';
 import { accessPassService } from '../../modules/accessPass/accessPass.service.js';
+import { ticketService } from '../../modules/ticket/ticket.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -246,7 +247,7 @@ export const generateDailyReport = async () => {
   let ticketsSold = 0;
 
   //Initialize Tickets Summary Values
-  const ticketsData = await Ticket.find({}).select('name').exec();
+  const ticketsData = await ticketService.list({ status: true });
 
   const ticketsArray = ticketsData.map((ticket) => {
     return { id: ticket._id, name: ticket.name, qty: 0 };
