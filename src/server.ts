@@ -3,6 +3,7 @@ import {
   disconnectMongoDB,
   syncModelIndexes,
 } from './database/mongodb/index.js';
+import { verifyS3Connection } from './common/object-storage/amazon-s3.js';
 import app from './app.js';
 import {
   closeMySqlPool,
@@ -21,6 +22,7 @@ const startServer = async () => {
   await verifyMySqlConnection();
   await syncModelIndexes(User);
   await verifyEmailServer();
+  await verifyS3Connection();
   startCronJobs();
 
   const server = app.listen(port, () => {

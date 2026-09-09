@@ -3,6 +3,7 @@ import fs from 'fs';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -40,6 +41,17 @@ const s3 = new S3Client({
     secretAccessKey: config.aws.s3.secretKey,
   },
 });
+
+export async function verifyS3Connection() {
+  const command = new HeadBucketCommand({ Bucket: config.aws.s3.bucketName });
+  try {
+    await s3.send(command);
+    console.log('S3 bucket connection verified successfully.');
+  } catch (error) {
+    console.error('Failed to connect to S3 bucket:', error.message);
+    process.exit(1);
+  }
+}
 
 export const deleteObjectFromS3 = async (key: string, bucket: string) => {
   return s3.send(
