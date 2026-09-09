@@ -1,13 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import {
-  create,
-  read,
-  list,
-  update,
-  remove,
-  logoUpload,
-} from './option.controller.js';
+import { create, read, list, update, remove } from './option.controller.js';
 import {
   requireSignin,
   authzMiddleware,
@@ -23,13 +16,6 @@ router.post(
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
   create,
-);
-
-router.post(
-  '/v1/logo-option',
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
-  logoUpload,
 );
 
 router.put(
