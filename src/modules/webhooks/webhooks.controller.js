@@ -2,11 +2,8 @@ import Sale from '../sale/sale.model.js';
 import SmQueue from '../smTickets/smQueue.model.js';
 import SmTicket from '../smTickets/smTickets.model.js';
 import { paymentOptionService } from '../paymentOption/paymentOption.service.js';
-import {
-  generateAccessPass,
-  sendAR,
-  getOpenParkExpiry,
-} from '../sale/sale.controller.js';
+import { sendAR, getOpenParkExpiry } from '../sale/sale.controller.js';
+import { accessPassService } from '../accessPass/accessPass.service.js';
 import { format } from 'date-fns';
 import { cronSyncSMTickets } from '../../common/cron/cronjobs.js';
 import { config } from '../../config/index.js';
@@ -212,7 +209,11 @@ export const paymayaPaymentSuccess = async (req, res) => {
 
     //send Acknowledgement receipt
     if (status == 'PAYMENT_SUCCESS') {
-      generateAccessPass(result, result.cartItems);
+      try {
+        await accessPassService.generateAccessPassesBySaleId(result._id);
+      } catch (err) {
+        console.log('ERROR IN GENERATING ACCESS PASSES: ', err);
+      }
       sendAR(result.refId);
     }
   } catch (err) {
@@ -380,34 +381,38 @@ export const smTicketVoid = async (req, res) => {
     });
   }
 
-  await Promise.all(
-    tickets.map(async (item) => {
-      const { ticketID } = item;
-      console.log('VOIDING TICKET: ', ticketID);
+  try {
+    await Promise.all(
+      tickets.map(async (item) => {
+        const { ticketID } = item;
+        console.log('VOIDING TICKET: ', ticketID);
 
-      //record new tiken
-      const newticket = new SmTicket();
-      newticket.tokenId = ticketID;
-      newticket.method = 'Void';
+        //record new tiken
+        const newticket = new SmTicket();
+        newticket.tokenId = ticketID;
+        newticket.method = 'Void';
 
-      try {
-        await newticket.save();
-        console.log('SM Ticket voided: ', ticketID);
-      } catch (err) {
-        console.log(err);
-      }
+        try {
+          await newticket.save();
+          console.log('SM Ticket voided: ', ticketID);
+        } catch (err) {
+          console.log(err);
+        }
 
-      try {
-        await turnstileSyncService.voidAccessPassInTurnstile(ticketID);
-      } catch {
-        console.log('ERROR IN VOIDING TICKET...');
-        return res.status(500).json({
-          status: 'Internal Server Error',
-          message: 'Cannot connect to Turnstile System',
-        });
-      }
-    }),
-  );
+        try {
+          await turnstileSyncService.voidAccessPassInTurnstile(ticketID);
+        } catch {
+          console.log('ERROR IN VOIDING TICKET...');
+          throw new Error('Cannot connect to Turnstile System');
+        }
+      }),
+    );
+  } catch {
+    return res.status(500).json({
+      status: 'Internal Server Error',
+      message: 'Cannot connect to Turnstile System',
+    });
+  }
 
   res.status(200).json({
     status: 'Success',
@@ -458,7 +463,7 @@ export const bpiTransact = async (req, res) => {
           const result = await sale.save();
           if (transactionStatus == 'SUCCESSFUL') {
             console.log('GENERATING ACCESS PASS');
-            generateAccessPass(result, result.cartItems);
+            await accessPassService.generateAccessPassesBySaleId(result._id);
             console.log('SENDING ACKNOWLEDGEMENT RECEIPT');
             sendAR(result.refId);
             return res.redirect(

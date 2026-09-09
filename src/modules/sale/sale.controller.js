@@ -3,85 +3,15 @@ import Sale from './sale.model.js';
 import { ticketService } from '../ticket/ticket.service.js';
 import { accessPassService } from '../accessPass/accessPass.service.js';
 import crypto from 'crypto';
-import QRCode from 'qrcode';
-import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import { sendMail } from '../email/email.service.js';
 import { accessPassEmailNotification } from '../email/templates/index.js';
 import { add, format, getDay, nextThursday } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
 import EmailQueue from '../email/emailQueue.model.js';
-import { accessPassQueueService } from '../accessPassQueue/accessPassQueue.service.js';
-import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js';
 //TEST
 import { promoService } from '../promo/promo.service.js';
 //HELPERS
 const { utcToZonedTime, zonedTimeToUtc } = dateFnsTz;
-
-const generateValidToken = async (itemCode) => {
-  let isExisting = [];
-  let finalToken = '';
-
-  do {
-    finalToken = `W-${itemCode}-${crypto.randomBytes(4).toString('hex')}`;
-    finalToken = finalToken.toUpperCase();
-    isExisting = await accessPassService.getByAccessToken(finalToken);
-  } while (isExisting);
-
-  return finalToken;
-};
-
-const generateQRCode = async (text) => {
-  return QRCode.toDataURL(text, {
-    version: 4,
-    errorCorrectionLevel: 'H',
-    type: 'image/jpeg',
-    quality: 1,
-    margin: 5,
-    width: 300,
-    height: 300,
-  });
-};
-
-export const generateAccessPass = (sale, accessPasses) => {
-  accessPasses.map(async (ap) => {
-    //get ticketDetails
-    const ticket = await ticketService.getById(ap.ticketId);
-
-    for (let i = 0; i < ap.qty; i++) {
-      //check for dupes
-      const finalToken = await generateValidToken(ticket.itemCode);
-      const base64 = await generateQRCode(finalToken);
-
-      const date = new Date();
-      const month = date.getUTCMonth() + 1; //months from 1-12
-      const year = date.getUTCFullYear();
-
-      const upload = await uploadFile(
-        base64,
-        `access-pass/${year}/${month}/${sale.refId}`,
-        300,
-      );
-
-      const accessPassData = {
-        ticketId: ap.ticketId,
-        salesId: sale._id,
-        accessToken: finalToken,
-        expiryDate: `${format(
-          new Date(sale.expiryDate),
-          'yyyy-LL-dd',
-        )} 23:59:59`,
-        QRcode: upload,
-      };
-      try {
-        const result = await accessPassService.create(accessPassData);
-        await syncAccessPass(result, ticket.itemCode);
-        console.log(`ACCESS PASS ${finalToken} CREATED`);
-      } catch {
-        console.log('FAILED TO SAVE TOKEN IN DATABASE: ', finalToken);
-      }
-    }
-  });
-};
 
 export const getOpenParkExpiry = () => {
   //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
@@ -184,24 +114,6 @@ export const sendAR = async (refId) => {
     console.log('ERROR IN MAILER: ', e);
     console.log('EMAIL SENT FAILED');
     return false;
-  }
-};
-
-const syncAccessPass = async (accessPass, _RideCode) => {
-  if (!config.app.isTurnstileSyncEnabled) {
-    console.log('Access Pass Syncing is disabled');
-    return;
-  }
-  try {
-    await turnstileSyncService.addAccessPassToTurnstile({
-      accesspassCode: accessPass.accessToken,
-      origin: 'web',
-      expiry: accessPass.expiryDate,
-      date: accessPass.createdAt,
-    });
-  } catch (err) {
-    console.log('ERROR IN SYNCING ACCESS PASS: ', err);
-    accessPassQueueService.createQueue(accessPass._id, 'Failed Insert');
   }
 };
 
@@ -459,10 +371,8 @@ export const regenerateAccessPass = async (req, res) => {
   if (req.params.id) {
     const sale = await Sale.findOne({ refId: req.params.id }).exec();
     if (sale) {
-      console.log('REMOVING OLD ACCESS PASS');
       await accessPassService.removeBySalesId(sale._id);
-      console.log('GENERATING NEW ACCESS PASS');
-      generateAccessPass(sale, sale.cartItems);
+      await accessPassService.generateAccessPassesBySaleId(sale._id);
       return res.json({
         status: 'Success',
         action: 'Access Passes Regenerated',
