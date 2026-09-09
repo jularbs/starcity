@@ -2,7 +2,7 @@ import ImageSlider from './imageSlider.model.js';
 import slugify from 'slugify';
 import formidable from 'formidable';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 
 export const create = (req, res) => {
   const form = formidable({ multiples: true });
@@ -72,12 +72,11 @@ export const create = (req, res) => {
             data: result,
             success: 'Slider Item added successfully!',
           });
-          createEntry(
-            req.profile.name,
-            'Created new Image Slider Item',
-            { ...result, image: null },
-            req,
-          );
+          auditTrailService.create({
+            action: 'Create new Image Slider Item',
+            request: req,
+            payload: { ...result, image: null },
+          });
         } catch (err) {
           console.log('Error on save: ', err);
           res.status(400).json({
@@ -169,12 +168,11 @@ export const update = async (req, res) => {
       }
       try {
         const result = await is.save();
-        createEntry(
-          req.profile.name,
-          `Updated Image Slider Item ${slug}`,
-          { ...result, image: null },
-          req,
-        );
+        auditTrailService.create({
+          action: `Updated Image Slider Item ${slug}`,
+          payload: { ...result, image: null },
+          request: req,
+        });
         return res.json({
           data: result,
           success: 'Image Slider item updated successfully!',
@@ -203,7 +201,11 @@ export const remove = async (req, res) => {
   const data = await ImageSlider.deleteOne({ slug }).exec();
 
   if (data) {
-    createEntry(req.profile.name, `Deleted Image Slider Item ${slug}`, {}, req);
+    auditTrailService.create({
+      action: `Deleted Image Slider Item ${slug}`,
+      payload: {},
+      request: req,
+    });
     return res.json({ success: 'Image Slider Item deleted successfully' });
   } else {
     return res.status(400).json({ error: 'Image Slider Item not found' });
@@ -219,12 +221,11 @@ export const toggleStatus = async (req, res) => {
     try {
       is.status = !is.status;
       const result = await is.save();
-      createEntry(
-        req.profile.name,
-        `Toggled Image Slider Item ${result.name}`,
-        { status: result.status },
-        req,
-      );
+      auditTrailService.create({
+        action: `Toggled Image Slider Item ${result.name}`,
+        payload: { status: result.status },
+        request: req,
+      });
       return res.json({
         data: result,
         success: 'Image Slider Item toggled successfully!',

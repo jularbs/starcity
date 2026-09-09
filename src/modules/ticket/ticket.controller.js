@@ -1,6 +1,6 @@
 import Ticket from './ticket.model.js';
 import slugify from 'slugify';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 export const create = async (req, res) => {
   const { name, code, shortDescription, price, details } = req.body;
 
@@ -18,7 +18,11 @@ export const create = async (req, res) => {
 
   try {
     const result = await ticket.save();
-    createEntry(req.profile.name, `Created New Ticket ${name}`, result, req);
+    auditTrailService.create({
+      action: `Created New Ticket ${name}`,
+      payload: result,
+      request: req,
+    });
     return res.json({ success: 'Ticket created successfully', data: result });
   } catch (err) {
     return res.status(400).json({
@@ -90,7 +94,11 @@ export const update = async (req, res) => {
   try {
     const result = await ticket.save();
     res.json({ result, success: 'Ticket updated successfully!' });
-    createEntry(req.profile.name, `Updated ticket ${name}`, result, req);
+    auditTrailService.create({
+      action: `Updated ticket ${name}`,
+      payload: result,
+      request: req,
+    });
   } catch (err) {
     return res.status(400).json({
       error: 'error occured',
@@ -120,7 +128,11 @@ export const remove = async (req, res) => {
     ticket.deletedAt = new Date();
     await ticket.save();
     res.json({ success: 'Ticket deleted successfully' });
-    createEntry(req.profile.name, `Deleted ticket ${_id}`, {}, req);
+    auditTrailService.create({
+      action: `Deleted ticket ${_id}`,
+      payload: {},
+      request: req,
+    });
   } catch (err) {
     return res.status(400).json({
       error: 'error occured',
@@ -140,17 +152,18 @@ export const toggleStatus = async (req, res) => {
 
   try {
     const result = await ticket.save();
-    createEntry(
-      req.profile.name,
-      `Toggled ticket ${ticket.name}`,
-      { status: result.status },
-      req,
-    );
+    auditTrailService.create({
+      action: `Toggled ticket ${ticket.name}`,
+      payload: { status: result.status },
+      request: req,
+    });
     return res.json({
       success: 'Ticket toggled successfully',
       data: result,
     });
-  } catch {
-    return res.status(400).json({ error: 'Unable to toggle ticket status.' });
+  } catch (err) {
+    return res
+      .status(400)
+      .json({ error: 'Unable to toggle ticket status.', message: err });
   }
 };

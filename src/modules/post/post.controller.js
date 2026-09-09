@@ -7,7 +7,7 @@ import {
   deleteObjectFromS3,
   uploadFile,
 } from '../../common/object-storage/amazon-s3.js';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import dateFnsTz from 'date-fns-tz';
 
 const { zonedTimeToUtc } = dateFnsTz;
@@ -67,7 +67,11 @@ export const create = async (req, res) => {
 
           const result = await post.save();
           res.json(result);
-          createEntry(req.profile.name, 'Created new post', result, req);
+          auditTrailService.create({
+            action: 'Created new post',
+            payload: result,
+            request: req,
+          });
         } catch {
           res.json({
             error: 'Failed to save post. Please try again later.',
@@ -160,7 +164,11 @@ export const update = async (req, res) => {
     try {
       const result = await post.save();
       res.json(result);
-      createEntry(req.profile.name, `Updated post ${post.title}`, result, req);
+      auditTrailService.create({
+        action: `Updated post ${post.title}`,
+        payload: result,
+        request: req,
+      });
     } catch (err) {
       res.status(400).json({
         error: 'Error on updating post. Please try again later.',
@@ -183,5 +191,9 @@ export const remove = async (req, res) => {
   //TODO: DELETE IMAGE
 
   res.json({ message: 'Post deleted successfully' });
-  createEntry(req.profile.name, `Deleted post ${slug}`, {}, req);
+  auditTrailService.create({
+    action: `Deleted post ${slug}`,
+    payload: {},
+    request: req,
+  });
 };

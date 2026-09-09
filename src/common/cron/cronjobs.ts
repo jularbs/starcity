@@ -8,7 +8,7 @@ import PaymentOption from '../../modules/paymentOption/paymentOption.model.js';
 import Ticket from '../../modules/ticket/ticket.model.js';
 
 import { pool } from '../../database/mysql/index.js';
-import { addAuditTrailEntry } from '../../modules/auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../../modules/auditTrail/auditTrail.service.js';
 import { format } from 'date-fns';
 import { sendMail } from '../../modules/email/email.service.js';
 import { convertArrayToCSV } from 'convert-array-to-csv';
@@ -60,9 +60,9 @@ export const cronSyncAP = async () => {
             connection.query(sql, [values], async function (error, results) {
               if (error) {
                 console.log('FAILED TO SYNC: ', accessPass.accessToken);
-                addAuditTrailEntry({
+                auditTrailService.create({
+                  user: 'Cron Job',
                   action: `System failed to sync Access Pass: ${accessPass.accessToken}`,
-                  meta: error,
                 });
               } else if (results.affectedRows < 1) {
                 console.log(

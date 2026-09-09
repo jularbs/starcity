@@ -3,7 +3,8 @@ import formidable from 'formidable';
 import slugify from 'slugify';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import type { Types } from 'mongoose';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+
 export const create = (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -60,7 +61,11 @@ export const create = (req, res) => {
           const result = await rideService.create(rideData);
           const r = await result.populate('rideCategoryId', 'name');
           res.status(200).json({ data: r, success: 'Ride added successfully' });
-          createEntry(req.profile.name, `Create new ride`, { result }, req);
+          auditTrailService.create({
+            action: `Create new ride`,
+            payload: { result },
+            request: req,
+          });
         } catch {
           return res.status(400).json({
             error: 'Failed to add new ride/attraction. Please try again later',
@@ -149,7 +154,11 @@ export const update = async (req, res) => {
     try {
       const result = await rideService.updateById(ride._id, rideData);
       const r = await result.populate('rideCategoryId', 'name _id');
-      createEntry(req.profile.name, `Updated ride ${r.name}`, {}, req);
+      auditTrailService.create({
+        action: `Updated ride ${r.name}`,
+        payload: {},
+        request: req,
+      });
 
       return res.json({
         result: r,
@@ -183,7 +192,11 @@ export const remove = async (req, res) => {
   }
 
   await rideService.removeById(ride._id);
-  createEntry(req.profile.name, `Deleted ride ${slug}`, { slug }, req);
+  auditTrailService.create({
+    action: `Deleted ride ${slug}`,
+    payload: { slug },
+    request: req,
+  });
 
   //TODO: DELETE IMAGE
   return res.json({ success: 'Ride deleted successfully' });

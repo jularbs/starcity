@@ -1,8 +1,9 @@
 import slugify from 'slugify';
 import Option from './option.model.js';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import formidable from 'formidable';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+
 export const logoUpload = async (req, res) => {
   const form = formidable({ multiples: true });
 
@@ -29,7 +30,11 @@ export const logoUpload = async (req, res) => {
         option.meta = imageInfo;
         const result = await option.save();
         res.json({ result, status: 'success' });
-        createEntry(req.profile.name, `Option ${name} updated`, imageInfo, req);
+        auditTrailService.create({
+          action: `Option ${name} updated`,
+          payload: imageInfo,
+          request: req,
+        });
       } catch (err) {
         return res.status(400).json({
           error: 'error occured',
@@ -47,14 +52,13 @@ export const logoUpload = async (req, res) => {
 
         const result = await newOption.save();
         res.json(result);
-        createEntry(
-          req.profile.name,
-          `Option ${name} created`,
-          {
+        auditTrailService.create({
+          action: `Option ${name} created`,
+          payload: {
             value: imageInfo.location,
           },
-          req,
-        );
+          request: req,
+        });
       } catch (err) {
         return res.status(400).json({
           error: 'error occured',
@@ -75,12 +79,11 @@ export const create = async (req, res) => {
       option.value = value;
       option.meta = meta;
       const result = await option.save();
-      createEntry(
-        req.profile.name,
-        `Option ${name} updated`,
-        { value: req.value },
-        req,
-      );
+      auditTrailService.create({
+        action: `Option ${name} updated`,
+        payload: { value: value },
+        request: req,
+      });
       return res.json({
         result,
         success: 'Option has been updated successfully!',
@@ -103,17 +106,16 @@ export const create = async (req, res) => {
       newOption.meta = meta;
 
       const result = await newOption.save();
-      createEntry(
-        req.profile.name,
-        `Option ${name} created`,
-        {
-          value: req.value,
+      auditTrailService.create({
+        action: `Option ${name} created`,
+        payload: {
+          value: value,
         },
-        req,
-      );
+        request: req,
+      });
       return res.json({
         result,
-        success: 'Option has been updated successfully!',
+        success: 'Option has been created successfully!',
       });
     } catch (err) {
       return res.status(400).json({
@@ -178,7 +180,7 @@ export const remove = async (req, res) => {
 
   try {
     await Option.findOneAndDelete({ slug }).exec();
-    res.json({ success: 'Payment Option deleted successfully' });
+    res.json({ success: 'Option deleted successfully' });
   } catch (err) {
     return res.status(400).json({
       error: 'error occured',

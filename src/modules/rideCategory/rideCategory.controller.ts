@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { Types } from 'mongoose';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import { rideCategoryService } from './rideCategory.service.js';
 type RequestWithProfile = Request & { profile: { name: string } };
 
@@ -8,7 +8,11 @@ export const create = async (req: RequestWithProfile, res: Response) => {
   const { name, description } = req.body;
 
   const result = await rideCategoryService.create({ name, description });
-  createEntry(req.profile.name, `Created new Ride Category`, result, req);
+  auditTrailService.create({
+    action: `Created new Ride Category`,
+    payload: result,
+    request: req,
+  });
   return res.json({
     data: result,
     success: 'Ride Category added successfully!',
@@ -42,7 +46,11 @@ export const update = async (req: RequestWithProfile, res: Response) => {
     id as unknown as Types.ObjectId,
     updateData,
   );
-  createEntry(req.profile.name, `Updated Ride Category ${name}`, result, req);
+  auditTrailService.create({
+    action: `Updated Ride Category ${name}`,
+    payload: result,
+    request: req,
+  });
   return res.json({ result, status: 'success' });
 };
 
@@ -50,6 +58,10 @@ export const remove = async (req: RequestWithProfile, res: Response) => {
   const { id } = req.params;
 
   await rideCategoryService.removeById(id as unknown as Types.ObjectId);
-  createEntry(req.profile.name, `Deleted Ride Category`, { id }, req);
+  auditTrailService.create({
+    action: `Deleted Ride Category`,
+    payload: { id },
+    request: req,
+  });
   res.json({ success: 'Ride Category deleted successfully' });
 };

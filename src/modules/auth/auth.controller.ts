@@ -1,4 +1,4 @@
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import {
   generateSalt,
   encryptPassword,
@@ -133,7 +133,12 @@ export const signin = async (req, res) => {
       lastLogin: new Date(),
     });
 
-    createEntry(user.name, 'Logged in to system', { email: email }, req);
+    auditTrailService.create({
+      user: user.name,
+      action: 'Logged in to system',
+      request: req,
+      payload: { email: email },
+    });
   } catch (error) {
     console.log(error);
     return res.status(400).json({
@@ -188,7 +193,12 @@ export const changePassword = async (req, res) => {
       hashed_password,
       salt,
     });
-    createEntry(user.name, `Changed Password`, {}, req);
+    auditTrailService.create({
+      user: user.name,
+      action: 'Changed Password',
+      request: req,
+      payload: {},
+    });
     return res.json({ success: 'Password successfully changed' });
   } catch {
     return res
@@ -214,7 +224,12 @@ export const unblockUser = async (req, res) => {
       mistakes: 0,
     });
 
-    createEntry(user.name, 'Unblocked User', {}, req);
+    auditTrailService.create({
+      user: user.name,
+      action: 'Unblocked User',
+      request: req,
+      payload: {},
+    });
     return res.json({ success: 'User successfully unblocked' });
   } catch (error) {
     console.log(error);

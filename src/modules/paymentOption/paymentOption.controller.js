@@ -1,6 +1,7 @@
 import slugify from 'slugify';
 import PaymentOption from './paymentOption.model.js';
-import { createEntry } from '../auditTrail/auditTrail.controller.js';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+
 export const create = async (req, res) => {
   const { name } = req.body;
   const slug = slugify(name).toLowerCase();
@@ -11,12 +12,11 @@ export const create = async (req, res) => {
     paymentOption.slug = slug;
 
     const result = await paymentOption.save();
-    createEntry(
-      req.profile.name,
-      'Created New Payment Option',
-      { name: name },
-      req,
-    );
+    auditTrailService.create({
+      action: 'Created New Payment Option',
+      payload: { name: name },
+      request: req,
+    });
     return res.json(result);
   } catch (err) {
     return res.status(400).json({
@@ -87,12 +87,11 @@ export const update = async (req, res) => {
     paymentOption.status = status;
 
     const result = await paymentOption.save();
-    createEntry(
-      req.profile.name,
-      `Updated Payment Option ${slug}`,
-      { name: name },
-      req,
-    );
+    auditTrailService.create({
+      action: `Updated Payment Option ${slug}`,
+      payload: { name: name },
+      request: req,
+    });
     res.json({ result, status: 'success' });
   } catch (err) {
     return res.status(400).json({
@@ -121,7 +120,11 @@ export const remove = async (req, res) => {
     paymentOption.deletedAt = new Date();
     await paymentOption.save();
     res.json({ success: 'Payment Option deleted successfully' });
-    createEntry(req.profile.name, `Deleted Payment Option ${slug}`, {}, req);
+    auditTrailService.create({
+      action: `Deleted Payment Option ${slug}`,
+      payload: {},
+      request: req,
+    });
   } catch (err) {
     return res.status(400).json({
       error: 'error occured',
@@ -137,12 +140,11 @@ export const toggleStatus = async (req, res) => {
     paymentOption.status = !paymentOption.status;
 
     const result = await paymentOption.save();
-    createEntry(
-      req.profile.name,
-      `Toggled Payment Option ${paymentOption.name}`,
-      {},
-      req,
-    );
+    auditTrailService.create({
+      action: `Toggled Payment Option ${paymentOption.name}`,
+      payload: {},
+      request: req,
+    });
     return res.json({
       data: result,
       success: 'Payment Option toggled successfully!',
