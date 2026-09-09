@@ -7,7 +7,6 @@ import QRCode from 'qrcode';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import { sendMail } from '../email/email.service.js';
 import { accessPassEmailNotification } from '../email/templates/index.js';
-import { pool } from '../../database/mysql/index.js';
 import { add, format, getDay, nextThursday } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
 import EmailQueue from '../email/emailQueue.model.js';
@@ -27,14 +26,14 @@ const getCurrentTicketPrice = async (ticket) => {
 };
 
 const generateValidToken = async (itemCode) => {
-  let isExisting;
-  let finalToken;
+  let isExisting = [];
+  let finalToken = '';
 
   do {
     finalToken = `W-${itemCode}-${crypto.randomBytes(4).toString('hex')}`;
     finalToken = finalToken.toUpperCase();
     isExisting = await accessPassService.getByAccessToken(finalToken);
-  } while (isExisting.length !== 0);
+  } while (isExisting);
 
   return finalToken;
 };
@@ -197,78 +196,22 @@ export const sendAR = async (refId) => {
   }
 };
 
-const syncAccessPass = (accessPass, RideCode) => {
+const syncAccessPass = async (accessPass, _RideCode) => {
   if (!config.app.isTurnstileSyncEnabled) {
     console.log('Access Pass Syncing is disabled');
     return;
   }
-  console.log('SYNCING ACCESS PASS: ', accessPass.accessToken);
-  return new Promise((resolve) => {
-    try {
-      pool.getConnection(async (err, connection) => {
-        if (err) {
-          console.log('ERROR: ', err);
-          await accessPassQueueService.createQueue(
-            accessPass._id,
-            'Failed Connection',
-          );
-          resolve('Failed Connection, added to queue.');
-        } else {
-          const date = format(accessPass.createdAt, 'yyyy-MM-dd');
-          const time = format(accessPass.createdAt, 'HH:mm:ss');
-
-          const values = [
-            [
-              accessPass.accessToken,
-              'Pop Tag',
-              date,
-              time,
-              'Purchased',
-              'web',
-              '1',
-              RideCode,
-              accessPass.expiryDate,
-            ],
-          ];
-
-          const sql =
-            'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
-
-          connection.query(sql, [values], function (error, results) {
-            if (error) {
-              console.log(
-                'UNABLE TO SYNC ACCESSPASS: ',
-                accessPass.accessToken,
-              );
-              console.log('ERROR MESSAGE: ', error);
-              accessPassQueueService.createQueue(
-                accessPass._id,
-                'Failed Query',
-              );
-              resolve('Failed Query, added to queue');
-            } else if (results.affectedRows < 1) {
-              console.log(
-                `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                accessPass.accessToken,
-              );
-              accessPassQueueService.createQueue(
-                accessPass._id,
-                'Failed Insert',
-              );
-              resolve('Failed Insert, added to queue');
-            } else {
-              resolve(`ACCESS PASS SYNCED: ${accessPass.accessToken}`);
-            }
-          });
-
-          connection.release();
-        }
-      });
-    } catch (e) {
-      console.log('ERROR IN MYSQL: ', e);
-      resolve('ERROR IN MYSQL.');
-    }
-  });
+  try {
+    await turnstileSyncService.addAccessPassToTurnstile({
+      accessPassCode: accessPass.accessToken,
+      origin: 'web',
+      expiry: accessPass.expiryDate,
+      date: accessPass.createdAt,
+    });
+  } catch (err) {
+    console.log('ERROR IN SYNCING ACCESS PASS: ', err);
+    accessPassQueueService.createQueue(accessPass._id, 'Failed Insert');
+  }
 };
 
 //REQUESTS

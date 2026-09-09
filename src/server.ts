@@ -8,7 +8,7 @@ import app from './app.js';
 import {
   closeMySqlPool,
   verifyMySqlConnection,
-} from './database/mysql/mysql2.js';
+} from './database/mysql/index.js';
 
 import { verifyEmailServer } from './modules/email/email.service.js';
 import { startCronJobs } from './common/cron/cronScheduler.js';

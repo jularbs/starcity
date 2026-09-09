@@ -1,4 +1,4 @@
-import { mysqldb } from '../../database/mysql/mysql2.js';
+import { mysqldb } from '../../database/mysql/index.js';
 import type { ResultSetHeader } from 'mysql2/promise';
 
 type TurnstileAccessPass = {

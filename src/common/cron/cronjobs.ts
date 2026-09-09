@@ -7,7 +7,6 @@ import AccessPass from '../../modules/accessPass/accessPass.model.js';
 import PaymentOption from '../../modules/paymentOption/paymentOption.model.js';
 import Ticket from '../../modules/ticket/ticket.model.js';
 
-import { pool } from '../../database/mysql/index.js';
 import { auditTrailService } from '../../modules/auditTrail/auditTrail.service.js';
 import { format } from 'date-fns';
 import { sendMail } from '../../modules/email/email.service.js';
@@ -20,6 +19,7 @@ import { accessPassQueueService } from '../../modules/accessPassQueue/accessPass
 import { accessPassService } from '../../modules/accessPass/accessPass.service.js';
 import { ticketService } from '../../modules/ticket/ticket.service.js';
 import { paymentOptionService } from '../../modules/paymentOption/paymentOption.service.js';
+import { turnstileSyncService } from '../../modules/turnstileSync/turnstileSync.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -28,64 +28,27 @@ export const cronSyncAP = async () => {
   if (queues.length > 0) {
     console.log('**** RUNNING ACCESS PASS SYNC WITH TURNSTILE ****');
     console.log('Number of Queues: ', queues.length);
-    try {
-      pool.getConnection((err, connection) => {
-        if (err) {
-          console.log('CONNECTION ERRER: ', err);
-        } else {
-          queues.map((q) => {
-            const accessPass = q.accessPass as unknown as InstanceType<
-              typeof AccessPass
-            >;
-            const date = format(accessPass.createdAt, 'yyyy-MM-dd');
-            const time = format(accessPass.createdAt, 'HH:mm:ss');
 
-            //extract itemCode from AccessToken
-            const RideCode = accessPass.accessToken.match('-(.*)-')[1];
-
-            const values = [
-              [
-                accessPass.accessToken,
-                'Pop Tag',
-                date,
-                time,
-                'Purchased',
-                'web',
-                '1',
-                RideCode,
-              ],
-            ];
-
-            const sql =
-              'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode) VALUES ?;';
-
-            connection.query(sql, [values], async function (error, results) {
-              if (error) {
-                console.log('FAILED TO SYNC: ', accessPass.accessToken);
-                auditTrailService.create({
-                  user: 'Cron Job',
-                  action: `System failed to sync Access Pass: ${accessPass.accessToken}`,
-                });
-              } else if (results.affectedRows < 1) {
-                console.log(
-                  `UNABLE TO INSERT TO DATABASE ACCESS TOKEN: `,
-                  accessPass.accessToken,
-                );
-              } else {
-                //remove in queue;
-                await accessPassQueueService.removeQueue(q._id);
-                console.log(
-                  'ACCESSPASS SUCCESS FOR ID: ',
-                  accessPass.accessToken,
-                );
-              }
-            });
-          });
-        }
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    queues.map(async (q) => {
+      const accessPass = q.accessPass as unknown as InstanceType<
+        typeof AccessPass
+      >;
+      try {
+        await turnstileSyncService.addAccessPassToTurnstile({
+          accesspassCode: accessPass.accessToken,
+          origin: 'web',
+          date: accessPass.createdAt.toISOString(),
+          expiry: accessPass.expiryDate,
+        });
+        await accessPassQueueService.removeQueue(q._id);
+      } catch (error) {
+        console.log('error in syncing access pass: ', error);
+        auditTrailService.create({
+          user: 'Cron Job',
+          action: `System failed to sync Access Pass: ${accessPass.accessToken}`,
+        });
+      }
+    });
   }
 };
 
@@ -93,62 +56,22 @@ export const cronSyncSMTickets = async () => {
   const queues = await SmQueue.find({}).exec();
 
   if (queues.length > 0) {
-    console.log('**** RUNNING SM TICKETES SYNC WITH TURNSTILE ****');
+    console.log('**** RUNNING SM TICKETS SYNC WITH TURNSTILE ****');
     console.log('Number of Queues: ', queues.length);
 
-    try {
-      pool.getConnection((err, connection) => {
-        if (err) {
-          console.log('CONNECTION ERRER: ', err);
-          return;
-        }
-
-        queues.map((q) => {
-          const date = format(q.createdAt, 'yyyy-MM-dd');
-          const time = format(q.createdAt, 'HH:mm:ss');
-          const expiry = q.ticketExpiry;
-          const ticketType = q.RideCode;
-          const values = [
-            [
-              q.tokenID,
-              'Pop Tag',
-              date,
-              time,
-              'Purchased',
-              'smticket',
-              '1',
-              ticketType,
-              expiry,
-            ],
-          ];
-
-          const sql =
-            'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
-
-          connection.query(sql, [values], async function (error, results) {
-            //if Error: do not remove in queue
-            if (error) {
-              console.log('Unable to process SM Queue: ', error);
-              return;
-            }
-
-            if (results.affectedRows < 1) {
-              console.log('Unable to process SM Queue: no affected rows');
-              return;
-            }
-
-            // no error (remove from queue);
-            console.log('SM Queue Processed for tokenID: ', q.tokenID);
-            await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
-            return;
-          });
+    queues.map(async (q) => {
+      try {
+        await turnstileSyncService.addAccessPassToTurnstile({
+          accesspassCode: q.tokenID,
+          origin: 'smticket',
+          date: q.createdAt.toISOString(),
+          expiry: q.ticketExpiry,
         });
-      });
-    } catch (e) {
-      console.log('Error on MySQL Connection: ');
-      console.log(e);
-      return;
-    }
+        await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
+      } catch (error) {
+        console.log('Error processing SM Queue item: ', error);
+      }
+    });
   }
 };
 

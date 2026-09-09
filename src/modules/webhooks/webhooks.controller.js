@@ -7,10 +7,10 @@ import {
   sendAR,
   getOpenParkExpiry,
 } from '../sale/sale.controller.js';
-import { pool } from '../../database/mysql/index.js';
 import { format } from 'date-fns';
 import { cronSyncSMTickets } from '../../common/cron/cronjobs.js';
 import { config } from '../../config/index.js';
+import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js';
 
 export const paymayaRequestCheckout = async (req, res) => {
   const paymayaPK = config.paymaya.publicKey;
@@ -259,26 +259,12 @@ const addToQueue = async (
   }
 };
 
-const checkExisting = (tickets) => {
-  return new Promise((resolve, reject) => {
-    const idArray = tickets.map((item) => item.ticketID);
-    pool.getConnection(async (err, connection) => {
-      if (err) {
-        reject({ status: 'Connection failed' });
-      } else {
-        let sql = `SELECT * FROM admission_history WHERE admission_no IN (?) AND status="Purchased";`;
-        let values = [idArray];
+const checkExisting = async (tickets) => {
+  const idArray = tickets.map((item) => item.ticketID);
+  const isExisting =
+    await turnstileSyncService.isTransactionCompleteInTurnstile(idArray);
 
-        connection.query(sql, values, (error, results) => {
-          if (error) {
-            reject({ status: 'Query failed' });
-          }
-          resolve(results);
-        });
-        connection.release();
-      }
-    });
-  });
+  return isExisting;
 };
 
 const processTickets = (tickets) => {
@@ -308,57 +294,15 @@ const processTickets = (tickets) => {
     }
 
     try {
-      pool.getConnection(async (err, connection) => {
-        if (err) {
-          addToQueue(
-            ticketID,
-            ticketType,
-            ticketExpiry
-              ? ticketExpiry
-              : `${format(
-                  new Date(getOpenParkExpiry()),
-                  'yyyy-LL-dd',
-                )} 23:59:59`,
-          );
-        } else {
-          const date = format(new Date(), 'yyyy-MM-dd');
-          const time = format(new Date(), 'HH:mm:ss');
-          const expiry = ticketExpiry
-            ? ticketExpiry
-            : `${format(new Date(getOpenParkExpiry()), 'yyyy-LL-dd')} 23:59:59`;
-
-          const values = [
-            [
-              ticketID,
-              'Pop Tag',
-              date,
-              time,
-              'Purchased',
-              'smticket',
-              '1',
-              ticketType,
-              expiry,
-            ],
-          ];
-          const sql =
-            'INSERT INTO admission_history (admission_no, type, date, time, status, origin, syncStatus, RideCode, expiration_date) VALUES ?;';
-
-          connection.query(sql, [values], function (error, results) {
-            if (error) {
-              addToQueue(ticketID, ticketType, expiry, 'Error in mySQL Insert');
-            } else if (results.affectedRows < 1) {
-              addToQueue(
-                ticketID,
-                ticketType,
-                expiry,
-                'Error in mySQL insert, no affected rows',
-              );
-            } else {
-              console.log('SM TICKET PROCESSED SUCCESS: ', ticketID);
-            }
-          });
-          connection.release();
-        }
+      const date = new Date();
+      const expiryDate = ticketExpiry
+        ? ticketExpiry
+        : `${format(new Date(getOpenParkExpiry()), 'yyyy-LL-dd')} 23:59:59`;
+      await turnstileSyncService.addAccessPassToTurnstile({
+        accesspassCode: ticketID,
+        origin: 'smticket',
+        date: date,
+        expiry: expiryDate,
       });
     } catch {
       addToQueue(
@@ -393,116 +337,83 @@ export const smTicketTransact = async (req, res) => {
   console.log('PROCESSING SM TICKETS TRANSACTION...');
   const { tickets, token } = req.body;
 
-  if (token == config.sm.token) {
-    if (tickets) {
-      checkExisting(tickets)
-        .then((data) => {
-          if (data.length > 0) {
-            res.status(400).json({
-              status: 'TicketID already exists',
-              message: 'Please provide unique IDs',
-              existingIDs: data.map((item) => item.admission_no),
-            });
-          } else {
-            processTickets(tickets);
-            res.status(200).json({
-              status: 'Success',
-              message: 'Tickets synchronized successfully',
-            });
-          }
-        })
-        .catch(() => {
-          processTickets(tickets);
-          res.status(200).json({
-            status: 'Success',
-            message:
-              'Tickets synchronized successfully but duplicates not checked',
-          });
-        });
-    } else {
-      res.status(400).json({
-        status: 'Invalid Transaction',
-        message: 'Server received empty tickets. No IDs to sync with system',
-      });
-    }
-  } else {
+  if (token !== config.sm.token) {
     res.status(401).json({
       status: 'Invalid Auth Token',
       message: 'Please make sure that your token in your request body is valid',
     });
+    return;
   }
+
+  if (!tickets || tickets.length < 1) {
+    return res.status(400).json({
+      status: 'Invalid Transaction',
+      message: 'No Ticket IDs found',
+    });
+  }
+
+  const isComplete = await checkExisting(tickets);
+
+  if (isComplete) {
+    return res.status(400).json({
+      status: 'TicketID already exists in Turnstile',
+      message: 'Please provide unique IDs',
+    });
+  }
+
+  processTickets(tickets);
+  res.status(200).json({
+    status: 'Success',
+    message: 'Tickets synchronized successfully',
+  });
 };
 
 export const smTicketVoid = async (req, res) => {
   console.log('VOIDING SM TICKET TRANSACTION...');
   const { token, tickets } = req.body;
 
-  if (token == config.sm.token) {
-    if (tickets) {
-      tickets.map(async (item) => {
-        const { ticketID } = item;
-        console.log('VOIDING TICKET: ', ticketID);
-
-        //record new tiken
-        const newticket = new SmTicket();
-        newticket.tokenId = ticketID;
-        newticket.method = 'Void';
-
-        try {
-          await newticket.save();
-          console.log('SM Ticket voided: ', ticketID);
-        } catch (err) {
-          console.log(err);
-        }
-
-        try {
-          pool.getConnection(async (err, connection) => {
-            if (err) {
-              console.log('ERROR IN MYSQL CONNECTION');
-              return res.status(500).json({
-                status: 'Internal Server Error',
-                message: 'Cannot connect to Turnstile System',
-              });
-            } else {
-              let sql = `UPDATE tablebarcode SET status = 0, isSnowWorld = 0 WHERE barcode_number = ?;UPDATE admission_history SET status = "Void" WHERE admission_no=?;`;
-              let values = [ticketID, ticketID];
-
-              connection.query(sql, values, function (error, results) {
-                if (error) {
-                  console.log('Error on executing query...');
-                  return res.status(400).json({
-                    status: 'Query Error',
-                    message: 'Query Execution Failed',
-                  });
-                } else if (results.affectedRows < 1) {
-                  console.log('No affected rows');
-                } else {
-                  console.log('SM TICKET VOID SUCCESS: ', ticketID);
-                }
-              });
-              connection.release();
-            }
-          });
-        } catch {
-          console.log('ERROR IN VOIDING TICKET...');
-          return res.status(500).json({
-            status: 'Internal Server Error',
-            message: 'Cannot connect to Turnstile System',
-          });
-        }
-      });
-    } else {
-      return res.status(400).json({
-        status: 'Invalid Transaction',
-        message: 'No Ticket IDs found',
-      });
-    }
-  } else {
+  if (token !== config.sm.token) {
     return res.status(401).json({
       status: 'Invalid Auth Token',
       message: 'Please make sure that your token in your request body is valid',
     });
   }
+
+  if (tickets.length < 1) {
+    return res.status(400).json({
+      status: 'Invalid Transaction',
+      message: 'No Ticket IDs found',
+    });
+  }
+
+  await Promise.all(
+    tickets.map(async (item) => {
+      const { ticketID } = item;
+      console.log('VOIDING TICKET: ', ticketID);
+
+      //record new tiken
+      const newticket = new SmTicket();
+      newticket.tokenId = ticketID;
+      newticket.method = 'Void';
+
+      try {
+        await newticket.save();
+        console.log('SM Ticket voided: ', ticketID);
+      } catch (err) {
+        console.log(err);
+      }
+
+      try {
+        await turnstileSyncService.voidAccessPassInTurnstile(ticketID);
+      } catch {
+        console.log('ERROR IN VOIDING TICKET...');
+        return res.status(500).json({
+          status: 'Internal Server Error',
+          message: 'Cannot connect to Turnstile System',
+        });
+      }
+    }),
+  );
 
   res.status(200).json({
     status: 'Success',
