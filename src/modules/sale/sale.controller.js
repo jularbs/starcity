@@ -29,11 +29,33 @@ const getCurrentTicketPrice = async (ticket) => {
   return { price: result.price };
 };
 
+const generateValidToken = async (itemCode) => {
+  let isExisting;
+  let finalToken;
+
+  do {
+    finalToken = `W-${itemCode}-${crypto.randomBytes(4).toString('hex')}`;
+    finalToken = finalToken.toUpperCase();
+    isExisting = await accessPassService.getByAccessToken(finalToken);
+  } while (isExisting.length !== 0);
+
+  return finalToken;
+};
+
+const generateQRCode = async (text) => {
+  return QRCode.toDataURL(text, {
+    version: 4,
+    errorCorrectionLevel: 'H',
+    type: 'image/jpeg',
+    quality: 1,
+    margin: 5,
+    width: 300,
+    height: 300,
+  });
+};
+
 export const generateAccessPass = (sale, accessPasses) => {
   accessPasses.map(async (ap) => {
-    let isExisting;
-    let finalToken;
-
     //get ticketDetails
     const ticket = await Ticket.findOne({
       _id: ap.ticketId,
@@ -41,28 +63,12 @@ export const generateAccessPass = (sale, accessPasses) => {
 
     for (let i = 0; i < ap.qty; i++) {
       //check for dupes
-      do {
-        finalToken = `W-${ticket.itemCode}-${crypto
-          .randomBytes(4)
-          .toString('hex')}`;
+      const finalToken = await generateValidToken(ticket.itemCode);
+      const base64 = await generateQRCode(finalToken);
 
-        finalToken = finalToken.toUpperCase();
-        isExisting = await accessPassService.getByAccessToken(finalToken);
-      } while (isExisting.length !== 0);
-
-      let base64 = await QRCode.toDataURL(finalToken, {
-        version: 4,
-        errorCorrectionLevel: 'H',
-        type: 'image/jpeg',
-        quality: 1,
-        margin: 5,
-        width: 300,
-        height: 300,
-      });
-
-      var date = new Date();
-      var month = date.getUTCMonth() + 1; //months from 1-12
-      var year = date.getUTCFullYear();
+      const date = new Date();
+      const month = date.getUTCMonth() + 1; //months from 1-12
+      const year = date.getUTCFullYear();
 
       const upload = await uploadFile(
         base64,
