@@ -74,6 +74,7 @@ export const cronSyncSMTickets = async () => {
   }
 };
 
+// TODOS: BROKEN
 export const cronProcessEmailQueues = async () => {
   const Qs = await EmailQueue.find().exec();
   if (Qs.length > 0) {
@@ -84,11 +85,9 @@ export const cronProcessEmailQueues = async () => {
       //remove q from database
       await EmailQueue.deleteOne({ _id: q._id }).exec();
       try {
-        const isResolved =
-          await emailService.sendAcknowledgementReceiptBySaleId(q._id);
-        if (!isResolved) {
-          console.log('Email not sent. Refid requeued');
-        }
+        //TODOS: this is wrong, get saleID
+        //BETTER: create a dedicated email queuing system for handling retries
+        await emailService.sendAcknowledgementReceiptBySaleId(q._id);
       } catch (error) {
         console.log('Error processing queued email for RefId: ', q.refId);
         console.log('Error: ', error);

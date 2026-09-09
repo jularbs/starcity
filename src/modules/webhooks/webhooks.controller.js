@@ -262,6 +262,7 @@ const addToQueue = async (
   }
 };
 
+// TODOS: BROKEN, tokenID doesn't match the expected format. add ticketType in addAccessPassInTurnstile
 const processTickets = (tickets) => {
   tickets.map(async (item) => {
     const { ticketID, ticketType, ticketExpiry } = item;
