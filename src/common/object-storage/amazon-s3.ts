@@ -13,6 +13,23 @@ import { config } from '../../config/index.js';
 import { File } from 'formidable';
 
 type Base64ImageFile = { buffer: Buffer; name: string; type: string };
+type MulterFile = Express.Multer.File;
+type UploadFile = File | MulterFile;
+type NormalizedUploadFile = {
+  buffer?: Buffer;
+  path?: string;
+  name: string;
+  type: string;
+};
+type LegacyUploadFile = File & {
+  filepath?: string;
+  originalFilename?: string | null;
+  mimetype?: string | null;
+  path?: string;
+  name?: string;
+  type?: string;
+  newFilename?: string;
+};
 
 const s3 = new S3Client({
   region: config.aws.s3.region,
@@ -45,7 +62,7 @@ const getObjectLocation = (bucket: string, key: string): string =>
     key,
   ).replace(/%2F/g, '/')}`;
 
-const isValidImage = (file: File | Base64ImageFile) => {
+const isValidImage = (file: NormalizedUploadFile) => {
   const fileType = file.type;
   const validImageTypes = [
     'image/gif',
@@ -81,16 +98,43 @@ const parseBase64Image = (dataUri: string): Base64ImageFile => {
 };
 
 export const uploadFile = async (
-  file: string | File,
+  file: string | UploadFile | Base64ImageFile,
   folder: string,
   width = 1600,
 ) => {
-  const normalizedFile =
-    typeof file === 'string' ? parseBase64Image(file) : file;
+  let normalizedFile: NormalizedUploadFile;
+
+  if (typeof file === 'string') {
+    normalizedFile = parseBase64Image(file);
+  } else if ('originalname' in file) {
+    normalizedFile = {
+      buffer: file.buffer,
+      name: file.originalname,
+      type: file.mimetype,
+    };
+  } else if ('buffer' in file) {
+    normalizedFile = file;
+  } else {
+    const legacyFile = file as LegacyUploadFile;
+    normalizedFile = {
+      path: legacyFile.filepath ?? legacyFile.path,
+      name:
+        legacyFile.originalFilename ??
+        legacyFile.name ??
+        legacyFile.newFilename ??
+        'upload',
+      type:
+        legacyFile.mimetype ?? legacyFile.type ?? 'application/octet-stream',
+    };
+  }
   const sourceBuffer =
-    'buffer' in normalizedFile
-      ? normalizedFile.buffer
-      : fs.readFileSync(normalizedFile.path);
+    normalizedFile.buffer ??
+    (normalizedFile.path ? fs.readFileSync(normalizedFile.path) : undefined);
+
+  if (!sourceBuffer) {
+    throw new Error('Upload file does not contain a buffer or file path');
+  }
+
   let body = sourceBuffer;
   let type = normalizedFile.type;
   let key = `${folder}/${nanoid()}${path.extname(normalizedFile.name)}`;
