@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import {
   generateRefreshToken,
   getRefreshTokenExpirationDate,
@@ -8,7 +9,7 @@ import {
 describe('Token Helpers', () => {
   it('signs and verifies an access token', () => {
     const payload = {
-      _id: '123e4567-e89b-12d3-a456-426614174000',
+      _id: '123e4567-e89b-12d3-a456-426614174000' as unknown as Types.ObjectId,
       department: 'admin',
       name: 'Admin User',
     };
