@@ -1,9 +1,19 @@
 import nodemailer from 'nodemailer';
 import { config } from '../../config/index.js';
 
-export const sendMail = async (email) => {
+type EmailInput = {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: any[];
+  cc?: string;
+  bcc?: string;
+};
+
+export const sendMail = async (email: EmailInput) => {
   try {
-    var mailConfig = {
+    const mailConfig = {
       host: config.email.host,
       port: config.email.port,
       secure: config.email.secure,
