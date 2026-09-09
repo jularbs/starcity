@@ -5,13 +5,14 @@ type TurnstileAccessPassInput = {
   accesspassCode: string;
   origin: 'smticket' | 'web';
   expiry: string;
+  ticketType?: string;
   date?: string;
 };
 
 const addAccessPassToTurnstile = async (data: TurnstileAccessPassInput) => {
   const date = format(new Date(data.date ?? new Date()), 'yyyy-MM-dd');
   const time = format(new Date(data.date ?? new Date()), 'HH:mm:ss');
-  const ticketType = data.accesspassCode.match('-(.*)-')[1];
+  const ticketType = data.ticketType ?? data.accesspassCode.match('-(.*)-')[1];
   const formattedData = {
     admission_no: data.accesspassCode,
     ticket_type: ticketType,

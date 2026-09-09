@@ -59,6 +59,26 @@ describe('Turnstile sync service', () => {
     expect(repository.syncAccessPassToTurnstile).toHaveBeenCalledTimes(1);
   });
 
+  it('uses the provided ticket type when available', async () => {
+    repository.syncAccessPassToTurnstile.mockResolvedValue(true);
+
+    await turnstileSyncService.addAccessPassToTurnstile({
+      accesspassCode: 'W-IGNORED-1234',
+      ticketType: 'CUSTOM-TYPE',
+      origin: 'web',
+      expiry: '2026-02-02 23:59:59',
+      date: '2026-01-02T03:04:05.000Z',
+    });
+
+    expect(repository.syncAccessPassToTurnstile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        admission_no: 'W-IGNORED-1234',
+        ticket_type: 'CUSTOM-TYPE',
+      }),
+    );
+    expect(repository.syncAccessPassToTurnstile).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects malformed access-pass codes without calling the repository', async () => {
     await expect(
       turnstileSyncService.addAccessPassToTurnstile({
