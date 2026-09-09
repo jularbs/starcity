@@ -1,5 +1,15 @@
 import nodemailer from 'nodemailer';
 import { config } from '../../config/index.js';
+import Sale from '../sale/sale.model.js';
+import handlebars from 'handlebars';
+import juice from 'juice';
+import fs from 'node:fs/promises'; // Use Node 22 native promise-based fs
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Types } from 'mongoose';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const templateDir = path.join(__dirname, 'templates');
 
 type EmailInput = {
   from: string;
@@ -49,4 +59,55 @@ export const verifyEmailServer = async () => {
   } catch (err) {
     console.error('Error verifying Email server: ', err);
   }
+};
+
+const buildHtmlFromTemplate = async (templateName: string, data: any) => {
+  const templatePath = path.join(templateDir, `${templateName}.hbs`);
+  const templateSource = await fs.readFile(templatePath, 'utf-8');
+  const template = handlebars.compile(templateSource);
+  return juice(template(data));
+};
+
+export const emailService = {
+  sendAcknowledgementReceiptBySaleId: async (saleId: Types.ObjectId) => {
+    // TODOS: refactor to use saleService
+    const sale = await Sale.findById(saleId)
+      .populate({
+        path: 'cartItems',
+        populate: {
+          path: 'ticketId',
+          model: 'Ticket',
+          select: 'name -_id',
+        },
+      })
+      .populate({
+        path: 'paymentDetails',
+        populate: {
+          path: 'option',
+          model: 'PaymentOption',
+          select: 'name -_id',
+        },
+      })
+      .exec();
+
+    const html = await buildHtmlFromTemplate('accessPassEmailNotification', {
+      ...sale.toObject(),
+      websiteUrl: config.app.websiteUrl,
+    });
+
+    const emailInput: EmailInput = {
+      from: config.email.address,
+      to: sale.emailAddress,
+      subject:
+        'Your acknowledgement receipt for your Star City ticket purchase',
+      html,
+    };
+
+    try {
+      await sendMail(emailInput);
+    } catch (e) {
+      console.log('Error sending Acknowledgement Receipt: ', e);
+      // TODOS: Create Email Queue
+    }
+  },
 };

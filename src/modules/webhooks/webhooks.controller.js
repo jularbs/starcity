@@ -2,13 +2,13 @@ import Sale from '../sale/sale.model.js';
 import SmQueue from '../smTickets/smQueue.model.js';
 import SmTicket from '../smTickets/smTickets.model.js';
 import { paymentOptionService } from '../paymentOption/paymentOption.service.js';
-import { sendAR } from '../sale/sale.controller.js';
 import { accessPassService } from '../accessPass/accessPass.service.js';
 import { format } from 'date-fns';
 import { cronSyncSMTickets } from '../../common/cron/cronjobs.js';
 import { config } from '../../config/index.js';
 import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js';
 import { getOpenParkExpiry } from '../../common/utils/get-expiry.js';
+import { emailService } from '../email/email.service.js';
 
 export const paymayaRequestCheckout = async (req, res) => {
   const paymayaPK = config.paymaya.publicKey;
@@ -215,7 +215,8 @@ export const paymayaPaymentSuccess = async (req, res) => {
       } catch (err) {
         console.log('ERROR IN GENERATING ACCESS PASSES: ', err);
       }
-      sendAR(result.refId);
+
+      await emailService.sendAcknowledgementReceiptBySaleId(result._id);
     }
   } catch (err) {
     return res.status(400).json({
@@ -466,7 +467,7 @@ export const bpiTransact = async (req, res) => {
             console.log('GENERATING ACCESS PASS');
             await accessPassService.generateAccessPassesBySaleId(result._id);
             console.log('SENDING ACKNOWLEDGEMENT RECEIPT');
-            sendAR(result.refId);
+            await emailService.sendAcknowledgementReceiptBySaleId(result._id);
             return res.redirect(
               `${config.app.websiteUrl}/?payment=success&refid=${result.refId}`,
             );

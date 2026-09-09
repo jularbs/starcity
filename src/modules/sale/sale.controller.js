@@ -1,92 +1,24 @@
-import { config } from '../../config/index.js';
 import Sale from './sale.model.js';
 import { ticketService } from '../ticket/ticket.service.js';
 import { accessPassService } from '../accessPass/accessPass.service.js';
 import crypto from 'crypto';
-import { sendMail } from '../email/email.service.js';
-import { accessPassEmailNotification } from '../email/templates/index.js';
+import { emailService } from '../email/email.service.js';
 import { format } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
-import EmailQueue from '../email/emailQueue.model.js';
 import { promoService } from '../promo/promo.service.js';
 import { getOpenParkExpiry } from '../../common/utils/get-expiry.js';
 const { zonedTimeToUtc } = dateFnsTz;
 
 export const resendAR = async (req, res) => {
   const { refId } = req.body;
+  //TODOS: refactor to use saleService
+  const sale = await Sale.findOne({ refId }).exec();
   try {
-    const isSent = await sendAR(refId);
-
-    if (isSent) {
-      res.json({ message: 'E-mail resent successfully.' });
-    } else {
-      res.json({ message: 'E-mail failed. Please try again later.' });
-    }
+    await emailService.sendAcknowledgementReceiptBySaleId(sale._id);
+    res.json({ message: 'E-mail resent successfully.' });
   } catch (error) {
-    console.log('Error resending AR for RefId: ', refId);
     console.log('Error: ', error);
-    res.json({ message: 'E-mail failed. Please try again later.' });
-  }
-};
-
-export const sendAR = async (refId) => {
-  try {
-    console.log('SENDING AR FOR ', refId);
-    const sale = await Sale.findOne({ refId: refId })
-      .populate({
-        path: 'cartItems',
-        populate: {
-          path: 'ticketId',
-          model: 'Ticket',
-          select: 'name -_id',
-        },
-      })
-      .populate({
-        path: 'paymentDetails',
-        populate: {
-          path: 'option',
-          model: 'PaymentOption',
-          select: 'name -_id',
-        },
-      })
-      .exec();
-
-    const details = {
-      to: sale.emailAddress,
-      from: config.email.address,
-      subject:
-        'Your acknowledgement receipt for your Star City ticket purchase',
-      html: accessPassEmailNotification(sale),
-      ...(config.app.isProduction
-        ? { bcc: ['accounting@starcity.com.ph'] }
-        : {}),
-    };
-
-    sendMail(details).then((info) => {
-      console.log('EMAIL STACK: ', info);
-      //check info if undefined
-      if (info === undefined) {
-        console.log('EMAIL SENT FAILED');
-        //add to email queue
-        let q = new EmailQueue();
-        q.refId = refId;
-        q.save()
-          .then(() => {
-            console.log('QUEUE CREATED FOR REF ID: ', refId);
-          })
-          .catch((err) => {
-            console.log('ERROR IN QUEUEING EMAIL: ', err);
-          });
-        return false;
-      } else {
-        console.log('EMAIL SENT SUCCESSFULLY');
-        return true;
-      }
-    });
-  } catch (e) {
-    console.log('ERROR IN MAILER: ', e);
-    console.log('EMAIL SENT FAILED');
-    return false;
+    res.status(400).json({ message: 'E-mail failed. Please try again later.' });
   }
 };
 

@@ -9,11 +9,10 @@ import Ticket from '../../modules/ticket/ticket.model.js';
 
 import { auditTrailService } from '../../modules/auditTrail/auditTrail.service.js';
 import { format } from 'date-fns';
-import { sendMail } from '../../modules/email/email.service.js';
+import { emailService, sendMail } from '../../modules/email/email.service.js';
 import { convertArrayToCSV } from 'convert-array-to-csv';
 import dateFnsTz from 'date-fns-tz';
 
-import { sendAR } from '../../modules/sale/sale.controller.js';
 import { config } from '../../config/index.js';
 import { accessPassQueueService } from '../../modules/accessPassQueue/accessPassQueue.service.js';
 import { accessPassService } from '../../modules/accessPass/accessPass.service.js';
@@ -85,7 +84,8 @@ export const cronProcessEmailQueues = async () => {
       //remove q from database
       await EmailQueue.deleteOne({ _id: q._id }).exec();
       try {
-        const isResolved = await sendAR(q.refId);
+        const isResolved =
+          await emailService.sendAcknowledgementReceiptBySaleId(q._id);
         if (!isResolved) {
           console.log('Email not sent. Refid requeued');
         }
@@ -308,6 +308,7 @@ export const generateDailyReport = async () => {
   };
 
   try {
+    //TODOS: Refactor to use emailService instead of sendMail directly
     sendMail(details).then((info) => {
       console.log('Email Report Info: ', info);
       //check info if undefined
@@ -370,6 +371,7 @@ export const generateQRdeliveryReport = async () => {
   };
 
   try {
+    //TODOS: Refactor to use emailService instead of sendMail directly
     sendMail(details).then((info) => {
       console.log('QR Report Info: ', info);
       //check info if undefined

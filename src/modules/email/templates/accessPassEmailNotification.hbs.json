@@ -1,0 +1,32 @@
+{
+  "customerName": "Ralph Jularbal",
+  "expiryDate": "September 24, 2026",
+  "refId": "123456",
+  "websiteUrl": "https://www.example.com",
+  "salt": "asdf",
+  "emailAddress": "ralph@example.com",
+  "contactNumber": "123-456-7890",
+  "paymentDetails": {
+    "referenceNumber": "2132r412331",
+    "option": {
+      "name": "Credit Card"
+    }
+  },
+  "orderTotal": "1932.00",
+  "cartItems": [
+    {
+      "ticketId": {
+        "name": "Item 1"
+      },
+      "qty": 2,
+      "priceAcquired": "500.00"
+    },
+    {
+      "ticketId": {
+        "name": "Item 2"
+      },
+      "qty": 7,
+      "priceAcquired": "100.00"
+    }
+  ]
+}
