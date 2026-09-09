@@ -65,16 +65,4 @@ const promoSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { getters: true } },
 );
 
-promoSchema.pre('find', function () {
-  this.where({ deletedAt: null });
-});
-
-promoSchema.pre('findOne', function () {
-  this.where({ deletedAt: null });
-});
-
-promoSchema.pre('countDocuments', function () {
-  this.where({ deletedAt: null });
-});
-
 export default mongoose.model('Promo', promoSchema);

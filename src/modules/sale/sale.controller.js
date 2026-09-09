@@ -13,7 +13,7 @@ import dateFnsTz from 'date-fns-tz';
 import EmailQueue from '../email/emailQueue.model.js';
 import { accessPassQueueService } from '../accessPassQueue/accessPassQueue.service.js';
 //TEST
-import { processPromo } from '../promo/promo.controller.js';
+import { promoService } from '../promo/promo.service.js';
 //HELPERS
 const { utcToZonedTime, zonedTimeToUtc } = dateFnsTz;
 
@@ -464,7 +464,10 @@ export const createCheckout = async (req, res) => {
 
   if (promoCode) {
     try {
-      const promo = await processPromo(promoCode, transactionAmount);
+      const promo = await promoService.calculatePromoDiscount(
+        promoCode,
+        transactionAmount,
+      );
       sale.promoCode = promo.promoCode;
       sale.discount = promo.discount;
     } catch (error) {
