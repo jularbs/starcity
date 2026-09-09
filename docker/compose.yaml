@@ -64,6 +64,14 @@ services:
       "
     restart: 'no'
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: local_mail_host
+    ports:
+      - "1025:1025" # SMTP server port
+      - "8025:8025" # Web UI dashboard port
+    restart: unless-stopped
+    
 volumes:
   minio_data:
   mongo_data:
