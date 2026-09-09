@@ -8,6 +8,8 @@ import {
   closeMySqlPool,
   verifyMySqlConnection,
 } from './database/mysql/mysql2.js';
+
+import { verifyEmailServer } from './modules/email/email.service.js';
 import { startCronJobs } from './common/cron/cronScheduler.js';
 import { config } from './config/index.js';
 import User from './modules/user/user.model.js';
@@ -18,6 +20,7 @@ const startServer = async () => {
   await connectMongoDB();
   await verifyMySqlConnection();
   await syncModelIndexes(User);
+  await verifyEmailServer();
   startCronJobs();
 
   const server = app.listen(port, () => {
