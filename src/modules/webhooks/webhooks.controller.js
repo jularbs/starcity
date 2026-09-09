@@ -259,14 +259,6 @@ const addToQueue = async (
   }
 };
 
-const checkExisting = async (tickets) => {
-  const idArray = tickets.map((item) => item.ticketID);
-  const isExisting =
-    await turnstileSyncService.isTransactionCompleteInTurnstile(idArray);
-
-  return isExisting;
-};
-
 const processTickets = (tickets) => {
   tickets.map(async (item) => {
     const { ticketID, ticketType, ticketExpiry } = item;
@@ -352,7 +344,9 @@ export const smTicketTransact = async (req, res) => {
     });
   }
 
-  const isComplete = await checkExisting(tickets);
+  const idArray = tickets.map((item) => item.ticketID);
+  const isComplete =
+    await turnstileSyncService.isTransactionCompleteInTurnstile(idArray);
 
   if (isComplete) {
     return res.status(400).json({
