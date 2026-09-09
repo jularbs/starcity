@@ -19,6 +19,7 @@ import { config } from '../../config/index.js';
 import { accessPassQueueService } from '../../modules/accessPassQueue/accessPassQueue.service.js';
 import { accessPassService } from '../../modules/accessPass/accessPass.service.js';
 import { ticketService } from '../../modules/ticket/ticket.service.js';
+import { paymentOptionService } from '../../modules/paymentOption/paymentOption.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -254,7 +255,7 @@ export const generateDailyReport = async () => {
   });
 
   //Initialize Payment Details Summary
-  const paymentsData = await PaymentOption.find({}).select('name').exec();
+  const paymentsData = await paymentOptionService.list({});
 
   const paymentsArray = paymentsData.map((po) => {
     return { id: po._id, name: po.name, qty: 0, amount: 0 };

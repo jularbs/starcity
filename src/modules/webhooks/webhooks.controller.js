@@ -1,7 +1,7 @@
 import Sale from '../sale/sale.model.js';
 import SmQueue from '../smTickets/smQueue.model.js';
 import SmTicket from '../smTickets/smTickets.model.js';
-import PaymentOption from '../paymentOption/paymentOption.model.js';
+import { paymentOptionService } from '../paymentOption/paymentOption.service.js';
 import {
   generateAccessPass,
   sendAR,
@@ -143,9 +143,7 @@ export const paymayaPaymentSuccess = async (req, res) => {
   const { status, requestReferenceNumber, amount } = req.body;
   const option = 'paymaya';
   const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
-  const pOption = await PaymentOption.findOne({ slug: option })
-    .select('_id status')
-    .exec();
+  const pOption = await paymentOptionService.getBySlug(option);
 
   if (!sale) {
     console.log('PAYMAYA PAYMENT SALE NOT FOUND: ', requestReferenceNumber);
@@ -534,9 +532,7 @@ export const bpiTransact = async (req, res) => {
       if (sale.status == 'awaiting payment') {
         //PROCESS SALE (GENERATE AND SEND AR)
         const option = 'bpi';
-        const pOption = await PaymentOption.findOne({ slug: option })
-          .select('_id')
-          .exec();
+        const pOption = await paymentOptionService.getBySlug(option);
 
         if (!pOption || pOption.status == false) {
           console.log('BPI PAYMENT OPTION DISABLED: ', pOption.status);

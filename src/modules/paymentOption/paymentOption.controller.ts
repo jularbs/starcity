@@ -1,17 +1,19 @@
 import slugify from 'slugify';
-import PaymentOption from './paymentOption.model.js';
+import { paymentOptionService } from './paymentOption.service.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 
 export const create = async (req, res) => {
   const { name } = req.body;
-  const slug = slugify(name).toLowerCase();
+  const slug = slugify.default(name).toLowerCase();
 
   try {
-    let paymentOption = new PaymentOption();
-    paymentOption.name = name;
-    paymentOption.slug = slug;
-
-    const result = await paymentOption.save();
+    const result = await paymentOptionService.create({
+      name,
+      slug,
+      status: false,
+      deletedAt: null,
+      meta: {},
+    });
     auditTrailService.create({
       action: 'Created New Payment Option',
       payload: { name: name },
@@ -28,12 +30,7 @@ export const create = async (req, res) => {
 
 export const read = async (req, res) => {
   try {
-    const data = await PaymentOption.findOne({
-      slug: req.params.slug,
-      deletedAt: null,
-    })
-      .select('name status')
-      .exec();
+    const data = await paymentOptionService.getBySlug(req.params.slug);
 
     if (!data) {
       return res.status(404).json({
@@ -54,10 +51,7 @@ export const list = async (req, res) => {
   const { f } = req.query;
   if (f) {
     try {
-      const data = await PaymentOption.find({
-        status: true,
-        deletedAt: null,
-      }).exec();
+      const data = await paymentOptionService.list({ status: true });
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -67,7 +61,7 @@ export const list = async (req, res) => {
     }
   } else {
     try {
-      const data = await PaymentOption.find({ deletedAt: null }).exec();
+      const data = await paymentOptionService.list({});
       res.json(data);
     } catch (err) {
       return res.status(400).json({
@@ -78,15 +72,24 @@ export const list = async (req, res) => {
   }
 };
 
+//TODOS: get id params for update
 export const update = async (req, res) => {
   try {
     const { slug, name, status } = req.body;
 
-    const paymentOption = await PaymentOption.findOne({ slug: slug }).exec();
-    paymentOption.name = name;
-    paymentOption.status = status;
+    const paymentOption = await paymentOptionService.getBySlug(slug);
+    if (!paymentOption) {
+      return res.status(404).json({
+        error: 'Payment Option not found',
+      });
+    }
 
-    const result = await paymentOption.save();
+    const result = await paymentOptionService.updateById(paymentOption._id, {
+      name,
+      slug,
+      status,
+    });
+
     auditTrailService.create({
       action: `Updated Payment Option ${slug}`,
       payload: { name: name },
@@ -110,15 +113,14 @@ export const remove = async (req, res) => {
       });
     }
 
-    const paymentOption = await PaymentOption.findOne({ slug }).exec();
+    const paymentOption = await paymentOptionService.getBySlug(slug);
     if (!paymentOption) {
       return res.status(404).json({
         error: 'Payment Option not found',
       });
     }
 
-    paymentOption.deletedAt = new Date();
-    await paymentOption.save();
+    await paymentOptionService.removeById(paymentOption._id);
     res.json({ success: 'Payment Option deleted successfully' });
     auditTrailService.create({
       action: `Deleted Payment Option ${slug}`,
@@ -136,10 +138,11 @@ export const remove = async (req, res) => {
 export const toggleStatus = async (req, res) => {
   try {
     const { _id } = req.body;
-    let paymentOption = await PaymentOption.findOne({ _id }).exec();
-    paymentOption.status = !paymentOption.status;
+    const paymentOption = await paymentOptionService.getById(_id);
 
-    const result = await paymentOption.save();
+    const result = await paymentOptionService.updateById(paymentOption._id, {
+      status: !paymentOption.status,
+    });
     auditTrailService.create({
       action: `Toggled Payment Option ${paymentOption.name}`,
       payload: {},
