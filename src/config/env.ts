@@ -42,6 +42,7 @@ const envSchema = z.object({
   AWS_S3_SECRETKEY: z.string(),
   AWS_S3_REGION: z.string(),
   AWS_S3_BUCKETNAME: z.string(),
+  AWS_S3_ENDPOINT: z.url().optional(),
   EMAIL_PROTOCOL: z.string().default('smtp'),
   EMAIL_HOST: z.string(),
   EMAIL_ENCRYPTION: z.string().default('tls'),

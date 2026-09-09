@@ -51,6 +51,7 @@ export const config = {
       secretKey: env.AWS_S3_SECRETKEY,
       region: env.AWS_S3_REGION,
       bucketName: env.AWS_S3_BUCKETNAME,
+      endpoint: env.AWS_S3_ENDPOINT,
     },
   },
   sm: {

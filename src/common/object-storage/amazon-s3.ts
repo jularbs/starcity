@@ -33,6 +33,8 @@ type LegacyUploadFile = File & {
 
 const s3 = new S3Client({
   region: config.aws.s3.region,
+  endpoint: config.aws.s3.endpoint,
+  forcePathStyle: Boolean(config.aws.s3.endpoint),
   credentials: {
     accessKeyId: config.aws.s3.publicKey,
     secretAccessKey: config.aws.s3.secretKey,

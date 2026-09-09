@@ -59,8 +59,8 @@ services:
     entrypoint: >
       /bin/sh -c "
       mc alias set local http://minio:9000 minio miniopassword &&
-      mc mb --ignore-existing local/spc-services &&
-      mc anonymous set none local/spc-services
+      mc mb --ignore-existing local/starcity-test &&
+      mc anonymous set none local/starcity-test
       "
     restart: 'no'
 
