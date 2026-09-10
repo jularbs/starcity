@@ -8,14 +8,15 @@ import { config } from '../../config/index.js';
 import { Request, Response } from 'express';
 
 export const getMedia = async (req: Request, res: Response) => {
-  const { key, bucket = config.aws.s3.bucketName } = req.query;
-
+  const { key } = req.query;
+  const bucket = config.aws.s3.bucketName;
   if (!key || typeof key !== 'string') {
     return res.status(400).json({ error: 'Media key is required' });
   }
 
   try {
     const data = await getObjectFromS3(key, bucket as string);
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.setHeader(
       'Content-Type',
       data.ContentType || 'application/octet-stream',
