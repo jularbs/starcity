@@ -19,6 +19,7 @@ import { accessPassService } from '../../modules/accessPass/accessPass.service.j
 import { ticketService } from '../../modules/ticket/ticket.service.js';
 import { paymentOptionService } from '../../modules/paymentOption/paymentOption.service.js';
 import { turnstileSyncService } from '../../modules/turnstileSync/turnstileSync.service.js';
+import { saleService } from '../../modules/sale/sale.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -104,13 +105,9 @@ export const dbcleanup = async () => {
 
   console.log('**** CLEANING UP DATABASE ****');
 
-  const saleCount = await Sale.countDocuments({
-    createdAt: { $lte: previous2Months },
-  });
+  const saleCount = await saleService.countByBeforeDate(previous2Months);
 
-  await Sale.deleteMany({
-    createdAt: { $lte: previous2Months },
-  });
+  await saleService.removeByBeforeDate(previous2Months);
 
   console.log(
     'Database clean up: Removing data before -',
@@ -134,35 +131,13 @@ export const generateDailyReport = async () => {
   // const end = endOfYesterday();
 
   //get sales data in date range
-  const salesData = await Sale.find({
-    status: {
-      $nin: ['awaiting payment', 'P', 'p'],
-    },
-    updatedAt: {
-      $gte: start,
-      $lte: end,
-    },
-  })
-    .select(
-      'updatedAt customerName emailAddress contactNumber refId contactnumber orderTotal paymentDetails cartItems',
-    )
-    .populate({
-      path: 'cartItems',
-      populate: {
-        path: 'ticketId',
-        model: 'Ticket',
-        select: 'name price',
-      },
-    })
-    .populate({
-      path: 'paymentDetails',
-      populate: {
-        path: 'option',
-        model: 'PaymentOption',
-        select: 'name',
-      },
-    })
-    .exec();
+  const salesData = await saleService.list({
+    skip: 0,
+    limit: Number.MAX_SAFE_INTEGER,
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    searchQuery: '',
+  });
 
   //Initialize Summary Values
   let numOfTransaction = 0;

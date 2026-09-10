@@ -1,4 +1,4 @@
-import Sale from '../sale/sale.model.js';
+import { saleService } from '../sale/sale.service.js';
 import SmQueue from '../smTickets/smQueue.model.js';
 import SmTicket from '../smTickets/smTickets.model.js';
 import { paymentOptionService } from '../paymentOption/paymentOption.service.js';
@@ -23,16 +23,7 @@ export const paymayaRequestCheckout = async (req, res) => {
 
   const { refId, customerFirstName, customerLastName } = req.body;
 
-  const sale = await Sale.findOne({ refId: refId })
-    .populate({
-      path: 'cartItems',
-      populate: {
-        path: 'ticketId',
-        model: 'Ticket',
-        select: 'name -_id',
-      },
-    })
-    .exec();
+  const sale = await saleService.getByRefIdWithDetails(refId);
 
   if (!sale) {
     return res.status(400).json({
@@ -140,7 +131,7 @@ export const paymayaPaymentSuccess = async (req, res) => {
 
   const { status, requestReferenceNumber, amount } = req.body;
   const option = 'paymaya';
-  const sale = await Sale.findOne({ refId: requestReferenceNumber }).exec();
+  const sale = await saleService.getByRefId(requestReferenceNumber);
   const pOption = await paymentOptionService.getBySlug(option);
 
   if (!sale) {
@@ -438,9 +429,7 @@ export const bpiTransact = async (req, res) => {
     transactionStatus &&
     transactionStatus == 'SUCCESSFUL'
   ) {
-    const sale = await Sale.findOne({
-      refId: merchantTransactionReference,
-    }).exec();
+    const sale = await saleService.getByRefId(merchantTransactionReference);
     if (sale) {
       if (sale.status == 'awaiting payment') {
         //PROCESS SALE (GENERATE AND SEND AR)

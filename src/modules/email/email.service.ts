@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { config } from '../../config/index.js';
-import Sale from '../sale/sale.model.js';
+import { saleService } from '../sale/sale.service.js';
 import handlebars from 'handlebars';
 import juice from 'juice';
 import fs from 'node:fs/promises'; // Use Node 22 native promise-based fs
@@ -71,24 +71,7 @@ const buildHtmlFromTemplate = async (templateName: string, data: any) => {
 export const emailService = {
   sendAcknowledgementReceiptBySaleId: async (saleId: Types.ObjectId) => {
     // TODOS: refactor to use saleService
-    const sale = await Sale.findById(saleId)
-      .populate({
-        path: 'cartItems',
-        populate: {
-          path: 'ticketId',
-          model: 'Ticket',
-          select: 'name -_id',
-        },
-      })
-      .populate({
-        path: 'paymentDetails',
-        populate: {
-          path: 'option',
-          model: 'PaymentOption',
-          select: 'name -_id',
-        },
-      })
-      .exec();
+    const sale = await saleService.getByIdWithDetails(saleId);
 
     const html = await buildHtmlFromTemplate('accessPassEmailNotification', {
       ...sale.toObject(),

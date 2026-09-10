@@ -74,7 +74,6 @@ const saleSchema = new mongoose.Schema(
       },
       amountPaid: {
         type: Decimal128,
-        default: 0,
         get: getPrice,
       },
       referenceNumber: String,

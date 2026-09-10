@@ -1,5 +1,4 @@
 import { accessPassRepository } from './accessPass.repository.js';
-import Sale from '../sale/sale.model.js';
 import type { Types } from 'mongoose';
 import { ticketService } from '../ticket/ticket.service.js';
 import crypto from 'crypto';
@@ -9,6 +8,7 @@ import { format } from 'date-fns';
 import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js';
 import { accessPassQueueService } from '../accessPassQueue/accessPassQueue.service.js';
 import { config } from '../../config/index.js';
+import { saleService } from '../sale/sale.service.js';
 
 type CreateAccessPassInput = {
   ticketId: Types.ObjectId;
@@ -106,7 +106,7 @@ const syncAccessPass = async (accessPass, _RideCode) => {
 
 const generateAccessPassesBySaleId = async (saleId: Types.ObjectId) => {
   // TODOS: refactor to use sale service
-  const sale = await Sale.findById(saleId);
+  const sale = await saleService.getById(saleId);
 
   const cartItems = sale.cartItems;
 
