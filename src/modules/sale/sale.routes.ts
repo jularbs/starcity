@@ -16,7 +16,7 @@ import {
   authzMiddleware,
 } from '../../common/middleware/auth.middleware.js';
 import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from '../auth/auth.constants.js';
-import { paymayaRequestCheckout } from '../webhooks/webhooks.controller.js';
+import { paymayaRequestCheckout } from '../webhooks/paymaya/paymaya.controller.js';
 
 router.get(
   '/v1/sale',

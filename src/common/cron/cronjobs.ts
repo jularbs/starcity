@@ -1,6 +1,5 @@
 //TODOS: Needs regression testing for all.
 // Focus on currency amounts for accuracy (Number vs ParseFloat)
-import SmQueue from '../../modules/smTickets/smQueue.model.js';
 import EmailQueue from '../../modules/email/emailQueue.model.js';
 import Sale from '../../modules/sale/sale.model.js';
 import AccessPass from '../../modules/accessPass/accessPass.model.js';
@@ -20,6 +19,7 @@ import { ticketService } from '../../modules/ticket/ticket.service.js';
 import { paymentOptionService } from '../../modules/paymentOption/paymentOption.service.js';
 import { turnstileSyncService } from '../../modules/turnstileSync/turnstileSync.service.js';
 import { saleService } from '../../modules/sale/sale.service.js';
+import { smQueueService } from '../../modules/webhooks/smTicket/smQueue.service.js';
 const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
@@ -53,7 +53,7 @@ export const cronSyncAP = async () => {
 };
 
 export const cronSyncSMTickets = async () => {
-  const queues = await SmQueue.find({}).exec();
+  const queues = await smQueueService.list();
 
   if (queues.length > 0) {
     console.log('**** RUNNING SM TICKETS SYNC WITH TURNSTILE ****');
@@ -67,7 +67,7 @@ export const cronSyncSMTickets = async () => {
           date: q.createdAt.toISOString(),
           expiry: q.ticketExpiry,
         });
-        await SmQueue.deleteOne({ tokenID: q.tokenID }).exec();
+        await smQueueService.remove(q.tokenID);
       } catch (error) {
         console.log('Error processing SM Queue item: ', error);
       }
