@@ -41,7 +41,7 @@ export function validateRequest(schemas: RequestSchemas) {
             message: 'Validation failed',
             code: 'VALIDATION_ERROR',
             statusCode: 400,
-            details: z.treeifyError(error),
+            details: z.flattenError(error).fieldErrors,
           }),
         );
       }
