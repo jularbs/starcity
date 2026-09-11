@@ -1,23 +1,15 @@
-export const addRideCategory = async ({
-  data,
-  token,
-}: {
-  data: Record<string, string>;
-  token: string | undefined;
-}) => {
+import { apiFetch } from "@/lib/api-client";
+
+export const addRideCategory = async ({ data }: { data: Record<string, string>; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride-category`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride-category`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(data),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -34,18 +26,9 @@ export const addRideCategory = async ({
   }
 };
 
-export const createRide = async ({
-  data,
-  token,
-}: {
-  data: FormData;
-  token: string | undefined;
-}) => {
+export const createRide = async ({ data }: { data: FormData; token?: string }) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride`, {
       method: "POST",
       body: data,
     });
@@ -65,18 +48,9 @@ export const createRide = async ({
   }
 };
 
-export const updateRide = async ({
-  data,
-  token,
-}: {
-  data: FormData;
-  token: string | undefined;
-}) => {
+export const updateRide = async ({ data }: { data: FormData; token?: string }) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride`, {
       method: "PUT",
       body: data,
     });
@@ -96,23 +70,11 @@ export const updateRide = async ({
   }
 };
 
-export const removeRide = async ({
-  slug,
-  token,
-}: {
-  slug: string;
-  token: string | undefined;
-}) => {
+export const removeRide = async ({ slug }: { slug: string; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride/${slug}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "DELETE",
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride/${slug}`, {
+      method: "DELETE",
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {

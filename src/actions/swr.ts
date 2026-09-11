@@ -1,4 +1,6 @@
 //TODOS: Create logic for parsing params
+import { apiFetch } from "@/lib/api-client";
+
 export const fetcher = async ({
   url,
   params,
@@ -32,12 +34,11 @@ export const fetcher = async ({
 
 export const fetcherWithToken = async ({
   url,
-  token,
   params,
   cache = { revalidate: 0 },
 }: {
   url: string;
-  token: string;
+  token?: string;
   params?: Record<string, string>;
   cache?: Record<string, number | string>;
 }) => {
@@ -51,11 +52,8 @@ export const fetcherWithToken = async ({
     baseURL.search = searchParams.toString();
   }
 
-  const res = await fetch(baseURL.toString(), {
+  const res = await apiFetch(baseURL.toString(), {
     next: cache,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 
   if (!res.ok) {
@@ -64,5 +62,4 @@ export const fetcherWithToken = async ({
   }
 
   return res.json();
-  // return res.json();
 };

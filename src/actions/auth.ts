@@ -15,6 +15,7 @@ export const SignIn = async ({
           "Content-Type": "application/json",
         },
         method: "POST",
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       }
     );
@@ -77,7 +78,7 @@ export const SignOut = async () => {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signout`,
-      {}
+      { credentials: "include" }
     );
 
     if (!res.ok) {
@@ -120,6 +121,24 @@ export const validateToken = async (token: string | undefined) => {
       error: "Server error, please try again later",
     };
   }
+};
+
+export const refreshAccessToken = async () => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/refresh-token`,
+    {
+      method: "POST",
+      credentials: "include",
+    }
+  );
+
+  if (!res.ok) {
+    return res.json().then((error) => {
+      throw error;
+    });
+  }
+
+  return res.json();
 };
 
 //User Managment Functions

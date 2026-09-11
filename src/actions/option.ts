@@ -1,23 +1,15 @@
-export const saveOption = async ({
-  token,
-  data,
-}: {
-  token: string | undefined;
-  data: Record<string, string>;
-}) => {
+import { apiFetch } from "@/lib/api-client";
+
+export const saveOption = async ({ data }: { token?: string; data: Record<string, string> }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/option`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/option`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(data),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {

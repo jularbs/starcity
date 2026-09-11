@@ -1,25 +1,22 @@
 // TODOS: Declare types
+import { apiFetch } from "@/lib/api-client";
+
 export const createTicket = async ({
   data,
-  token,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
-  token: string | undefined;
+  token?: string;
 }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify(data),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -38,25 +35,20 @@ export const createTicket = async ({
 
 export const updateTicket = async ({
   data,
-  token,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
-  token: string | undefined;
+  token?: string;
 }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        method: "PUT",
-        body: JSON.stringify(data),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -75,12 +67,9 @@ export const updateTicket = async ({
 
 export const getTickets = async ({ cache = { revalidate: 0 } }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket`,
-      {
-        next: cache,
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket`, {
+      next: cache,
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -98,26 +87,16 @@ export const getTickets = async ({ cache = { revalidate: 0 } }) => {
   }
 };
 
-export const toggleTicket = async ({
-  token,
-  id,
-}: {
-  token: string | undefined;
-  id: string;
-}) => {
+export const toggleTicket = async ({ id }: { token?: string; id: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket/toggle-status`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        method: "PUT",
-        body: JSON.stringify({ _id: id }),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket/toggle-status`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "PUT",
+      body: JSON.stringify({ _id: id }),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -136,12 +115,9 @@ export const toggleTicket = async ({
 
 export const removeTicket = async ({ id }: { id: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket/${id}`,
-      {
-        method: "DELETE",
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ticket/${id}`, {
+      method: "DELETE",
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {

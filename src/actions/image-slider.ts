@@ -1,23 +1,15 @@
-export const toggleImageSlider = async ({
-  id,
-  token,
-}: {
-  id: string;
-  token: string | undefined;
-}) => {
+import { apiFetch } from "@/lib/api-client";
+
+export const toggleImageSlider = async ({ id }: { id: string; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/toggle-status`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        method: "PUT",
-        body: JSON.stringify({ id }),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/toggle-status`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "PUT",
+      body: JSON.stringify({ id }),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -34,23 +26,11 @@ export const toggleImageSlider = async ({
   }
 };
 
-export const removeImageSlider = async ({
-  slug,
-  token,
-}: {
-  slug: string;
-  token: string | undefined;
-}) => {
+export const removeImageSlider = async ({ slug }: { slug: string; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/${slug}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "DELETE",
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/${slug}`, {
+      method: "DELETE",
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -67,24 +47,12 @@ export const removeImageSlider = async ({
   }
 };
 
-export const addImageSlider = async ({
-  data,
-  token,
-}: {
-  data: FormData;
-  token: string | undefined;
-}) => {
+export const addImageSlider = async ({ data }: { data: FormData; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "POST",
-        body: data,
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider`, {
+      method: "POST",
+      body: data,
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -101,24 +69,12 @@ export const addImageSlider = async ({
   }
 };
 
-export const updateImageSlider = async ({
-  data,
-  token,
-}: {
-  data: FormData;
-  token: string | undefined;
-}) => {
+export const updateImageSlider = async ({ data }: { data: FormData; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "PUT",
-        body: data,
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider`, {
+      method: "PUT",
+      body: data,
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {

@@ -1,21 +1,11 @@
-export const createPromo = async ({
-  data,
-  token,
-}: {
-  data: FormData;
-  token: string | undefined;
-}) => {
+import { apiFetch } from "@/lib/api-client";
+
+export const createPromo = async ({ data }: { data: FormData; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "POST",
-        body: data,
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo`, {
+      method: "POST",
+      body: data,
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -32,24 +22,12 @@ export const createPromo = async ({
   }
 };
 
-export const updatePromo = async ({
-  data,
-  token,
-}: {
-  data: FormData;
-  token: string | undefined;
-}) => {
+export const updatePromo = async ({ data }: { data: FormData; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "PATCH",
-        body: data,
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo`, {
+      method: "PATCH",
+      body: data,
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -66,26 +44,16 @@ export const updatePromo = async ({
   }
 };
 
-export const togglePromo = async ({
-  id,
-  token,
-}: {
-  id: string;
-  token: string | undefined;
-}) => {
+export const togglePromo = async ({ id }: { id: string; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo/toggle`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({ id }),
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo/toggle`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({ id }),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -102,23 +70,11 @@ export const togglePromo = async ({
   }
 };
 
-export const removePromo = async ({
-  id,
-  token,
-}: {
-  id: string;
-  token: string | undefined;
-}) => {
+export const removePromo = async ({ id }: { id: string; token?: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "DELETE",
-      }
-    );
+    const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/promo/${id}`, {
+      method: "DELETE",
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
