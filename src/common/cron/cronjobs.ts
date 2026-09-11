@@ -1,6 +1,5 @@
 //TODOS: Needs regression testing for all.
 // Focus on currency amounts for accuracy (Number vs ParseFloat)
-import EmailQueue from '../../modules/email/emailQueue.model.js';
 import Sale from '../../modules/sale/sale.model.js';
 import AccessPass from '../../modules/accessPass/accessPass.model.js';
 import PaymentOption from '../../modules/paymentOption/paymentOption.model.js';
@@ -8,7 +7,8 @@ import Ticket from '../../modules/ticket/ticket.model.js';
 
 import { auditTrailService } from '../../modules/auditTrail/auditTrail.service.js';
 import { format } from 'date-fns';
-import { emailService, sendMail } from '../../modules/email/email.service.js';
+import { sendMail } from '../../modules/email/email.service.js';
+import { emailQueueService } from '../../modules/email/emailQueue.service.js';
 import { convertArrayToCSV } from 'convert-array-to-csv';
 import dateFnsTz from 'date-fns-tz';
 
@@ -75,22 +75,19 @@ export const cronSyncSMTickets = async () => {
   }
 };
 
-// TODOS: BROKEN
 export const cronProcessEmailQueues = async () => {
-  const Qs = await EmailQueue.find().exec();
+  const Qs = await emailQueueService.listReady();
   if (Qs.length > 0) {
     console.log('**** PROCESSING QUEUED EMAIL ****');
     console.log('Number of Queued emails: ', Qs.length);
 
     Qs.map(async (q) => {
-      //remove q from database
-      await EmailQueue.deleteOne({ _id: q._id }).exec();
       try {
-        //TODOS: this is wrong, get saleID
-        //BETTER: create a dedicated email queuing system for handling retries
-        await emailService.sendAcknowledgementReceiptBySaleId(q._id);
+        await sendMail(q.toObject());
+        await emailQueueService.remove(q._id);
       } catch (error) {
-        console.log('Error processing queued email for RefId: ', q.refId);
+        await emailQueueService.recordFailure(q._id, error);
+        console.log('Error processing queued email: ', q._id);
         console.log('Error: ', error);
       }
     });

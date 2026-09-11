@@ -7,19 +7,12 @@ import fs from 'node:fs/promises'; // Use Node 22 native promise-based fs
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Types } from 'mongoose';
+import { emailQueueService, type QueuedEmail } from './emailQueue.service.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const templateDir = path.join(__dirname, 'templates');
 
-type EmailInput = {
-  from: string;
-  to: string;
-  subject: string;
-  html: string;
-  attachments?: any[];
-  cc?: string;
-  bcc?: string;
-};
+export type EmailInput = QueuedEmail;
 
 const mailConfig = {
   host: config.email.host,
@@ -35,21 +28,16 @@ const mailConfig = {
 const transporter = nodemailer.createTransport(mailConfig);
 
 export const sendMail = async (email: EmailInput) => {
-  try {
-    const { from, to, subject, html, attachments, cc, bcc } = email;
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      html,
-      attachments,
-      cc,
-      bcc,
-    });
-    return info;
-  } catch (e) {
-    console.log('ERROR IN MAILER: ', e);
-  }
+  const { from, to, subject, html, attachments, cc, bcc } = email;
+  return transporter.sendMail({
+    from,
+    to,
+    subject,
+    html,
+    attachments,
+    cc,
+    bcc,
+  });
 };
 
 export const verifyEmailServer = async () => {
@@ -90,7 +78,10 @@ export const emailService = {
       await sendMail(emailInput);
     } catch (e) {
       console.log('Error sending Acknowledgement Receipt: ', e);
-      // TODOS: Create Email Queue
+      await emailQueueService.enqueue({
+        ...emailInput,
+        type: 'acknowledgement-receipt',
+      });
     }
   },
 };

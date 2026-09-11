@@ -33,10 +33,8 @@ export const startCronJobs = () => {
     }
   });
 
-  cron.schedule('*/5 * * * *', () => {
-    if (config.app.isProduction) {
-      runJob(cronProcessEmailQueues, 'process email queues');
-    }
+  cron.schedule('*/1 * * * *', () => {
+    runJob(cronProcessEmailQueues, 'process email queues');
   });
 
   cron.schedule(
@@ -54,10 +52,8 @@ export const startCronJobs = () => {
   cron.schedule(
     '5 0 * * *',
     () => {
-      if (config.app.isProduction) {
-        runJob(generateDailyReport, 'generate daily report');
-        runJob(generateQRdeliveryReport, 'generate QR delivery report');
-      }
+      runJob(generateDailyReport, 'generate daily report');
+      runJob(generateQRdeliveryReport, 'generate QR delivery report');
     },
     {
       timezone: 'Asia/Manila',
