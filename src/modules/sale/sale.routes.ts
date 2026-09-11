@@ -6,7 +6,6 @@ import {
   createCheckout,
   readBySaltRefID,
   resendAR,
-  cleanUp,
   regenerateAccessPass,
   resyncSaleByRefId,
 } from './sale.controller.js';
@@ -70,14 +69,6 @@ router.post(
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   resendAR,
-);
-
-//Helper Functions
-router.get(
-  '/v1/clean-up',
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  cleanUp,
 );
 
 router.get(

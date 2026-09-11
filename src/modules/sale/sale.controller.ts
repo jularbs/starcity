@@ -1,7 +1,6 @@
 import { ticketService } from '../ticket/ticket.service.js';
 import { accessPassService } from '../accessPass/accessPass.service.js';
 import { emailService } from '../email/email.service.js';
-import { format } from 'date-fns';
 import dateFnsTz from 'date-fns-tz';
 const { zonedTimeToUtc } = dateFnsTz;
 import { saleService } from './sale.service.js';
@@ -88,27 +87,6 @@ export const createCheckout = async (req, res) => {
       error: err.message || 'error occured',
     });
   }
-};
-
-export const cleanUp = async (req, res) => {
-  const previous2Months = new Date();
-  previous2Months.setDate(previous2Months.getDate() - 90);
-
-  //TODOS: create count documents service
-  const accessPassCount =
-    await accessPassService.getCountByBeforeDate(previous2Months);
-
-  const saleCount = await saleService.countByBeforeDate(previous2Months);
-
-  await accessPassService.removeByBeforeDate(previous2Months);
-
-  await saleService.removeByBeforeDate(previous2Months);
-
-  res.json({
-    date: format(previous2Months, 'PPpp'),
-    AccessPassDeletedCount: accessPassCount,
-    saleDeletedCount: saleCount,
-  });
 };
 
 export const regenerateAccessPass = async (req, res) => {
