@@ -5,7 +5,6 @@ import {
   list,
   update,
   remove,
-  toggleStatus,
   read,
 } from './imageSlider.controller.js';
 import {
@@ -16,7 +15,13 @@ import {
   upload,
   validateUploadedFile,
 } from '../../common/middleware/multer.middleware.js';
+import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
+import { UploadedImageFileSchema } from '../../common/schemas/uploadedImageFile.schema.js';
 import { ADMIN_ROLE, CONTENT_MANAGER_ROLE } from '../auth/auth.constants.js';
+import { createImageSliderSchema } from './dto/createImageSlider.dto.js';
+import { updateImageSliderSchema } from './dto/updateImageSlider.dto.js';
+import { imageSliderIdParamsSchema } from './dto/imageSliderIdParams.dto.js';
+import { imageSliderSlugParamsSchema } from './dto/imageSliderSlugParams.dto.js';
 
 router.post(
   '/v1/image-slider',
@@ -24,32 +29,45 @@ router.post(
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
   upload.single('image'),
   validateUploadedFile,
+  validateRequest({
+    body: createImageSliderSchema,
+    file: UploadedImageFileSchema,
+  }),
   create,
 );
 
-router.put(
-  '/v1/image-slider',
+router.patch(
+  '/v1/image-slider/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
   upload.single('image'),
   validateUploadedFile,
+  validateRequest({
+    params: imageSliderIdParamsSchema,
+    file: UploadedImageFileSchema.optional(),
+    body: updateImageSliderSchema,
+  }),
   update,
 );
 
-router.put(
-  '/v1/image-slider/toggle-status',
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
-  toggleStatus,
+//TODOS: pagination validation
+router.get('/v1/image-slider', list);
+
+router.get(
+  '/v1/image-slider/:slug',
+  validateRequest({
+    params: imageSliderSlugParamsSchema,
+  }),
+  read,
 );
 
-router.get('/v1/image-slider', list);
-router.get('/v1/image-slider/:slug', read);
-
 router.delete(
-  '/v1/image-slider/:slug',
+  '/v1/image-slider/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
+  validateRequest({
+    params: imageSliderIdParamsSchema,
+  }),
   remove,
 );
 

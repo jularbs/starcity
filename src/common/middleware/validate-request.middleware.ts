@@ -27,11 +27,18 @@ export function validateRequest(schemas: RequestSchemas) {
       if (schemas.params) {
         req.params = schemas.params.parse(req.params) as Request['params'];
       }
+      // Wrapped so file issues get a path (e.g. fieldErrors.file) instead of formErrors
       if (schemas.file) {
-        req.file = schemas.file.parse(req.file) as Express.Multer.File;
+        const parsed = z
+          .object({ file: schemas.file })
+          .parse({ file: req.file });
+        req.file = parsed.file as Express.Multer.File;
       }
       if (schemas.files) {
-        req.files = schemas.files.parse(req.files) as
+        const parsed = z
+          .object({ files: schemas.files })
+          .parse({ files: req.files });
+        req.files = parsed.files as
           Express.Multer.File[] | Record<string, Express.Multer.File[]>;
       }
       if (schemas.cookies) {
