@@ -59,6 +59,7 @@ const updateById = async (
       image,
       `image-slider/${year}/${month}/${imageSlider.slug}`,
     );
+    //TODOS: if overwritten, delete the old image from storage
   }
 
   return imageSliderRepository.updateById(id, {
@@ -99,6 +100,7 @@ const deleteById = async (id: Types.ObjectId) => {
     });
   }
 
+  //TODOS: delete associated image from storage if necessary
   return imageSliderRepository.deleteById(id);
 };
 
