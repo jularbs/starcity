@@ -1,70 +1,79 @@
+import type { Request, Response } from 'express';
+import { AppError } from '../../common/errors/app-error.js';
+import type { Types } from 'mongoose';
+import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+import {
+  authenticate,
+  encryptPassword,
+  generateSalt,
+} from '../auth/password.helpers.js';
 import { userService } from './user.service.js';
 
-export const remove = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await userService.getById(id);
-
-    if (!user) return res.status(400).json({ error: 'User not found' });
-
-    await userService.removeById(id);
-
-    return res.json({
-      success: 'User removed successfully',
-    });
-  } catch (err) {
-    console.log(err);
-    return res.status(400).json({
-      error: 'Failed to remove user. Please try again later.',
-    });
-  }
-};
-
-export const read = async (req, res) => {
+export const remove = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  try {
-    const user = await userService.getById(id);
-    if (!user) return res.status(400).json({ error: 'User not found' });
+  const user = await userService.getById(id as unknown as Types.ObjectId);
 
-    delete user.hashed_password;
-    delete user.salt;
-    return res.json(user);
-  } catch (e) {
-    console.log('Error: ', e);
-    return res.status(400).json({ error: 'Error on getting user information' });
+  if (!user) {
+    throw new AppError({
+      message: 'User not found',
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
+    });
   }
+
+  await userService.removeById(id as unknown as Types.ObjectId);
+
+  return res.json({
+    success: 'User removed successfully',
+  });
 };
 
-export const update = async (req, res) => {
-  const { _id } = req.body;
+export const read = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-  const user = await userService.getById(_id);
+  const user = await userService.getById(id as unknown as Types.ObjectId);
+  if (!user) {
+    throw new AppError({
+      message: 'User not found',
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
+    });
+  }
 
-  if (!user) return res.status(400).json({ error: 'User not found' });
+  delete user.hashed_password;
+  delete user.salt;
+  return res.json(user);
+};
+
+export const update = async (req: Request, res: Response) => {
+  const { _id } = req.params;
+  const { name, status, email, department } = req.body;
+
+  const user = await userService.getById(_id as unknown as Types.ObjectId);
+
+  if (!user) {
+    throw new AppError({
+      message: 'User not found',
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
+    });
+  }
 
   const update = {
-    ...(req.body?.name && { name: req.body?.name }),
-    ...(req.body?.status && { status: req.body?.status }),
-    ...(req.body?.email && { email: req.body?.email }),
-    ...(req.body?.department && { department: req.body?.department }),
+    ...(name && { name }),
+    ...(status && { status }),
+    ...(email && { email }),
+    ...(department && { department }),
   };
 
-  try {
-    await userService.updateById(_id, update);
-    return res.json({
-      success: 'User updated successfully',
-    });
-  } catch (err) {
-    console.log(err);
-    return res.status(400).json({
-      error: 'Failed to update user. Please try again later.',
-    });
-  }
+  await userService.updateById(_id as unknown as Types.ObjectId, update);
+  return res.json({
+    success: 'User updated successfully',
+  });
 };
 
-export const list = async (req, res) => {
+export const list = async (req: Request, res: Response) => {
   const {
     query = '',
     department = '',
@@ -79,22 +88,74 @@ export const list = async (req, res) => {
     status,
   };
 
-  try {
-    const users = await userService.list({
-      params,
-      skip: parseInt(skip),
-      limit: parseInt(limit),
-    });
-    const count = await userService.countUsers(params);
+  const users = await userService.list({
+    params,
+    skip: parseInt(skip as string),
+    limit: parseInt(limit as string),
+  });
+  const count = await userService.countUsers(params);
 
-    return res.json({
-      data: users,
-      count: count,
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: 'Something went wrong',
+  return res.json({
+    data: users,
+    count: count,
+  });
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+
+  const _id = req.profile?._id;
+  const user = await userService.getById(_id as unknown as Types.ObjectId);
+  if (
+    !authenticate({
+      password: currentPassword,
+      salt: user.salt,
+      hashedPassword: user.hashed_password,
+    })
+  ) {
+    throw new AppError({
+      message: 'Current password is incorrect',
+      code: 'CURRENT_PASSWORD_INCORRECT',
+      statusCode: 400,
     });
   }
+
+  const salt = generateSalt();
+  const hashed_password = encryptPassword({ password: newPassword, salt });
+  await userService.updateById(user._id as unknown as Types.ObjectId, {
+    hashed_password,
+    salt,
+  });
+  auditTrailService.create({
+    user: user.name,
+    action: 'Changed Password',
+    request: req,
+    payload: {},
+  });
+  return res.json({ success: 'Password successfully changed' });
+};
+
+export const unblockUser = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const user = await userService.getById(id as unknown as Types.ObjectId);
+  if (!user) {
+    throw new AppError({
+      message: 'User not found',
+      code: 'USER_NOT_FOUND',
+      statusCode: 400,
+    });
+  }
+
+  await userService.updateById(id as unknown as Types.ObjectId, {
+    mistakes: 0,
+  });
+
+  auditTrailService.create({
+    user: user.name,
+    action: 'Unblocked User',
+    request: req,
+    payload: {},
+  });
+  return res.json({ success: 'User successfully unblocked' });
 };
