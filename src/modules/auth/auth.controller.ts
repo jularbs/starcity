@@ -1,4 +1,5 @@
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+import type { Request, Response } from 'express';
 import {
   generateSalt,
   encryptPassword,
@@ -12,146 +13,137 @@ import {
 import { config } from '../../config/index.js';
 import { refreshTokenRepository } from './refreshToken.repository.js';
 import { userService } from '../user/user.service.js';
+import { AppError } from '../../common/errors/app-error.js';
 
-export const signup = async (req, res) => {
-  const { name, email, password, confirmPassword } = req.body;
+export const signup = async (req: Request, res: Response) => {
+  const { name, email, password } = req.body;
 
-  if (password !== confirmPassword)
-    return res
-      .status(400)
-      .json({ error: 'Password and Confirm Password should match' });
+  const user = await userService.getByEmail(email);
 
-  try {
-    const user = await userService.getByEmail(email);
-
-    if (user) {
-      return res.status(400).json({
-        error:
-          'Email address is already registered. Please proceed to logging in.',
-      });
-    }
-
-    const salt = generateSalt();
-    const hashed_password = encryptPassword({ password, salt });
-    await userService.create({
-      name,
-      email,
-      hashed_password,
-      salt,
-    });
-
-    return res.json({
-      success: 'Signup Success! Please wait for your acccount to be processed.',
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: 'Unable to signup new user.',
-      message: error,
+  if (user) {
+    throw new AppError({
+      message:
+        'Email address is already registered. Please proceed to logging in.',
+      code: 'EXISTING_EMAIL',
+      statusCode: 400,
     });
   }
+
+  const salt = generateSalt();
+  const hashed_password = encryptPassword({ password, salt });
+  await userService.create({
+    name,
+    email,
+    hashed_password,
+    salt,
+  });
+
+  return res.json({
+    success: 'Signup Success! Please wait for your acccount to be processed.',
+  });
 };
 
-export const signin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+export const signin = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-    const user = await userService.getByEmail(email);
+  const user = await userService.getByEmail(email);
 
-    if (!user) {
-      return res.status(400).json({
-        error: 'Email is not yet registered. Please create an account.',
-      });
-    }
-
-    if (user.mistakes > 3) {
-      return res.status(400).json({
-        error:
-          'Your account has been blocked due to many failed attempts to sign in. Please contact web administrator',
-      });
-    }
-
-    if (
-      !authenticate({
-        password,
-        salt: user.salt,
-        hashedPassword: user.hashed_password,
-      })
-    ) {
-      await userService.updateById(user._id, {
-        mistakes: user.mistakes + 1,
-      });
-
-      return res.status(400).json({
-        error: 'Email and password do not match.',
-      });
-    }
-
-    if (!user.status) {
-      return res.status(400).json({
-        error: 'Account is not yet approved.',
-      });
-    }
-
-    //generate JWT
-    const payload = {
-      _id: user._id,
-      department: user.department,
-      name: user.name,
-    };
-    const token = signAccessToken(payload);
-
-    const refreshToken = generateRefreshToken();
-    const hashedRefreshToken = hashRefreshToken(refreshToken);
-
-    // Store hashed refresh token in the database
-
-    await refreshTokenRepository.storeRefreshToken(
-      user._id,
-      hashedRefreshToken,
-    );
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.auth.cookieSecure,
-      sameSite: 'Strict',
-      maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
+  if (!user) {
+    throw new AppError({
+      message: 'Email is not yet registered. Please create an account.',
+      code: 'EMAIL_NOT_REGISTERED',
+      statusCode: 400,
     });
+  }
 
-    res.json({
-      token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        department: user.department,
-      },
+  if (user.mistakes > 3) {
+    throw new AppError({
+      message:
+        'Your account has been blocked due to many failed attempts to sign in. Please contact web administrator',
+      code: 'ACCOUNT_BLOCKED',
+      statusCode: 400,
     });
+  }
 
+  if (
+    !authenticate({
+      password,
+      salt: user.salt,
+      hashedPassword: user.hashed_password,
+    })
+  ) {
     await userService.updateById(user._id, {
-      mistakes: 0,
-      lastLogin: new Date(),
+      mistakes: user.mistakes + 1,
     });
 
-    auditTrailService.create({
-      user: user.name,
-      action: 'Logged in to system',
-      request: req,
-      payload: { email: email },
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: 'Unable to sign in. Please try again later.',
-      message: error,
+    throw new AppError({
+      message: 'Email and password do not match.',
+      code: 'INVALID_CREDENTIALS',
+      statusCode: 400,
     });
   }
+
+  if (!user.status) {
+    throw new AppError({
+      message: 'Account not yet approved',
+      code: 'ACCOUNT_PENDING',
+      statusCode: 400,
+    });
+  }
+
+  //generate JWT
+  const payload = {
+    _id: user._id,
+    department: user.department,
+    name: user.name,
+  };
+  const token = signAccessToken(payload);
+
+  const refreshToken = generateRefreshToken();
+  const hashedRefreshToken = hashRefreshToken(refreshToken);
+
+  // Store hashed refresh token in the database
+
+  await refreshTokenRepository.storeRefreshToken(user._id, hashedRefreshToken);
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: config.auth.cookieSecure,
+    sameSite: 'strict',
+    maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({
+    token,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      department: user.department,
+    },
+  });
+
+  await userService.updateById(user._id, {
+    mistakes: 0,
+    lastLogin: new Date(),
+  });
+
+  auditTrailService.create({
+    user: user.name,
+    action: 'Logged in to system',
+    request: req,
+    payload: { email: email },
+  });
 };
 
-export const refreshAccessToken = async (req, res) => {
+export const refreshAccessToken = async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
   if (!token) {
-    return res.status(401).json({ error: 'No refresh token provided.' });
+    throw new AppError({
+      message: 'No refresh token provided.',
+      code: 'NO_REFRESH_TOKEN',
+      statusCode: 401,
+    });
   }
 
   const hashedRefreshToken = hashRefreshToken(token);
@@ -160,14 +152,22 @@ export const refreshAccessToken = async (req, res) => {
 
   if (!storedToken || storedToken.expiresAt < new Date()) {
     res.clearCookie('refreshToken');
-    return res.status(401).json({ error: 'Invalid or expired refresh token.' });
+    throw new AppError({
+      message: 'Invalid or expired refresh token.',
+      code: 'INVALID_REFRESH_TOKEN',
+      statusCode: 401,
+    });
   }
 
   const user = await userService.getById(storedToken.userId);
   if (!user || !user.status) {
     await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
     res.clearCookie('refreshToken');
-    return res.status(401).json({ error: 'Invalid or expired refresh token.' });
+    throw new AppError({
+      message: 'Invalid or expired refresh token.',
+      code: 'INVALID_REFRESH_TOKEN',
+      statusCode: 401,
+    });
   }
 
   // rotate refresh token so a stolen token can only be replayed once
@@ -188,7 +188,7 @@ export const refreshAccessToken = async (req, res) => {
   res.cookie('refreshToken', newRefreshToken, {
     httpOnly: true,
     secure: config.auth.cookieSecure,
-    sameSite: 'Strict',
+    sameSite: 'strict',
     maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
   });
 
@@ -203,13 +203,8 @@ export const refreshAccessToken = async (req, res) => {
   });
 };
 
-export const signout = async (req, res) => {
+export const signout = async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
-  if (!token) {
-    return res.json({
-      error: 'No token provided.',
-    });
-  }
 
   const hashedRefreshToken = hashRefreshToken(token);
   await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
@@ -219,77 +214,6 @@ export const signout = async (req, res) => {
   });
 };
 
-export const changePassword = async (req, res) => {
-  try {
-    const { _id, currentPassword, newPassword, confirmation } = req.body;
-
-    const user = await userService.getById(_id);
-    if (
-      !authenticate({
-        password: currentPassword,
-        salt: user.salt,
-        hashedPassword: user.hashed_password,
-      })
-    ) {
-      return res.status(400).json({
-        error: 'Current password is incorrect.',
-      });
-    }
-
-    if (newPassword !== confirmation) {
-      return res.status(400).json({
-        error: 'New Password and confirmation should match',
-      });
-    }
-
-    const salt = generateSalt();
-    const hashed_password = encryptPassword({ password: confirmation, salt });
-    await userService.updateById(user._id, {
-      hashed_password,
-      salt,
-    });
-    auditTrailService.create({
-      user: user.name,
-      action: 'Changed Password',
-      request: req,
-      payload: {},
-    });
-    return res.json({ success: 'Password successfully changed' });
-  } catch {
-    return res
-      .status(400)
-      .json({ error: 'Unable to change password. Please try again later' });
-  }
-};
-
-export const validateToken = (_req, res) => {
+export const validateToken = (_req: Request, res: Response) => {
   return res.json({ message: 'VALID' });
-};
-
-export const unblockUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await userService.getById(id);
-    if (!user) {
-      return res.status(400).json({ error: 'User not found' });
-    }
-
-    await userService.updateById(id, {
-      mistakes: 0,
-    });
-
-    auditTrailService.create({
-      user: user.name,
-      action: 'Unblocked User',
-      request: req,
-      payload: {},
-    });
-    return res.json({ success: 'User successfully unblocked' });
-  } catch (error) {
-    console.log(error);
-    return res.status(400).json({
-      error: 'Unable to unblock user. Please try again later.',
-    });
-  }
 };
