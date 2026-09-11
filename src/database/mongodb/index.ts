@@ -5,7 +5,7 @@ mongoose.set('strictQuery', true);
 
 const RETRY_DELAY_MS = 5000;
 
-const wait = (duration) =>
+const wait = (duration: number) =>
   new Promise((resolve) => setTimeout(resolve, duration));
 
 export const connectMongoDB = async () => {
@@ -43,7 +43,7 @@ export const connectMongoDB = async () => {
 };
 
 // Drops/creates indexes to match the current schema; fixes stale unique indexes left by removed fields.
-export const syncModelIndexes = async (model) => {
+export const syncModelIndexes = async (model: mongoose.Model<any>) => {
   try {
     const dropped = await model.syncIndexes();
     if (dropped.length > 0) {
