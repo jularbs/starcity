@@ -147,6 +147,7 @@ const generateAccessPassesBySaleId = async (saleId: Types.ObjectId) => {
 };
 
 export const accessPassService = {
+  syncAccessPass,
   create,
   removeBySalesId,
   removeByBeforeDate,

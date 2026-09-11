@@ -31,7 +31,7 @@ export const readBySaltRefID = async (req, res) => {
 
 export const read = async (req, res) => {
   try {
-    const data = await saleService.getByRefIdWithSaleDetails(req.params.refid);
+    const data = await saleService.getByRefIdWithDetails(req.params.refid);
     res.json(data);
   } catch (err) {
     return res.status(400).json({
@@ -124,7 +124,7 @@ export const resyncSaleByRefId = async (req, res) => {
       accesspasses.map(async (ap) => {
         //get ticketDetails
         const ticket = await ticketService.getById(ap.ticketId);
-        await syncAccessPass(ap, ticket.itemCode);
+        await accessPassService.syncAccessPass(ap, ticket.itemCode);
       });
       return res.json({ status: 'Success', action: 'Sale Resynced' });
     } else {
