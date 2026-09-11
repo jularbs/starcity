@@ -1,4 +1,3 @@
-import formidable from 'formidable';
 import { pipeline } from 'node:stream/promises';
 import {
   getObjectFromS3,
@@ -37,34 +36,26 @@ export const getMedia = async (req: Request, res: Response) => {
 };
 
 export const uploadMediaFromEditor = async (req: Request, res: Response) => {
-  const form = formidable({ multiples: true });
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.log(err);
-      return res
-        .status(400)
-        .json({ error: 'File Upload failed. Please try again later.' });
-    }
-    const { image } = files;
-    const imageFile = Array.isArray(image) ? image[0] : image;
-    const date = new Date();
-    const month = date.getUTCMonth() + 1; //months from 1-12
-    const year = date.getUTCFullYear();
+  const imageFile = req.file;
 
-    try {
-      const imageInfo = await uploadFile(
-        imageFile,
-        `attachments/${year}/${month}/${imageFile.name}`,
-      );
-      if (imageInfo.bucket && imageInfo.key) {
-        //return string URL for getMedia
-        return res.json(imageInfo);
-      }
-    } catch (err) {
-      console.log('Error on upload: ', err);
-      return res
-        .status(400)
-        .json({ error: 'File Upload failed. Please try again later.' });
-    }
-  });
+  if (!imageFile) {
+    return res.status(400).json({ error: 'Image is required' });
+  }
+
+  const date = new Date();
+  const month = date.getUTCMonth() + 1;
+  const year = date.getUTCFullYear();
+
+  try {
+    const imageInfo = await uploadFile(
+      imageFile,
+      `attachments/${year}/${month}`,
+    );
+    return res.json(imageInfo);
+  } catch (err) {
+    console.log('Error on upload: ', err);
+    return res
+      .status(400)
+      .json({ error: 'File Upload failed. Please try again later.' });
+  }
 };

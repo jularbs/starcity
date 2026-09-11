@@ -1,89 +1,80 @@
 //TODOS: Handle duplicate errors
 import Promo from './promo.model.js';
 import { promoService } from './promo.service.js';
-import formidable from 'formidable';
 import type { Request, Response } from 'express';
 import { Types } from 'mongoose';
 
+const firstValue = <T>(value: T | T[]) =>
+  Array.isArray(value) ? value[0] : value;
+
+const parseBoolean = (value: unknown) =>
+  typeof value === 'boolean' ? value : value === 'true';
+
+const parsePaymentOptions = (value: unknown) => {
+  if (typeof value === 'string') {
+    return JSON.parse(value);
+  }
+
+  return value ?? [];
+};
+
+const buildPromoData = (fields: Record<string, any>) => ({
+  code: firstValue(fields.code).toUpperCase(),
+  campaignName: firstValue(fields.campaignName),
+  startDate: new Date(firstValue(fields.startDate)),
+  endDate: new Date(firstValue(fields.endDate)),
+  percentageDiscount: Number(firstValue(fields.percentageDiscount)),
+  fixedDiscount: Number(firstValue(fields.fixedDiscount)),
+  maxDiscount: Number(firstValue(fields.maxDiscount)),
+  minimumRequired: Number(firstValue(fields.minimumRequired)),
+  maxUsage: Number(firstValue(fields.maxUsage)),
+  status: parseBoolean(firstValue(fields.status)),
+  acceptedPaymentMethods: parsePaymentOptions(fields.paymentOptions),
+  deletedAt: null,
+  meta: undefined,
+});
+
 export const create = async (req: Request, res: Response) => {
-  const form = formidable();
-  form.parse(req, async (err, fields) => {
-    if (err) {
-      console.log(err);
-      return res
-        .status(400)
-        .json({ error: 'Error on parsing form. Please try again later.' });
-    }
+  const {
+    code,
+    campaignName,
+    startDate,
+    endDate,
+    percentageDiscount,
+    fixedDiscount,
+    maxDiscount,
+    minimumRequired,
+    maxUsage,
+    status,
+    paymentOptions,
+  } = req.body;
 
-    const {
-      code,
-      campaignName,
-      startDate,
-      endDate,
-      percentageDiscount,
-      fixedDiscount,
-      maxDiscount,
-      minimumRequired,
-      maxUsage,
-      status,
-      paymentOptions,
-    } = fields;
-
-    const promoData = {
-      code: Array.isArray(code) ? code[0].toUpperCase() : code.toUpperCase(),
-      campaignName: Array.isArray(campaignName)
-        ? campaignName[0]
-        : campaignName,
-      startDate: Array.isArray(startDate)
-        ? new Date(startDate[0])
-        : new Date(startDate),
-      endDate: Array.isArray(endDate)
-        ? new Date(endDate[0])
-        : new Date(endDate),
-      percentageDiscount: Array.isArray(percentageDiscount)
-        ? Number(percentageDiscount[0])
-        : Number(percentageDiscount),
-      fixedDiscount: Array.isArray(fixedDiscount)
-        ? Number(fixedDiscount[0])
-        : Number(fixedDiscount),
-      maxDiscount: Array.isArray(maxDiscount)
-        ? Number(maxDiscount[0])
-        : Number(maxDiscount),
-      minimumRequired: Array.isArray(minimumRequired)
-        ? Number(minimumRequired[0])
-        : Number(minimumRequired),
-      maxUsage: Array.isArray(maxUsage)
-        ? Number(maxUsage[0])
-        : Number(maxUsage),
-      status: Array.isArray(status)
-        ? status[0] === 'true'
-          ? true
-          : false
-        : status === 'true'
-          ? true
-          : false,
-      acceptedPaymentMethods: Array.isArray(paymentOptions)
-        ? JSON.parse(paymentOptions[0])
-        : paymentOptions
-          ? JSON.parse(paymentOptions)
-          : [],
-      deletedAt: null,
-      meta: undefined,
-    };
-
-    try {
-      const result = await promoService.create(promoData);
-      return res.json({
-        success: 'Promo Code created successfully',
-        data: result,
-      });
-    } catch (err) {
-      console.log(err);
-      return res.status(400).json({
-        error: 'Failed to add promo. Please try again later.',
-      });
-    }
+  const promoData = buildPromoData({
+    code,
+    campaignName,
+    startDate,
+    endDate,
+    percentageDiscount,
+    fixedDiscount,
+    maxDiscount,
+    minimumRequired,
+    maxUsage,
+    status,
+    paymentOptions,
   });
+
+  try {
+    const result = await promoService.create(promoData);
+    return res.json({
+      success: 'Promo Code created successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      error: 'Failed to add promo. Please try again later.',
+    });
+  }
 };
 
 export const read = async (req: Request, res: Response) => {
@@ -94,88 +85,50 @@ export const read = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const form = formidable({ multiples: true });
-  form.parse(req, async (err, fields) => {
-    if (err) {
-      console.log(err);
-      return res
-        .status(400)
-        .json({ error: 'Error on parsing form. Please try again later.' });
-    }
+  const {
+    _id,
+    code,
+    campaignName,
+    startDate,
+    endDate,
+    percentageDiscount,
+    fixedDiscount,
+    maxDiscount,
+    minimumRequired,
+    maxUsage,
+    status,
+    paymentOptions,
+  } = req.body;
 
-    const {
-      _id,
-      code,
-      campaignName,
-      startDate,
-      endDate,
-      percentageDiscount,
-      fixedDiscount,
-      maxDiscount,
-      minimumRequired,
-      maxUsage,
-      status,
-      paymentOptions,
-    } = fields;
-
-    const updateData = {
-      code: Array.isArray(code) ? code[0].toUpperCase() : code.toUpperCase(),
-      campaignName: Array.isArray(campaignName)
-        ? campaignName[0]
-        : campaignName,
-      startDate: Array.isArray(startDate)
-        ? new Date(startDate[0])
-        : new Date(startDate),
-      endDate: Array.isArray(endDate)
-        ? new Date(endDate[0])
-        : new Date(endDate),
-      percentageDiscount: Array.isArray(percentageDiscount)
-        ? Number(percentageDiscount[0])
-        : Number(percentageDiscount),
-      fixedDiscount: Array.isArray(fixedDiscount)
-        ? Number(fixedDiscount[0])
-        : Number(fixedDiscount),
-      maxDiscount: Array.isArray(maxDiscount)
-        ? Number(maxDiscount[0])
-        : Number(maxDiscount),
-      minimumRequired: Array.isArray(minimumRequired)
-        ? Number(minimumRequired[0])
-        : Number(minimumRequired),
-      maxUsage: Array.isArray(maxUsage)
-        ? Number(maxUsage[0])
-        : Number(maxUsage),
-      status: Array.isArray(status)
-        ? status[0] === 'true'
-          ? true
-          : false
-        : status === 'true'
-          ? true
-          : false,
-      acceptedPaymentMethods: Array.isArray(paymentOptions)
-        ? JSON.parse(paymentOptions[0])
-        : paymentOptions
-          ? JSON.parse(paymentOptions)
-          : [],
-      deletedAt: null,
-      meta: undefined,
-    };
-
-    try {
-      const result = await promoService.updateById(
-        _id as unknown as Types.ObjectId,
-        updateData,
-      );
-      return res.json({
-        success: 'Promo Code updated successfully',
-        data: result,
-      });
-    } catch (err) {
-      console.log(err);
-      return res.status(400).json({
-        error: 'Failed to update promo. Please try again later.',
-      });
-    }
+  const updateData = buildPromoData({
+    code,
+    campaignName,
+    startDate,
+    endDate,
+    percentageDiscount,
+    fixedDiscount,
+    maxDiscount,
+    minimumRequired,
+    maxUsage,
+    status,
+    paymentOptions,
   });
+
+  try {
+    const result = await promoService.updateById(
+      _id as unknown as Types.ObjectId,
+      updateData,
+    );
+    return res.json({
+      success: 'Promo Code updated successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      error: 'Failed to update promo. Please try again later.',
+    });
+  }
 };
 
 export const list = async (req: Request, res: Response) => {

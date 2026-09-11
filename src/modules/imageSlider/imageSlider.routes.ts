@@ -12,12 +12,18 @@ import {
   requireSignin,
   authzMiddleware,
 } from '../../common/middleware/auth.middleware.js';
+import {
+  upload,
+  validateUploadedFile,
+} from '../../common/middleware/multer.middleware.js';
 import { ADMIN_ROLE, CONTENT_MANAGER_ROLE } from '../auth/auth.constants.js';
 
 router.post(
   '/v1/image-slider',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
+  upload.single('image'),
+  validateUploadedFile,
   create,
 );
 
@@ -25,6 +31,8 @@ router.put(
   '/v1/image-slider',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE),
+  upload.single('image'),
+  validateUploadedFile,
   update,
 );
 

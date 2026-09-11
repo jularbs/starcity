@@ -10,11 +10,17 @@ import {
   ECOMMERCE_MANAGER_ROLE,
   CONTENT_MANAGER_ROLE,
 } from '../auth/auth.constants.js';
+import {
+  upload,
+  validateUploadedFile,
+} from '../../common/middleware/multer.middleware.js';
 //Version 1.0
 router.post(
   '/v1/post',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE, CONTENT_MANAGER_ROLE),
+  upload.single('image'),
+  validateUploadedFile,
   create,
 );
 
@@ -22,6 +28,8 @@ router.put(
   '/v1/post',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE, CONTENT_MANAGER_ROLE),
+  upload.single('image'),
+  validateUploadedFile,
   update,
 );
 

@@ -2,7 +2,6 @@ import Post from './post.model.js';
 import slugify from 'slugify';
 import { smartTrim } from '../../common/utils/smart-trim.js';
 import { stripHtml } from 'string-strip-html';
-import formidable from 'formidable';
 import {
   deleteObjectFromS3,
   uploadFile,
@@ -13,79 +12,67 @@ import dateFnsTz from 'date-fns-tz';
 const { zonedTimeToUtc } = dateFnsTz;
 
 export const create = async (req, res) => {
-  const form = formidable({ multiples: true });
+  const { title, content, status, publishDate } = req.body;
+  const imageFile = req.file;
 
-  form.parse(req, async (err, fields, files) => {
-    const { title, content, status, publishDate } = fields;
-    const { image } = files;
+  if (!title) {
+    return res.status(400).json({
+      error: 'Title is required',
+    });
+  }
 
-    if (!title || !title.length) {
-      return res.status(400).json({
-        error: 'Title is required',
-      });
-    }
+  const slug = slugify(title).toLowerCase();
+  const excerpt = smartTrim(
+    stripHtml(content).result.substring(0, 300),
+    280,
+    ' ',
+    '...',
+  );
 
-    const slug = slugify(title).toLowerCase();
-    const excerpt = smartTrim(
-      stripHtml(content).result.substring(0, 300),
-      280,
-      ' ',
-      '...',
+  if (!imageFile) {
+    return res.status(400).json({
+      error: 'Featured Image is required',
+    });
+  }
+
+  if (imageFile.size > 1000000) {
+    return res.status(400).json({
+      error: 'Image too large. ( > 1MB ).',
+    });
+  }
+
+  const date = new Date();
+  const month = date.getUTCMonth() + 1;
+  const year = date.getUTCFullYear();
+
+  try {
+    const imageInfo = await uploadFile(
+      imageFile,
+      `post/${year}/${month}/${slug}`,
     );
+    const post = new Post({
+      title,
+      slug,
+      content,
+      excerpt,
+      featuredImage: imageInfo,
+      status,
+      publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
+    });
 
-    if (image) {
-      if (image.size > 1000000) {
-        return res.status(400).json({
-          error: 'Image too large. ( > 1MB ).',
-        });
-      }
-
-      var date = new Date();
-      var month = date.getUTCMonth() + 1; //months from 1-12
-      var year = date.getUTCFullYear();
-
-      let imageInfo;
-      try {
-        imageInfo = await uploadFile(image, `post/${year}/${month}/${slug}`);
-      } catch (err) {
-        console.log('Error on upload: ', err);
-        return res
-          .status(400)
-          .json({ error: 'Error on uploading image to Amazon S3' });
-      }
-
-      if (imageInfo.location && imageInfo.bucket && imageInfo.bucket) {
-        try {
-          let post = new Post();
-          post.title = title;
-          post.slug = slug;
-          post.content = content;
-          post.excerpt = excerpt;
-          post.featuredImage = imageInfo;
-          post.status = status;
-          post.publishDate = zonedTimeToUtc(publishDate, 'Asia/Manila');
-
-          const result = await post.save();
-          res.json(result);
-          auditTrailService.create({
-            action: 'Created new post',
-            payload: result,
-            request: req,
-          });
-        } catch {
-          res.json({
-            error: 'Failed to save post. Please try again later.',
-          });
-        }
-      } else {
-        res.json({ error: 'Error on uploading image to Amazon S3' });
-      }
-    } else {
-      return res.status(400).json({
-        error: 'Featured Image is required',
-      });
-    }
-  });
+    const result = await post.save();
+    res.json(result);
+    auditTrailService.create({
+      action: 'Created new post',
+      payload: result,
+      request: req,
+    });
+  } catch (err) {
+    console.log('Error creating post: ', err);
+    return res.status(400).json({
+      error: 'Failed to save post. Please try again later.',
+    });
+  }
 };
 
 export const read = async (req, res) => {
@@ -120,62 +107,72 @@ export const list = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const form = formidable({ multiples: true });
+  const { title, content, slug, status, publishDate } = req.body;
+  const imageFile = req.file;
 
-  form.parse(req, async (err, fields, files) => {
-    const { title, content, slug, status, publishDate } = fields;
-    const { image } = files;
+  let post = await Post.findOne({ slug }).exec();
 
-    let post = await Post.findOne({ slug }).exec();
+  if (!post) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
 
-    let imageInfo;
-    if (image) {
-      deleteObjectFromS3(post.featuredImage.key, post.featuredImage.bucket);
-
-      var date = new Date();
-      var month = date.getUTCMonth() + 1; //months from 1-12
-      var year = date.getUTCFullYear();
-
-      try {
-        imageInfo = await uploadFile(image, `post/${year}/${month}/${slug}`);
-
-        post.featuredImage = imageInfo;
-      } catch (err) {
-        console.log('Error on upload: ', err);
-        return res
-          .status(400)
-          .json({ error: 'Error on uploading image to Amazon S3' });
-      }
+  let imageInfo;
+  if (imageFile) {
+    if (imageFile.size > 1000000) {
+      return res.status(400).json({
+        error: 'Image too large. ( > 1MB ).',
+      });
     }
 
-    const excerpt = smartTrim(
-      stripHtml(content).result.substring(0, 300),
-      280,
-      ' ',
-      '...',
-    );
-    post.title = title;
-    post.slug = slug;
-    post.content = content;
-    post.excerpt = excerpt;
-    post.status = status;
-    post.publishDate = zonedTimeToUtc(publishDate, 'Asia/Manila');
+    if (post.featuredImage?.key && post.featuredImage?.bucket) {
+      await deleteObjectFromS3(
+        post.featuredImage.key,
+        post.featuredImage.bucket,
+      );
+    }
+
+    const date = new Date();
+    const month = date.getUTCMonth() + 1;
+    const year = date.getUTCFullYear();
 
     try {
-      const result = await post.save();
-      res.json(result);
-      auditTrailService.create({
-        action: `Updated post ${post.title}`,
-        payload: result,
-        request: req,
-      });
+      imageInfo = await uploadFile(imageFile, `post/${year}/${month}/${slug}`);
+      post.featuredImage = imageInfo;
     } catch (err) {
-      res.status(400).json({
-        error: 'Error on updating post. Please try again later.',
-        payload: err,
-      });
+      console.log('Error on upload: ', err);
+      return res
+        .status(400)
+        .json({ error: 'Error on uploading image to Amazon S3' });
     }
-  });
+  }
+
+  const excerpt = smartTrim(
+    stripHtml(content).result.substring(0, 300),
+    280,
+    ' ',
+    '...',
+  );
+  post.title = title;
+  post.slug = slug;
+  post.content = content;
+  post.excerpt = excerpt;
+  post.status = status;
+  post.publishDate = zonedTimeToUtc(publishDate, 'Asia/Manila');
+
+  try {
+    const result = await post.save();
+    res.json(result);
+    auditTrailService.create({
+      action: `Updated post ${post.title}`,
+      payload: result,
+      request: req,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      error: 'Error on updating post. Please try again later.',
+      payload: err,
+    });
+  }
 };
 
 export const remove = async (req, res) => {

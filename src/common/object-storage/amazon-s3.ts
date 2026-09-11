@@ -1,5 +1,4 @@
 //TODOS: Test uploadFile with different image types and base64 strings
-import fs from 'fs';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -11,25 +10,13 @@ import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import path from 'path';
 import { config } from '../../config/index.js';
-import { File } from 'formidable';
 
 type Base64ImageFile = { buffer: Buffer; name: string; type: string };
-type MulterFile = Express.Multer.File;
-type UploadFile = File | MulterFile;
+type UploadFile = Express.Multer.File;
 type NormalizedUploadFile = {
-  buffer?: Buffer;
-  path?: string;
+  buffer: Buffer;
   name: string;
   type: string;
-};
-type LegacyUploadFile = File & {
-  filepath?: string;
-  originalFilename?: string | null;
-  mimetype?: string | null;
-  path?: string;
-  name?: string;
-  type?: string;
-  newFilename?: string;
 };
 
 const s3 = new S3Client({
@@ -126,28 +113,10 @@ export const uploadFile = async (
       name: file.originalname,
       type: file.mimetype,
     };
-  } else if ('buffer' in file) {
-    normalizedFile = file;
   } else {
-    const legacyFile = file as LegacyUploadFile;
-    normalizedFile = {
-      path: legacyFile.filepath ?? legacyFile.path,
-      name:
-        legacyFile.originalFilename ??
-        legacyFile.name ??
-        legacyFile.newFilename ??
-        'upload',
-      type:
-        legacyFile.mimetype ?? legacyFile.type ?? 'application/octet-stream',
-    };
+    normalizedFile = file;
   }
-  const sourceBuffer =
-    normalizedFile.buffer ??
-    (normalizedFile.path ? fs.readFileSync(normalizedFile.path) : undefined);
-
-  if (!sourceBuffer) {
-    throw new Error('Upload file does not contain a buffer or file path');
-  }
+  const sourceBuffer = normalizedFile.buffer;
 
   let body = sourceBuffer;
   let type = normalizedFile.type;
