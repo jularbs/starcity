@@ -8,6 +8,7 @@ type RequestSchemas = {
   params?: z.ZodType;
   file?: z.ZodType;
   files?: z.ZodType;
+  cookies?: z.ZodType;
 };
 
 export function validateRequest(schemas: RequestSchemas) {
@@ -32,6 +33,9 @@ export function validateRequest(schemas: RequestSchemas) {
       if (schemas.files) {
         req.files = schemas.files.parse(req.files) as
           Express.Multer.File[] | Record<string, Express.Multer.File[]>;
+      }
+      if (schemas.cookies) {
+        req.cookies = schemas.cookies.parse(req.cookies) as Request['cookies'];
       }
       next();
     } catch (error) {
