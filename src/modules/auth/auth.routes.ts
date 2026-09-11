@@ -7,6 +7,7 @@ import {
   changePassword,
   validateToken,
   unblockUser,
+  refreshAccessToken,
 } from './auth.controller.js';
 import { requireSignin } from '../../common/middleware/auth.middleware.js';
 import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
@@ -34,6 +35,16 @@ router.post(
 );
 
 router.post('/v1/change-password', requireSignin, changePassword);
+
+router.post(
+  '/v1/refresh-token',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 15,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
+  refreshAccessToken,
+);
 
 router.post(
   '/v1/unblock/:id',

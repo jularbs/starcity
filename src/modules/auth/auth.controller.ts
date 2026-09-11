@@ -148,6 +148,61 @@ export const signin = async (req, res) => {
   }
 };
 
+export const refreshAccessToken = async (req, res) => {
+  const token = req.cookies.refreshToken;
+  if (!token) {
+    return res.status(401).json({ error: 'No refresh token provided.' });
+  }
+
+  const hashedRefreshToken = hashRefreshToken(token);
+  const storedToken =
+    await refreshTokenRepository.findByToken(hashedRefreshToken);
+
+  if (!storedToken || storedToken.expiresAt < new Date()) {
+    res.clearCookie('refreshToken');
+    return res.status(401).json({ error: 'Invalid or expired refresh token.' });
+  }
+
+  const user = await userService.getById(storedToken.userId);
+  if (!user || !user.status) {
+    await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
+    res.clearCookie('refreshToken');
+    return res.status(401).json({ error: 'Invalid or expired refresh token.' });
+  }
+
+  // rotate refresh token so a stolen token can only be replayed once
+  await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
+  const newRefreshToken = generateRefreshToken();
+  await refreshTokenRepository.storeRefreshToken(
+    user._id,
+    hashRefreshToken(newRefreshToken),
+  );
+
+  const payload = {
+    _id: user._id,
+    department: user.department,
+    name: user.name,
+  };
+  const newAccessToken = signAccessToken(payload);
+
+  res.cookie('refreshToken', newRefreshToken, {
+    httpOnly: true,
+    secure: config.auth.cookieSecure,
+    sameSite: 'Strict',
+    maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
+  });
+
+  return res.json({
+    token: newAccessToken,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      department: user.department,
+    },
+  });
+};
+
 export const signout = async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) {

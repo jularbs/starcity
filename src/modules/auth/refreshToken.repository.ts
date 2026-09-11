@@ -19,7 +19,12 @@ const removeRefreshTokenByToken = async (token: string) => {
   await RefreshToken.deleteMany({ token });
 };
 
+const findByToken = async (token: string) => {
+  return RefreshToken.findOne({ token });
+};
+
 export const refreshTokenRepository = {
   storeRefreshToken,
   removeRefreshTokenByToken,
+  findByToken,
 };
