@@ -1,4 +1,5 @@
 import express from 'express';
+import { getMediaSchema } from './dto/getMedia.dto.js';
 const router = express.Router();
 import { getMedia, uploadMediaFromEditor } from './media.controller.js';
 import {
@@ -14,7 +15,10 @@ import {
   upload,
   validateUploadedFile,
 } from '../../common/middleware/multer.middleware.js';
-router.get('/v1/media', getMedia);
+import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
+import { UploadedImageFileSchema } from '../../common/schemas/uploadedImageFile.schema.js';
+
+router.get('/v1/media', validateRequest({ query: getMediaSchema }), getMedia);
 
 router.post(
   '/v1/upload/editor',
@@ -22,6 +26,7 @@ router.post(
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
   upload.single('image'),
   validateUploadedFile,
+  validateRequest({ file: UploadedImageFileSchema }),
   uploadMediaFromEditor,
 );
 

@@ -5,16 +5,14 @@ import {
 } from '../../common/object-storage/amazon-s3.js';
 import { config } from '../../config/index.js';
 import { Request, Response } from 'express';
+import { createErrorResponse } from '../../common/errors/error-response.js';
 
 export const getMedia = async (req: Request, res: Response) => {
   const { key } = req.query;
   const bucket = config.aws.s3.bucketName;
-  if (!key || typeof key !== 'string') {
-    return res.status(400).json({ error: 'Media key is required' });
-  }
 
   try {
-    const data = await getObjectFromS3(key, bucket as string);
+    const data = await getObjectFromS3(key as string, bucket as string);
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.setHeader(
       'Content-Type',
@@ -31,7 +29,12 @@ export const getMedia = async (req: Request, res: Response) => {
       return;
     }
 
-    return res.status(400).json({ error: 'Media not found' });
+    return res.status(404).json(
+      createErrorResponse({
+        code: 'MEDIA_NOT_FOUND',
+        message: 'Media not found',
+      }),
+    );
   }
 };
 
