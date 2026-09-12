@@ -15,8 +15,9 @@ const optionSchema = new mongoose.Schema(
     },
     value: {
       type: String,
+      nullable: true,
+      default: null,
     },
-    meta: Object,
   },
   { timestamps: true },
 );

@@ -1,6 +1,11 @@
 import express from 'express';
 const router = express.Router();
-import { create, read, list, update, remove } from './option.controller.js';
+import { manage, read, list, remove } from './option.controller.js';
+import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
+import { optionIdParamsSchema } from './dto/optionIdParams.dto.js';
+import { optionSlugParamsSchema } from './dto/optionSlugParams.dto.js';
+import { manageOptionSchema } from './dto/manageOption.dto.js';
+import { listOptionSchema } from './dto/listOption.dto.js';
 import {
   requireSignin,
   authzMiddleware,
@@ -15,24 +20,23 @@ router.post(
   '/v1/option',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
-  create,
+  validateRequest({ body: manageOptionSchema }),
+  manage,
 );
 
-router.put(
-  '/v1/option',
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
-  update,
+router.get('/v1/option', validateRequest({ query: listOptionSchema }), list);
+
+router.get(
+  '/v1/option/:slug',
+  validateRequest({ params: optionSlugParamsSchema }),
+  read,
 );
-
-router.get('/v1/option', list);
-
-router.get('/v1/option/:name', read);
 
 router.delete(
-  '/v1/option',
+  '/v1/option/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
+  validateRequest({ params: optionIdParamsSchema }),
   remove,
 );
 

@@ -2,142 +2,80 @@ import slugify from 'slugify';
 import { optionService } from './option.service.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import type { Request, Response } from 'express';
+import { Types } from 'mongoose';
 
-export const create = async (req: Request, res: Response) => {
-  const { name, value, meta } = req.body;
+export const manage = async (req: Request, res: Response) => {
+  const { name, value } = req.body;
   const option = await optionService.getByName(name);
 
   if (option) {
-    try {
-      const updateParams = {
-        name: name,
-        value: value,
-        meta: meta,
-      };
+    const updateParams = {
+      value: value,
+    };
 
-      const result = await optionService.updateById(option._id, updateParams);
+    const result = await optionService.updateById(option._id, updateParams);
 
-      auditTrailService.create({
-        action: `Option ${name} updated`,
-        payload: { value: value },
-        request: req,
-      });
-      return res.json({
-        result,
-        success: 'Option has been updated successfully!',
-      });
-    } catch (err) {
-      return res.status(400).json({
-        error: 'Unable to save option. Please try again later.',
-        message: err,
-      });
-    }
+    auditTrailService.create({
+      action: `Option ${name} updated`,
+      payload: { value: value },
+      request: req,
+    });
+    return res.json({
+      result,
+      success: 'Option has been updated successfully!',
+    });
   } else {
-    try {
-      const slug = slugify.default(name).toLowerCase();
+    const normalizedName = name
+      .trim()
+      .split('_')
+      .join('')
+      .split('-')
+      .join(' ')
+      .toLowerCase();
 
-      const newOptionData = {
-        name: name,
-        slug: slug,
+    const slug = slugify.default(normalizedName).toLowerCase();
+
+    const newOptionData = {
+      name: name,
+      slug: slug,
+      value: value,
+    };
+
+    const result = await optionService.create(newOptionData);
+
+    auditTrailService.create({
+      action: `Option ${name} created`,
+      payload: {
         value: value,
-        meta: meta,
-      };
-
-      const result = await optionService.create(newOptionData);
-
-      auditTrailService.create({
-        action: `Option ${name} created`,
-        payload: {
-          value: value,
-        },
-        request: req,
-      });
-      return res.json({
-        result,
-        success: 'Option has been created successfully!',
-      });
-    } catch (err) {
-      return res.status(400).json({
-        error: 'Unable to save option. Please try again later.',
-        message: err,
-      });
-    }
+      },
+      request: req,
+    });
+    return res.json({
+      result,
+      success: 'Option has been created successfully!',
+    });
   }
 };
 
 export const read = async (req: Request, res: Response) => {
-  const { name } = req.params;
-  try {
-    const data = await optionService.getByName(name as string);
+  const { slug } = req.params;
+  const data = await optionService.getBySlugOrThrow(slug as string);
 
-    res.json(data);
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  res.json(data);
 };
 
 export const list = async (req: Request, res: Response) => {
-  try {
-    const options = await optionService.list();
-    res.json(options);
-  } catch {
-    res.status(400).json({ error: 'Unable to retrieve options' });
-  }
+  const { skip = 0, limit = 10 } = req.query;
+  const options = await optionService.list({
+    skip: Number(skip),
+    limit: Number(limit),
+  });
+  res.json(options);
 };
 
-//TODOS: deprecate this along with repo and service to use a single endpoint for create and update
-export const update = async (req: Request, res: Response) => {
-  const { slug, name, value, meta } = req.body;
-
-  const option = await optionService.getBySlug(slug as string);
-
-  option.name = name;
-  option.value = value;
-  option.meta = meta;
-
-  try {
-    const result = await optionService.updateById(option._id, {
-      name,
-      value,
-      meta,
-    });
-    return res.json({ result, status: 'success' });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'Unable to update option. Please try again later.',
-      message: err,
-    });
-  }
-};
-
-//TODOS: change slug to id
 export const remove = async (req: Request, res: Response) => {
-  const { slug } = req.body;
+  const { id } = req.params;
 
-  if (!slug) {
-    return res.status(400).json({
-      error: 'Option slug is required',
-    });
-  }
-
-  const option = await optionService.getBySlug(slug as string);
-
-  if (!option) {
-    return res.status(400).json({
-      error: 'Option not found',
-    });
-  }
-
-  try {
-    await optionService.deleteById(option._id);
-    res.json({ success: 'Option deleted successfully' });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  await optionService.deleteById(id as unknown as Types.ObjectId);
+  res.json({ success: 'Option deleted successfully' });
 };

@@ -5,7 +5,11 @@ type CreateOption = {
   name: string;
   slug: string;
   value: string;
-  meta: Record<string, any> | undefined;
+};
+
+type ListOption = {
+  skip: number;
+  limit: number;
 };
 const findByName = async (name: string) => {
   return Option.findOne({ name });
@@ -27,8 +31,9 @@ const findBySlug = async (slug: string) => {
   return Option.findOne({ slug: slug });
 };
 
-const list = async () => {
-  return Option.find({});
+const list = async (params: ListOption) => {
+  const { skip, limit } = params;
+  return Option.find({}).skip(skip).limit(limit);
 };
 
 const deleteById = async (id: Types.ObjectId) => {
