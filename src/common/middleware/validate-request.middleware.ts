@@ -22,7 +22,12 @@ export function validateRequest(schemas: RequestSchemas) {
         req.body = schemas.body.parse(req.body) as Request['body'];
       }
       if (schemas.query) {
-        req.query = schemas.query.parse(req.query) as Request['query'];
+        Object.defineProperty(req, 'query', {
+          value: schemas.query.parse(req.query) as Request['query'],
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
       }
       if (schemas.params) {
         req.params = schemas.params.parse(req.params) as Request['params'];
