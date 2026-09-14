@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { config } from '../../config/index.js';
+import { AppError } from '../../common/errors/app-error.js';
 
 mongoose.set('strictQuery', true);
 
@@ -12,7 +13,11 @@ export const connectMongoDB = async () => {
   const connectionString = config.database.mongodb.url;
 
   if (!connectionString) {
-    throw new Error('DB_CONNECTION_STRING is required');
+    throw new AppError({
+      message: 'MongoDB connection string is required',
+      statusCode: 500,
+      code: 'MONGODB_CONNECTION_STRING_MISSING',
+    });
   }
 
   mongoose.connection.on('disconnected', () => {

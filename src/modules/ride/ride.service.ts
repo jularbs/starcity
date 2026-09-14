@@ -14,14 +14,14 @@ export type CreateRideInput = {
 };
 
 const getById = async (id: Types.ObjectId) => {
-  if (!Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid ID');
-  }
-
   const ride = await rideRepository.findById(id);
 
   if (!ride) {
-    throw new Error('Ride not found');
+    throw new AppError({
+      message: 'Ride not found',
+      code: 'RIDE_NOT_FOUND',
+      statusCode: 404,
+    });
   }
 
   return ride;

@@ -10,6 +10,7 @@ import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 import path from 'path';
 import { config } from '../../config/index.js';
+import { AppError } from '../errors/app-error.js';
 
 type Base64ImageFile = { buffer: Buffer; name: string; type: string };
 type UploadFile = Express.Multer.File;
@@ -85,7 +86,11 @@ const parseBase64Image = (dataUri: string): Base64ImageFile => {
   const match = dataUri.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
 
   if (!match) {
-    throw new Error('Expected a base64 image data URI');
+    throw new AppError({
+      message: 'Expected a base64 image data URI',
+      statusCode: 400,
+      code: 'BASE64_IMAGE_ERROR',
+    });
   }
 
   const [, type, encodedData] = match;

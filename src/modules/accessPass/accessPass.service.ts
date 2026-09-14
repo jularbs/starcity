@@ -9,6 +9,7 @@ import { turnstileSyncService } from '../turnstileSync/turnstileSync.service.js'
 import { accessPassQueueService } from '../accessPassQueue/accessPassQueue.service.js';
 import { config } from '../../config/index.js';
 import { saleService } from '../sale/sale.service.js';
+import { AppError } from '../../common/errors/app-error.js';
 
 type CreateAccessPassInput = {
   ticketId: Types.ObjectId;
@@ -31,7 +32,11 @@ const create = async (accessPassData: CreateAccessPassInput) => {
     accessPassData.accessToken,
   );
   if (existingAccessPass) {
-    throw new Error('Access token must be unique');
+    throw new AppError({
+      message: 'Access token must be unique',
+      statusCode: 400,
+      code: 'ACCESS_TOKEN_NOT_UNIQUE',
+    });
   }
 
   return accessPassRepository.create(accessPassData);

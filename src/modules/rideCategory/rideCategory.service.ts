@@ -6,12 +6,13 @@ import { AppError } from '../../common/errors/app-error.js';
 
 const create = async (data: { name: string; description: string }) => {
   const slug = slugify.default(data.name).toLowerCase();
-  if (!slug) {
-    throw new Error('Failed to generate slug');
-  }
 
   if (await rideCategoryRepository.findBySlug(slug)) {
-    throw new Error('Slug already exists');
+    throw new AppError({
+      message: 'Slug already exists',
+      statusCode: 400,
+      code: 'SLUG_ALREADY_EXISTS',
+    });
   }
 
   return rideCategoryRepository.create({ ...data, slug });
