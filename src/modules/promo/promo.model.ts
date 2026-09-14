@@ -60,7 +60,6 @@ const promoSchema = new mongoose.Schema(
     deletedAt: {
       type: Date,
     },
-    meta: Object,
   },
   { timestamps: true, toJSON: { getters: true } },
 );

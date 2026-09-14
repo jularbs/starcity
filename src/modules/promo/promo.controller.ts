@@ -31,7 +31,6 @@ const buildPromoData = (fields: Record<string, any>) => ({
   status: parseBoolean(firstValue(fields.status)),
   acceptedPaymentMethods: parsePaymentOptions(fields.paymentOptions),
   deletedAt: null,
-  meta: undefined,
 });
 
 export const create = async (req: Request, res: Response) => {

@@ -14,7 +14,6 @@ type CreatePromo = {
   maxUsage: number;
   status: boolean;
   deletedAt: Date | null;
-  meta: Record<string, any> | undefined;
 };
 
 const create = async (data: CreatePromo) => {
