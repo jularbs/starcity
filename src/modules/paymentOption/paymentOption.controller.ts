@@ -1,8 +1,10 @@
 import slugify from 'slugify';
 import { paymentOptionService } from './paymentOption.service.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
+import type { Request, Response } from 'express';
+import type { Types } from 'mongoose';
 
-export const create = async (req, res) => {
+export const create = async (req: Request, res: Response) => {
   const { name } = req.body;
   const slug = slugify.default(name).toLowerCase();
 
@@ -28,9 +30,10 @@ export const create = async (req, res) => {
   }
 };
 
-export const read = async (req, res) => {
+export const read = async (req: Request, res: Response) => {
   try {
-    const data = await paymentOptionService.getBySlug(req.params.slug);
+    const { slug } = req.params;
+    const data = await paymentOptionService.getBySlug(slug as string);
 
     if (!data) {
       return res.status(404).json({
@@ -47,48 +50,38 @@ export const read = async (req, res) => {
   }
 };
 
-export const list = async (req, res) => {
-  const { f } = req.query;
-  if (f) {
-    try {
-      const data = await paymentOptionService.list({ status: true });
-      res.json(data);
-    } catch (err) {
-      return res.status(400).json({
-        error: 'error occured',
-        message: err,
-      });
-    }
-  } else {
-    try {
-      const data = await paymentOptionService.list({});
-      res.json(data);
-    } catch (err) {
-      return res.status(400).json({
-        error: 'error occured',
-        message: err,
-      });
-    }
-  }
+export const publicList = async (req: Request, res: Response) => {
+  const data = await paymentOptionService.list({ status: true });
+  res.json(data);
 };
 
-//TODOS: get id params for update
-export const update = async (req, res) => {
+export const manageList = async (req: Request, res: Response) => {
+  const data = await paymentOptionService.list({});
+  res.json(data);
+};
+
+export const update = async (req: Request, res: Response) => {
   try {
     const { slug, name, status } = req.body;
+    const { id } = req.params;
 
-    const paymentOption = await paymentOptionService.getBySlug(slug);
+    const paymentOption = await paymentOptionService.getById(
+      id as unknown as Types.ObjectId,
+    );
     if (!paymentOption) {
       return res.status(404).json({
         error: 'Payment Option not found',
       });
     }
 
-    const result = await paymentOptionService.updateById(paymentOption._id, {
-      name,
-      slug,
-      status,
-    });
+    const result = await paymentOptionService.updateById(
+      id as unknown as Types.ObjectId,
+      {
+        name,
+        slug,
+        status,
+      },
+    );
 
     auditTrailService.create({
       action: `Updated Payment Option ${slug}`,
@@ -104,57 +97,14 @@ export const update = async (req, res) => {
   }
 };
 
-export const remove = async (req, res) => {
-  try {
-    const { slug } = req.body;
-    if (!slug) {
-      return res.status(400).json({
-        error: 'Payment Option slug is required',
-      });
-    }
+export const remove = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-    const paymentOption = await paymentOptionService.getBySlug(slug);
-    if (!paymentOption) {
-      return res.status(404).json({
-        error: 'Payment Option not found',
-      });
-    }
-
-    await paymentOptionService.removeById(paymentOption._id);
-    res.json({ success: 'Payment Option deleted successfully' });
-    auditTrailService.create({
-      action: `Deleted Payment Option ${slug}`,
-      payload: {},
-      request: req,
-    });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
-};
-
-export const toggleStatus = async (req, res) => {
-  try {
-    const { _id } = req.body;
-    const paymentOption = await paymentOptionService.getById(_id);
-
-    const result = await paymentOptionService.updateById(paymentOption._id, {
-      status: !paymentOption.status,
-    });
-    auditTrailService.create({
-      action: `Toggled Payment Option ${paymentOption.name}`,
-      payload: {},
-      request: req,
-    });
-    return res.json({
-      data: result,
-      success: 'Payment Option toggled successfully!',
-    });
-  } catch {
-    return res
-      .status(400)
-      .json({ error: 'Unable to toggle payment option status.' });
-  }
+  await paymentOptionService.removeById(id as unknown as Types.ObjectId);
+  res.json({ success: 'Payment Option deleted successfully' });
+  auditTrailService.create({
+    action: `Deleted Payment Option ${id}`,
+    payload: {},
+    request: req,
+  });
 };

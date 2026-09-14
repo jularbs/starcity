@@ -3,45 +3,60 @@ const router = express.Router();
 import {
   create,
   read,
-  list,
+  publicList,
+  manageList,
   update,
   remove,
-  toggleStatus,
 } from './paymentOption.controller.js';
+import { createPaymentOptionSchema } from './dto/createPaymentOption.dto.js';
+import { updatePaymentOptionSchema } from './dto/updatePaymentOption.dto.js';
+import { paymentOptionIdParamsSchema } from './dto/paymentOptionIdParams.dto.js';
+import { readPaymentOptionSchema } from './dto/readPaymentOption.dto.js';
 import {
   requireSignin,
   authzMiddleware,
 } from '../../common/middleware/auth.middleware.js';
 import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from '../auth/auth.constants.js';
+import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
 
 router.post(
   '/v1/payment-option',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  validateRequest({ body: createPaymentOptionSchema }),
   create,
 );
 
-router.put(
-  '/v1/payment-option',
+router.patch(
+  '/v1/payment-option/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  validateRequest({
+    body: updatePaymentOptionSchema,
+    params: paymentOptionIdParamsSchema,
+  }),
   update,
 );
 
-router.put(
-  '/v1/payment-option/toggle-status',
+router.get('/v1/payment-option', publicList);
+router.get(
+  '/v1/payment-option/manage',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  toggleStatus,
+  manageList,
 );
 
-router.get('/v1/payment-option', list);
-router.get('/v1/payment-option/:slug', read);
+router.get(
+  '/v1/payment-option/:slug',
+  validateRequest({ params: readPaymentOptionSchema }),
+  read,
+);
 
 router.delete(
-  '/v1/payment-option',
+  '/v1/payment-option/:id',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  validateRequest({ params: paymentOptionIdParamsSchema }),
   remove,
 );
 

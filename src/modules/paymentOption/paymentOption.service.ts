@@ -1,3 +1,4 @@
+import { AppError } from '../../common/errors/app-error.js';
 import { paymentOptionRepository } from './paymentOption.repository.js';
 import type { Types } from 'mongoose';
 
@@ -13,7 +14,11 @@ const create = async (data: CreatePaymentOption) => {
     data.slug,
   );
   if (existingPaymentOption) {
-    throw new Error(`Payment option with slug "${data.slug}" already exists`);
+    throw new AppError({
+      message: `Payment option with slug "${data.slug}" already exists`,
+      code: 'PAYMENT_OPTION_ALREADY_EXISTS',
+      statusCode: 400,
+    });
   }
 
   return paymentOptionRepository.create(data);
@@ -26,7 +31,11 @@ const updateById = async (
   const existingPaymentOption = await paymentOptionRepository.findById(id);
 
   if (!existingPaymentOption) {
-    throw new Error(`Payment option not found`);
+    throw new AppError({
+      message: 'Payment Option not found',
+      code: 'PAYMENT_OPTION_NOT_FOUND',
+      statusCode: 404,
+    });
   }
 
   return paymentOptionRepository.updateById(id, data);
@@ -48,22 +57,14 @@ const removeById = async (id: Types.ObjectId) => {
   const existingPaymentOption = await paymentOptionRepository.findById(id);
 
   if (!existingPaymentOption) {
-    throw new Error(`Payment option not found`);
+    throw new AppError({
+      message: `Payment option not found`,
+      code: 'PAYMENT_OPTION_NOT_FOUND',
+      statusCode: 404,
+    });
   }
 
   return paymentOptionRepository.updateById(id, { deletedAt: new Date() });
-};
-
-const toggleStatusById = async (id: Types.ObjectId) => {
-  const existingPaymentOption = await paymentOptionRepository.findById(id);
-
-  if (!existingPaymentOption) {
-    throw new Error(`Payment option not found`);
-  }
-
-  return paymentOptionRepository.updateById(id, {
-    status: !existingPaymentOption.status,
-  });
 };
 
 export const paymentOptionService = {
@@ -73,5 +74,4 @@ export const paymentOptionService = {
   getById,
   list,
   removeById,
-  toggleStatusById,
 };
