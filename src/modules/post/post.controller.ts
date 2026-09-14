@@ -6,6 +6,7 @@ import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import dateFnsTz from 'date-fns-tz';
 
 import { postService } from './post.service.js';
+import { Types } from 'mongoose';
 
 const { zonedTimeToUtc } = dateFnsTz;
 
@@ -31,29 +32,22 @@ export const create = async (req: Request, res: Response) => {
     '...',
   );
 
-  try {
-    const result = await postService.create({
-      authorId: req.profile?._id,
-      title,
-      slug,
-      content,
-      excerpt,
-      featuredImage: imageFile,
-      status,
-      publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
-    });
-    res.json(result);
-    auditTrailService.create({
-      action: 'Created new post',
-      payload: result,
-      request: req,
-    });
-  } catch (err) {
-    console.log('Error creating post: ', err);
-    return res.status(400).json({
-      error: 'Failed to save post. Please try again later.',
-    });
-  }
+  const result = await postService.create({
+    authorId: req.profile?._id,
+    title,
+    slug,
+    content,
+    excerpt,
+    featuredImage: imageFile,
+    status,
+    publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
+  });
+  res.json(result);
+  auditTrailService.create({
+    action: 'Created new post',
+    payload: result,
+    request: req,
+  });
 };
 
 export const read = async (req: Request, res: Response) => {
@@ -89,13 +83,8 @@ export const list = async (req: Request, res: Response) => {
 
 export const update = async (req: Request, res: Response) => {
   const { title, content, slug, status, publishDate } = req.body;
+  const { id } = req.params;
   const imageFile = req.file;
-
-  const post = await postService.getBySlug(slug as string);
-
-  if (!post) {
-    return res.status(404).json({ error: 'Post not found' });
-  }
 
   const excerpt = smartTrim(
     stripHtml(content).result.substring(0, 300),
@@ -114,10 +103,13 @@ export const update = async (req: Request, res: Response) => {
       publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
       ...(imageFile && { featuredImage: imageFile }),
     };
-    const result = await postService.updateById(post._id, updatePayload);
+    const result = await postService.updateById(
+      id as unknown as Types.ObjectId,
+      updatePayload,
+    );
     res.json(result);
     auditTrailService.create({
-      action: `Updated post ${post.title}`,
+      action: `Updated post ${id}`,
       payload: result,
       request: req,
     });
@@ -130,24 +122,13 @@ export const update = async (req: Request, res: Response) => {
 };
 
 export const remove = async (req: Request, res: Response) => {
-  const { slug } = req.body;
+  const { id } = req.params;
 
-  if (!slug) {
-    return res.status(400).json({
-      error: 'Post slug is required',
-    });
-  }
-
-  const post = await postService.getBySlug(slug as string);
-  if (!post) {
-    return res.status(404).json({ error: 'Post not found' });
-  }
-
-  await postService.deleteById(post._id);
+  await postService.deleteById(id as unknown as Types.ObjectId);
 
   res.json({ message: 'Post deleted successfully' });
   auditTrailService.create({
-    action: `Deleted post ${slug}`,
+    action: `Deleted post ${id}`,
     payload: {},
     request: req,
   });

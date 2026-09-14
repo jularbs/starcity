@@ -1,3 +1,4 @@
+import { AppError } from '../../common/errors/app-error.js';
 import { uploadFile } from '../../common/object-storage/amazon-s3.js';
 import { postRepository } from './post.repository.js';
 import { Types } from 'mongoose';
@@ -21,33 +22,32 @@ type ListParams = {
   skip?: number;
   limit?: number;
 };
+
 export const postService = {
   create: async (data: CreatePostInput) => {
     if (!data.authorId) {
-      throw new Error('Author ID is required to create a post');
-    }
-
-    if (!data.featuredImage) {
-      throw new Error('Featured image is required to create a post');
-    }
-
-    if (data.featuredImage.size > 1000000) {
-      throw new Error('Image too large. ( > 1MB ).');
+      throw new AppError({
+        message: 'You need to be logged in to create a post ',
+        statusCode: 400,
+        code: 'AUTH_REQUIRED',
+      });
     }
 
     const date = new Date();
     const month = date.getUTCMonth() + 1;
     const year = date.getUTCFullYear();
 
-    let imageInfo: Media;
+    const imageInfo = await uploadFile(
+      data.featuredImage,
+      `post/${year}/${month}/${data.slug}`,
+    );
 
-    try {
-      imageInfo = await uploadFile(
-        data.featuredImage,
-        `post/${year}/${month}/${data.slug}`,
-      );
-    } catch (err) {
-      throw new Error('Failed to upload featured image', { cause: err });
+    if (data.status == 'published' && !data.publishDate) {
+      throw new AppError({
+        message: 'Publish date is required when status is published',
+        statusCode: 400,
+        code: 'PUBLISH_DATE_REQUIRED',
+      });
     }
 
     const createData = {
@@ -65,35 +65,38 @@ export const postService = {
   },
 
   getById: (id: Types.ObjectId) => postRepository.findById(id),
-  getBySlug: (slug: string) => postRepository.findBySlug(slug),
-  updateById: async (id: Types.ObjectId, data: Partial<CreatePostInput>) => {
-    if (!id) {
-      throw new Error('ID is required to update a post');
+  getBySlug: async (slug: string) => {
+    const post = await postRepository.findBySlug(slug);
+    if (!post) {
+      throw new AppError({
+        message: 'Post not found',
+        statusCode: 404,
+        code: 'POST_NOT_FOUND',
+      });
     }
+    return post;
+  },
+  updateById: async (id: Types.ObjectId, data: Partial<CreatePostInput>) => {
     const post = await postRepository.findById(id);
     if (!post) {
-      throw new Error('Post not found');
+      throw new AppError({
+        message: 'Post not found',
+        statusCode: 404,
+        code: 'POST_NOT_FOUND',
+      });
     }
 
     let imageInfo: Media;
 
     if (data.featuredImage) {
-      if (data.featuredImage.size > 1000000) {
-        throw new Error('Image too large. ( > 1MB ).');
-      }
-
       const date = new Date();
       const month = date.getUTCMonth() + 1;
       const year = date.getUTCFullYear();
 
-      try {
-        imageInfo = await uploadFile(
-          data.featuredImage,
-          `post/${year}/${month}/${data.slug}`,
-        );
-      } catch (err) {
-        throw new Error('Failed to upload featured image', { cause: err });
-      }
+      imageInfo = await uploadFile(
+        data.featuredImage,
+        `post/${year}/${month}/${data.slug}`,
+      );
     }
 
     return postRepository.updateById(id, {
@@ -102,12 +105,13 @@ export const postService = {
     });
   },
   deleteById: async (id: Types.ObjectId) => {
-    if (!id) {
-      throw new Error('ID is required to delete a post');
-    }
     const post = await postRepository.findById(id);
     if (!post) {
-      throw new Error('Post not found');
+      throw new AppError({
+        message: 'Post not found',
+        statusCode: 404,
+        code: 'POST_NOT_FOUND',
+      });
     }
     return postRepository.deleteById(id);
   },
