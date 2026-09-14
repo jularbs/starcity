@@ -55,13 +55,18 @@ const voidAccessPassInTurnstile = async (
 
 const getAccessPassFromTurnstile = async (
   admission_no: string[],
-): Promise<TurnstileAccessPass[] | null> => {
-  const sql = `SELECT * FROM admission_history WHERE admission_no IN (?) AND status="Purchased";`;
+): Promise<TurnstileAccessPass[]> => {
+  if (admission_no.length === 0) {
+    return [];
+  }
 
-  const [rows] = await mysqldb.execute<any[]>(sql, [admission_no]);
+  const placeholders = admission_no.map(() => '?').join(',');
+  const sql = `SELECT * FROM admission_history WHERE admission_no IN (${placeholders}) AND status="Purchased";`;
+
+  const [rows] = await mysqldb.execute<any[]>(sql, admission_no);
 
   if (rows.length === 0) {
-    return null;
+    return [];
   }
   return rows.map((row) => ({
     admission_no: row.admission_no,
