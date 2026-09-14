@@ -1,3 +1,4 @@
+import { AppError } from '../../common/errors/app-error.js';
 import { ticketRepository } from './ticket.repository.js';
 import type { Types } from 'mongoose';
 
@@ -19,9 +20,11 @@ type UpdateTicketInput = Partial<CreateTicketInput> & {
 const create = async (data: CreateTicketInput) => {
   const existingTicket = await ticketRepository.getBySlug(data.slug);
   if (existingTicket) {
-    throw new Error(
-      'Ticket slug is already taken, contact support for assistance',
-    );
+    throw new AppError({
+      message: 'Ticket with this slug already exists',
+      statusCode: 400,
+      code: 'TICKET_SLUG_EXISTS ',
+    });
   }
   return ticketRepository.create(data);
 };
@@ -29,7 +32,11 @@ const create = async (data: CreateTicketInput) => {
 const updateById = async (id: Types.ObjectId, data: UpdateTicketInput) => {
   const ticket = await ticketRepository.findById(id);
   if (!ticket) {
-    throw new Error('Ticket not found');
+    throw new AppError({
+      message: 'Ticket not found',
+      statusCode: 404,
+      code: 'TICKET_NOT_FOUND',
+    });
   }
 
   if (data.slug && data.slug !== ticket.slug) {
@@ -38,9 +45,11 @@ const updateById = async (id: Types.ObjectId, data: UpdateTicketInput) => {
       existingTicket &&
       ticket._id.toString() !== existingTicket._id.toString()
     ) {
-      throw new Error(
-        'Ticket slug is already taken, contact support for assistance',
-      );
+      throw new AppError({
+        message: 'Ticket slug is already taken, contact support for assistance',
+        statusCode: 400,
+        code: 'TICKET_SLUG_EXISTS',
+      });
     }
   }
 
@@ -55,6 +64,18 @@ const getBySlug = async (slug: string) => {
   return ticketRepository.getBySlug(slug);
 };
 
+const getBySlugOrThrow = async (slug: string) => {
+  const ticket = await ticketRepository.getBySlug(slug);
+  if (!ticket) {
+    throw new AppError({
+      message: 'Ticket not found',
+      statusCode: 404,
+      code: 'TICKET_NOT_FOUND',
+    });
+  }
+  return ticket;
+};
+
 const list = async (filters: { status?: boolean }) => {
   return ticketRepository.list(filters);
 };
@@ -62,7 +83,11 @@ const list = async (filters: { status?: boolean }) => {
 const getCurrentPriceById = async (id: Types.ObjectId) => {
   const ticket = await ticketRepository.findById(id);
   if (!ticket) {
-    throw new Error('Ticket not found');
+    throw new AppError({
+      message: 'Ticket not found',
+      statusCode: 404,
+      code: 'TICKET_NOT_FOUND',
+    });
   }
   return ticket.price;
 };
@@ -73,5 +98,6 @@ export const ticketService = {
   getById,
   getBySlug,
   list,
+  getBySlugOrThrow,
   getCurrentPriceById,
 };

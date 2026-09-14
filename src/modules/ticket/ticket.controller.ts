@@ -1,8 +1,10 @@
+import type { Request, Response } from 'express';
 import slugify from 'slugify';
+import type { Types } from 'mongoose';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import { ticketService } from './ticket.service.js';
 
-export const create = async (req, res) => {
+export const create = async (req: Request, res: Response) => {
   const { name, code, shortDescription, price, details } = req.body;
 
   const slug = slugify.default(name).toLowerCase();
@@ -18,147 +20,69 @@ export const create = async (req, res) => {
     meta: undefined,
   };
 
-  try {
-    const result = await ticketService.create(ticketData);
-    auditTrailService.create({
-      action: `Created New Ticket ${name}`,
-      payload: result,
-      request: req,
-    });
-    return res.json({ success: 'Ticket created successfully', data: result });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  const result = await ticketService.create(ticketData);
+  auditTrailService.create({
+    action: `Created New Ticket ${name}`,
+    payload: result,
+    request: req,
+  });
+  return res.json({ success: 'Ticket created successfully', data: result });
 };
 
-export const read = async (req, res) => {
-  try {
-    const data = await ticketService.getBySlug(req.params.slug);
+export const read = async (req: Request, res: Response) => {
+  const { slug } = req.params;
+  const data = await ticketService.getBySlugOrThrow(slug as string);
 
-    if (!data) {
-      return res.status(404).json({
-        error: 'Ticket not found',
-      });
-    }
-
-    res.json(data);
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  res.json(data);
 };
 
-export const list = async (req, res) => {
-  const { f } = req.query;
-
-  if (f) {
-    try {
-      const data = await ticketService.list({ status: true });
-      res.json(data);
-    } catch (err) {
-      return res.status(400).json({
-        error: 'error occured',
-        message: err,
-      });
-    }
-  } else {
-    try {
-      const data = await ticketService.list({});
-      res.json(data);
-    } catch (err) {
-      return res.status(400).json({
-        error: 'error occured',
-        message: err,
-      });
-    }
-  }
+export const publicList = async (req: Request, res: Response) => {
+  const data = await ticketService.list({ status: true });
+  res.json(data);
 };
 
-export const update = async (req, res) => {
-  const { name, _id, shortDescription, price, details, code } = req.body;
+export const manageList = async (req: Request, res: Response) => {
+  const data = await ticketService.list({});
+  res.json(data);
+};
 
-  const ticket = await ticketService.getById(_id);
+export const update = async (req: Request, res: Response) => {
+  const { name, slug, status, shortDescription, price, details, code } =
+    req.body;
+  const { id } = req.params;
 
   const updatedData = {
     name,
-    slug: ticket.slug,
+    slug,
+    status,
     itemCode: code,
     shortDescription,
     price,
     details,
   };
 
-  if (name !== ticket.name) {
-    updatedData.slug = slugify.default(name).toLowerCase();
-  }
-
-  try {
-    const result = await ticketService.updateById(_id, updatedData);
-    res.json({ result, success: 'Ticket updated successfully!' });
-    auditTrailService.create({
-      action: `Updated ticket ${name}`,
-      payload: result,
-      request: req,
-    });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  const result = await ticketService.updateById(
+    id as unknown as Types.ObjectId,
+    updatedData,
+  );
+  res.json({ result, success: 'Ticket updated successfully!' });
+  auditTrailService.create({
+    action: `Updated ticket ${name}`,
+    payload: result,
+    request: req,
+  });
 };
 
-export const remove = async (req, res) => {
-  const { _id } = req.body;
+export const remove = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-  try {
-    if (!_id) {
-      return res.status(400).json({
-        error: 'Ticket ID is required',
-      });
-    }
-
-    await ticketService.updateById(_id, { deletedAt: new Date() });
-    res.json({ success: 'Ticket deleted successfully' });
-    auditTrailService.create({
-      action: `Deleted ticket ${_id}`,
-      payload: {},
-      request: req,
-    });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
-};
-
-export const toggleStatus = async (req, res) => {
-  const { _id } = req.body;
-
-  const ticket = await ticketService.getById(_id);
-
-  try {
-    const result = await ticketService.updateById(_id, {
-      status: !ticket.status,
-    });
-    auditTrailService.create({
-      action: `Toggled ticket ${ticket.name}`,
-      payload: { status: result.status },
-      request: req,
-    });
-    return res.json({
-      success: 'Ticket toggled successfully',
-      data: result,
-    });
-  } catch (err) {
-    return res
-      .status(400)
-      .json({ error: 'Unable to toggle ticket status.', message: err });
-  }
+  await ticketService.updateById(id as unknown as Types.ObjectId, {
+    deletedAt: new Date(),
+  });
+  res.json({ success: 'Ticket deleted successfully' });
+  auditTrailService.create({
+    action: `Deleted ticket ${id}`,
+    payload: {},
+    request: req,
+  });
 };
