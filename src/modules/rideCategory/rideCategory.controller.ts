@@ -33,13 +33,6 @@ export const update = async (req: RequestWithProfile, res: Response) => {
   const { id } = req.params;
   const { slug, name, description } = req.body;
 
-  const checkSlug = await rideCategoryService.getBySlug(slug);
-  if (checkSlug && checkSlug._id.toString() !== id) {
-    return res.status(400).json({
-      error: 'Slug already exists',
-    });
-  }
-
   const updateData = { name, description, slug };
 
   const result = await rideCategoryService.updateById(

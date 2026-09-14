@@ -2,6 +2,7 @@ import slugify from 'slugify';
 import { rideCategoryRepository } from './rideCategory.repository.js';
 import { Types } from 'mongoose';
 import { rideService } from '../ride/ride.service.js';
+import { AppError } from '../../common/errors/app-error.js';
 
 const create = async (data: { name: string; description: string }) => {
   const slug = slugify.default(data.name).toLowerCase();
@@ -32,6 +33,17 @@ const updateById = async (
   id: Types.ObjectId,
   data: { name?: string; description?: string; slug?: string },
 ) => {
+  if (data.slug) {
+    const checkSlug = await rideCategoryService.getBySlug(data.slug);
+    if (checkSlug && checkSlug._id.toString() !== id.toString()) {
+      throw new AppError({
+        message: 'Ride Category with this slug already exists',
+        code: 'RIDE_CATEGORY_SLUG_EXISTS',
+        statusCode: 400,
+      });
+    }
+  }
+
   return rideCategoryRepository.updateById(id, data);
 };
 
@@ -39,7 +51,11 @@ const removeById = async (id: Types.ObjectId) => {
   const rideCategory = await rideCategoryRepository.findById(id);
 
   if (!rideCategory) {
-    throw new Error('Ride Category not found');
+    throw new AppError({
+      message: 'Ride Category not found',
+      code: 'RIDE_CATEGORY_NOT_FOUND',
+      statusCode: 404,
+    });
   }
 
   const referencedRides = await rideService.getByRideCategoryId(
@@ -47,7 +63,11 @@ const removeById = async (id: Types.ObjectId) => {
   );
 
   if (referencedRides.length > 0) {
-    throw new Error('Cannot delete ride category with referenced rides');
+    throw new AppError({
+      message: 'Cannot delete ride category with referenced rides',
+      code: 'RIDE_CATEGORY_REFERENCED',
+      statusCode: 400,
+    });
   }
 
   return rideCategoryRepository.removeById(id);
