@@ -14,13 +14,11 @@ import {
   authzMiddleware,
 } from '../../common/middleware/auth.middleware.js';
 import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from '../auth/auth.constants.js';
-import { upload } from '../../common/middleware/multer.middleware.js';
 //Version 1.0
 router.post(
   '/v1/promo',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  upload.none(),
   create,
 );
 
@@ -35,7 +33,6 @@ router.patch(
   '/v1/promo',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  upload.none(),
   update,
 );
 
