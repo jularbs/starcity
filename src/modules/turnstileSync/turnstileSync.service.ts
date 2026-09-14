@@ -40,6 +40,12 @@ const isTransactionCompleteInTurnstile = async (
   return true;
 };
 
+const getAccessPassInTurnstile = async (
+  accesspassCodes: string[],
+): Promise<any[]> => {
+  return turnstileSyncRepository.getAccessPassFromTurnstile(accesspassCodes);
+};
+
 const getMissingAccessPassesInTurnstile = async (
   accesspassCodes: string[],
 ): Promise<string[]> => {
@@ -57,5 +63,6 @@ export const turnstileSyncService = {
   addAccessPassToTurnstile,
   voidAccessPassInTurnstile,
   isTransactionCompleteInTurnstile,
+  getAccessPassInTurnstile,
   getMissingAccessPassesInTurnstile,
 };

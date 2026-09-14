@@ -4,6 +4,8 @@ import { smTicketRepository } from './smTicket.repository.js';
 import { getOpenParkExpiry } from '../../../common/utils/get-expiry.js';
 import { turnstileSyncService } from '../../turnstileSync/turnstileSync.service.js';
 import { smQueueService } from './smQueue.service.js';
+import { config } from '../../../config/index.js';
+import { AppError } from '../../../common/errors/app-error.js';
 
 type CreateSmTicketInput = {
   tokenId: string;
@@ -11,60 +13,119 @@ type CreateSmTicketInput = {
   ticketExpiry?: string;
 };
 
-export const smTicketService = {
-  create: async (data: CreateSmTicketInput) => {
-    if (!data.tokenId) {
-      throw new Error('Token ID is required');
-    }
+type TicketsInput = {
+  ticketID: string;
+  ticketType: string;
+  ticketExpiry: string;
+};
 
-    const expiry = data.ticketExpiry
-      ? data.ticketExpiry
-      : `${format(new Date(getOpenParkExpiry()), 'yyyy-LL-dd')} 23:59:59`;
+const create = async (data: CreateSmTicketInput) => {
+  if (!data.tokenId) {
+    throw new AppError({
+      code: 'TOKEN_ID_REQUIRED',
+      message: 'Token ID is required',
+    });
+  }
+
+  const expiry = data.ticketExpiry
+    ? data.ticketExpiry
+    : `${format(new Date(getOpenParkExpiry()), 'yyyy-LL-dd')} 23:59:59`;
+
+  try {
+    const ticket = await smTicketRepository.create({
+      ...data,
+      ticketExpiry: expiry,
+      method: 'Purchase',
+    });
 
     try {
-      const ticket = await smTicketRepository.create({
-        ...data,
-        ticketExpiry: expiry,
-        method: 'Purchase',
+      await turnstileSyncService.addAccessPassToTurnstile({
+        accesspassCode: data.tokenId,
+        origin: 'smticket',
+        date: new Date().toISOString(),
+        expiry: expiry,
+        ticketType: data.ticketType,
       });
-
-      try {
-        await turnstileSyncService.addAccessPassToTurnstile({
-          accesspassCode: data.tokenId,
-          origin: 'smticket',
-          date: new Date().toISOString(),
-          expiry: expiry,
-          ticketType: data.ticketType,
-        });
-      } catch (err) {
-        //TODOS: Add to queue
-        console.log('ERROR IN SYNCING SM TICKET TO TURNSTILE: ', err);
-        smQueueService.create({
-          tokenID: data.tokenId,
-          RideCode: data.ticketType,
-          status: 'for delivery',
-          ticketExpiry: expiry,
-        });
-      }
-      return ticket;
-    } catch (err) {
-      console.log('ERROR IN CREATING SM TICKET: ', err);
-      throw err;
+    } catch {
+      smQueueService.create({
+        tokenID: data.tokenId,
+        RideCode: data.ticketType,
+        status: 'for delivery',
+        ticketExpiry: expiry,
+      });
     }
-  },
+    return ticket;
+  } catch (err) {
+    console.log('ERROR IN CREATING SM TICKET: ', err);
+    throw err;
+  }
+};
 
-  void: async (tokenId: string) => {
-    if (!tokenId) {
-      throw new Error('Token ID is required');
-    }
+const voidTicket = async (tokenId: string) => {
+  if (!tokenId) {
+    throw new AppError({
+      code: 'TOKEN_ID_REQUIRED',
+      message: 'Token ID is required',
+    });
+  }
 
-    try {
-      const ticket = await smTicketRepository.void(tokenId);
-      await turnstileSyncService.voidAccessPassInTurnstile(tokenId);
-      return ticket;
-    } catch (err) {
-      console.log('ERROR IN VOIDING SM TICKET: ', err);
-      throw err;
-    }
-  },
+  const ticket = await smTicketRepository.void(tokenId);
+  await turnstileSyncService.voidAccessPassInTurnstile(tokenId);
+  return ticket;
+};
+
+const processTransaction = async (tickets: TicketsInput[], token: string) => {
+  if (token !== config.sm.token) {
+    throw new AppError({
+      code: 'INVALID_AUTH_TOKEN',
+      message: 'Please make sure that your token in your request body is valid',
+    });
+  }
+
+  const idArray = tickets.map((item) => item.ticketID);
+  const existingTickets =
+    await turnstileSyncService.getAccessPassInTurnstile(idArray);
+
+  if (existingTickets.length > 0) {
+    throw new AppError({
+      code: 'TICKET_ID_EXISTS',
+      message:
+        'One or more Ticket IDs already synchronized, Please provide new Ticket IDs',
+      details:
+        'Synced Tickets: ' +
+        existingTickets.map((ticket) => ticket.admission_no),
+    });
+  }
+
+  tickets.map(async (item) => {
+    const { ticketID, ticketType, ticketExpiry } = item;
+    await create({
+      tokenId: ticketID,
+      ticketType: ticketType,
+      ...(ticketExpiry && { ticketExpiry }),
+    });
+  });
+};
+
+const voidTransaction = async (
+  tickets: Pick<TicketsInput, 'ticketID'>[],
+  token: string,
+) => {
+  if (token !== config.sm.token) {
+    throw new AppError({
+      code: 'INVALID_AUTH_TOKEN',
+      message: 'Please make sure that your token in your request body is valid',
+    });
+  }
+
+  for (const item of tickets) {
+    await voidTicket(item.ticketID);
+  }
+};
+
+export const smTicketService = {
+  create,
+  voidTicket,
+  processTransaction,
+  voidTransaction,
 };
