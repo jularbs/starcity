@@ -4,6 +4,9 @@ import { saleRepository } from './sale.repository.js';
 import { ticketService } from '../ticket/ticket.service.js';
 import { promoService } from '../promo/promo.service.js';
 import { getOpenParkExpiry } from '../../common/utils/get-expiry.js';
+import { AppError } from '../../common/errors/app-error.js';
+import { accessPassService } from '../accessPass/accessPass.service.js';
+import { emailService } from '../email/email.service.js';
 
 type CartItems = {
   _id: Types.ObjectId;
@@ -82,10 +85,23 @@ const getByRefIdWithDetails = async (refId: string) => {
 
 const getByRefIdWithSalt = async (refId: string, salt: string) => {
   const sale = await saleRepository.findByRefId(refId);
-  if (sale && sale.salt === salt) {
-    return sale;
+
+  if (!sale) {
+    throw new AppError({
+      message: 'Sale transaction not found',
+      statusCode: 404,
+      code: 'SALE_NOT_FOUND',
+    });
   }
-  return null;
+
+  if (sale.salt !== salt) {
+    throw new AppError({
+      message: 'Forbidden Access',
+      statusCode: 403,
+      code: 'FORBIDDEN_ACCESS',
+    });
+  }
+  return sale;
 };
 
 const list = async (params: ListParamsInput) => {
@@ -115,27 +131,6 @@ const listCount = async (params: ListParamsInput) => {
 };
 
 const createCheckout = async (data: CreateCheckoutInput) => {
-  if (data.cartItems.length === 0) {
-    throw new Error('Cart is empty');
-  }
-
-  const hasInvalidQuantity = data.cartItems.some(
-    (item) => !Number.isInteger(item.qty) || item.qty <= 0,
-  );
-
-  if (hasInvalidQuantity) {
-    throw new Error('Invalid cart item quantity');
-  }
-
-  if (data.cartItems.reduce((sum, item) => sum + item.qty, 0) === 0) {
-    throw new Error('Cart is empty');
-  }
-
-  if (!data.customerName || !data.emailAddress || !data.contactNumber) {
-    throw new Error('Missing required customer information');
-  }
-
-  //Get current prices
   let cartPrices: {
     ticketId: Types.ObjectId;
     qty: number;
@@ -153,10 +148,11 @@ const createCheckout = async (data: CreateCheckoutInput) => {
         };
       }),
     );
-  } catch (error) {
-    console.error('Error acquiring ticket prices:', error);
-    throw new Error('Error acquiring ticket prices, checkout aborted', {
-      cause: error,
+  } catch {
+    throw new AppError({
+      message: 'Error acquiring ticket prices, checkout aborted',
+      statusCode: 400,
+      code: 'TICKET_PRICE_ERROR',
     });
   }
 
@@ -174,10 +170,11 @@ const createCheckout = async (data: CreateCheckoutInput) => {
       );
 
       transactionAmount -= promo.discount;
-    } catch (error) {
-      console.log('Error processing promo code:', error);
-      throw new Error('Promo code processing failed, checkout aborted', {
-        cause: error,
+    } catch {
+      throw new AppError({
+        message: 'Promo code not available. checkout aborted',
+        statusCode: 400,
+        code: 'PROMO_CODE_ERROR',
       });
     }
   }
@@ -217,6 +214,63 @@ const countByBeforeDate = async (date: Date) => {
   return saleRepository.countByBeforeDate(date);
 };
 
+const resyncSaleByRefId = async (id: string) => {
+  const sale = await saleRepository.findByRefId(id);
+
+  if (!sale) {
+    throw new AppError({
+      message: 'Sale transaction not found',
+      statusCode: 404,
+      code: 'SALE_NOT_FOUND',
+    });
+  }
+
+  const accesspasses = await accessPassService.getBySalesId(sale._id);
+
+  await Promise.all(
+    accesspasses.map(async (ap) => {
+      const ticket = await ticketService.getById(ap.ticketId);
+      if (!ticket) {
+        throw new AppError({
+          message: 'Ticket not found for access pass',
+          statusCode: 404,
+          code: 'TICKET_NOT_FOUND',
+        });
+      }
+      await accessPassService.syncAccessPass(ap, ticket.itemCode);
+    }),
+  );
+};
+
+const regenerateAccessPassBySaleId = async (id: Types.ObjectId) => {
+  const sale = await saleRepository.findBySaleId(id);
+
+  if (!sale) {
+    throw new AppError({
+      message: 'Sale transaction not found',
+      statusCode: 404,
+      code: 'SALE_NOT_FOUND',
+    });
+  }
+
+  await accessPassService.removeBySalesId(sale._id);
+  await accessPassService.generateAccessPassesBySaleId(sale._id);
+};
+
+const resendAcknowledgementReceiptBySaleId = async (saleId: Types.ObjectId) => {
+  const sale = await saleRepository.findBySaleId(saleId);
+
+  if (!sale) {
+    throw new AppError({
+      message: 'Sale transaction not found',
+      statusCode: 404,
+      code: 'SALE_NOT_FOUND',
+    });
+  }
+
+  await emailService.sendAcknowledgementReceiptBySaleId(sale._id);
+};
+
 export const saleService = {
   list,
   listCount,
@@ -228,4 +282,7 @@ export const saleService = {
   getByRefIdWithDetails,
   removeByBeforeDate,
   countByBeforeDate,
+  resyncSaleByRefId,
+  regenerateAccessPassBySaleId,
+  resendAcknowledgementReceiptBySaleId,
 };

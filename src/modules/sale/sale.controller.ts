@@ -1,47 +1,39 @@
-import { ticketService } from '../ticket/ticket.service.js';
+import type { Request, Response } from 'express';
 import { accessPassService } from '../accessPass/accessPass.service.js';
-import { emailService } from '../email/email.service.js';
 import dateFnsTz from 'date-fns-tz';
 const { zonedTimeToUtc } = dateFnsTz;
 import { saleService } from './sale.service.js';
+import { Types } from 'mongoose';
 
-export const resendAR = async (req, res) => {
-  const { refId } = req.body;
-  try {
-    const sale = await saleService.getByRefId(refId);
-    await emailService.sendAcknowledgementReceiptBySaleId(sale._id);
-    res.json({ message: 'E-mail resent successfully.' });
-  } catch (error) {
-    console.log('Error: ', error);
-    res.status(400).json({ message: 'E-mail failed. Please try again later.' });
-  }
+export const resendAR = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  await saleService.resendAcknowledgementReceiptBySaleId(
+    id as unknown as Types.ObjectId,
+  );
+  res.json({ message: 'E-mail resent successfully.' });
 };
 
-export const readBySaltRefID = async (req, res) => {
+export const readBySaltRefID = async (req: Request, res: Response) => {
   const { salt, refid } = req.query;
 
-  const saleData = await saleService.getByRefIdWithSalt(refid, salt);
-
-  if (saleData == null) return res.status(400).json({ error: 'Invalid Data' });
+  const saleData = await saleService.getByRefIdWithSalt(
+    refid as string,
+    salt as string,
+  );
 
   const accessPasses = await accessPassService.getBySalesId(saleData._id);
 
   res.json({ details: saleData, accessPasses });
 };
 
-export const read = async (req, res) => {
-  try {
-    const data = await saleService.getByRefIdWithDetails(req.params.refid);
-    res.json(data);
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+export const read = async (req: Request, res: Response) => {
+  const { refid } = req.params;
+  const data = await saleService.getByRefIdWithDetails(refid as string);
+  res.json(data);
 };
 
-export const list = async (req, res) => {
+export const list = async (req: Request, res: Response) => {
   const { skip = 0, limit = 10, start, end, search = '' } = req.query;
 
   const startDate = zonedTimeToUtc(
@@ -54,82 +46,40 @@ export const list = async (req, res) => {
   ).toISOString();
 
   const data = await saleService.list({
-    skip: parseInt(skip),
-    limit: parseInt(limit),
+    skip: parseInt(skip as string),
+    limit: parseInt(limit as string),
     startDate,
     endDate,
-    searchQuery: search,
+    searchQuery: search as string,
   });
 
   const count = await saleService.listCount({
     startDate,
     endDate,
-    searchQuery: search,
+    searchQuery: search as string,
   });
   res.json({ count, data });
 };
 
-export const createCheckout = async (req, res) => {
-  const { cartItems, customerName, email, contactNumber, promoCode } = req.body;
-
-  try {
-    const result = await saleService.createCheckout({
-      cartItems,
-      customerName,
-      emailAddress: email,
-      contactNumber,
-      promoCode: promoCode,
-    });
-    res.json(result);
-  } catch (err) {
-    console.log(err);
-    return res.status(400).json({
-      error: err.message || 'error occured',
-    });
-  }
+export const createCheckout = async (req: Request, res: Response) => {
+  const result = await saleService.createCheckout(req.body);
+  res.json(result);
 };
 
-export const regenerateAccessPass = async (req, res) => {
-  console.log(
-    'Regenerating Access Passes for sale with Reference Number: ',
-    req.params.id,
+export const regenerateAccessPass = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  await saleService.regenerateAccessPassBySaleId(
+    id as unknown as Types.ObjectId,
   );
-  if (req.params.id) {
-    const sale = await saleService.getByRefId(req.params.id);
-    if (sale) {
-      await accessPassService.removeBySalesId(sale._id);
-      await accessPassService.generateAccessPassesBySaleId(sale._id);
-      return res.json({
-        status: 'Success',
-        action: 'Access Passes Regenerated',
-      });
-    } else {
-      return res.json({ status: '404', message: 'Sale transaction not found' });
-    }
-  } else {
-    return res.json({ status: '404', message: 'Reference ID not found' });
-  }
+  return res.json({
+    status: 'Success',
+    action: 'Access Passes Regenerated',
+  });
 };
 
-export const resyncSaleByRefId = async (req, res) => {
-  console.log(
-    'Resyncing Access Passes for sale with Reference Number: ',
-    req.params.id,
-  );
+export const resyncSaleByRefId = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-  if (req.params.id) {
-    const sale = await saleService.getByRefId(req.params.id);
-    if (sale) {
-      const accesspasses = await accessPassService.getBySalesId(sale._id);
-      accesspasses.map(async (ap) => {
-        //get ticketDetails
-        const ticket = await ticketService.getById(ap.ticketId);
-        await accessPassService.syncAccessPass(ap, ticket.itemCode);
-      });
-      return res.json({ status: 'Success', action: 'Sale Resynced' });
-    } else {
-      return res.json({ status: '404', message: 'Sale transaction not found' });
-    }
-  }
-  return res.json({ status: '404', message: 'Reference ID not found' });
+  await saleService.resyncSaleByRefId(id as string);
+  return res.json({ status: 'Success', action: 'Sale Resynced' });
 };
