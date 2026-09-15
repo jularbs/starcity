@@ -33,8 +33,8 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const read = async (req: Request, res: Response) => {
-  const { slug } = req.params;
-  const is = await imageSliderService.getBySlug(slug as string);
+  const { id } = req.params;
+  const is = await imageSliderService.getById(id as unknown as Types.ObjectId);
 
   return res.status(200).json(createSuccessResponse(is));
 };
@@ -45,11 +45,12 @@ export const list = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const { order, name, startDate, endDate, slug } = req.body;
+  const { order, name, startDate, endDate, slug, status } = req.body;
   const { id } = req.params;
   const imageFile = req.file;
 
   const imageSliderData = {
+    ...(status !== undefined ? { status } : {}),
     ...(order ? { order: parseInt(order, 10) } : {}),
     ...(name ? { name } : {}),
     ...(startDate ? { startDate: new Date(startDate) } : {}),

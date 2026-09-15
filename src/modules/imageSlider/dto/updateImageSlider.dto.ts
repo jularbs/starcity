@@ -1,7 +1,7 @@
 import { z } from 'zod';
+import { BooleanSchema } from '../../../common/schemas/boolean.js';
 
 export const updateImageSliderSchema = z.object({
-  // multipart/form-data fields arrive as strings, so coerce before validating
   order: z.coerce
     .number()
     .int()
@@ -15,6 +15,7 @@ export const updateImageSliderSchema = z.object({
     .string({ error: 'Name is required' })
     .min(1, { message: 'Name must not be empty' })
     .optional(),
+  status: BooleanSchema.optional(),
   startDate: z.coerce.date({ error: 'Start date is required' }).optional(),
   endDate: z.coerce.date({ error: 'End date is required' }).optional(),
 });
