@@ -79,7 +79,7 @@ export const refreshAccessToken = async () => {
   return response.data ?? response;
 };
 
-export const removeUser = async ({ id }: { id: string }) => {
+export const removeUser = async (id: string) => {
   const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/${id}`, {
     method: "DELETE",
   });
@@ -91,8 +91,20 @@ export const removeUser = async ({ id }: { id: string }) => {
   return res.json();
 };
 
-export const updateUser = async ({ data }: { data: Record<string, string | boolean> }) => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user`, {
+export const unblockUser = async (id: string) => {
+  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/unblock/${id}`, {
+    method: "PATCH",
+  });
+
+  if (!res.ok) {
+    throw await res.json();
+  }
+
+  return res.json();
+};
+
+export const updateUser = async (id: string, data: Record<string, unknown>) => {
+  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/${id}`, {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",

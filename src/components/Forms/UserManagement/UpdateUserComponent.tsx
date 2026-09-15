@@ -32,13 +32,15 @@ import { cn } from "@/lib/utils";
 import { ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE } from "@/lib/constants";
 import { toast } from "sonner";
 import { updateUser } from "@/actions/auth";
+import { getErrorMessage } from "@/lib/errors";
 const UpdateUserComponent = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
-    //Fetch all payment options
     const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         id && open ? { url: "v1/user/" + id } : null,
         fetcher
     );
+
+    const userData = data?.data;
 
     const [loading, setLoading] = useState(false)
 
@@ -60,8 +62,9 @@ const UpdateUserComponent = ({ id = "", open, onOpenChange }:
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true)
-        updateUser({ data: values }).then(data => {
+        try {
+            setLoading(true)
+            const { data } = await updateUser(id, values)
             setLoading(false);
             onOpenChange(false);
             mutate({ url: "v1/user", params: { status: true } });
@@ -71,11 +74,10 @@ const UpdateUserComponent = ({ id = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: `User ${data.name} updated successfully`,
                 duration: 5000
             });
-
-        }).catch(err => {
+        } catch (err) {
             console.log("Error: ", err)
             setLoading(false);
             toast.error("Invalid Request!", {
@@ -84,10 +86,10 @@ const UpdateUserComponent = ({ id = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     useEffect(() => {
@@ -103,13 +105,13 @@ const UpdateUserComponent = ({ id = "", open, onOpenChange }:
 
     useEffect(() => {
         if (!isLoading)
-            if (data) {
-                form.setValue("_id", data._id);
-                form.setValue("name", data.name);
-                form.setValue("email", data.email);
-                form.setValue("department", data.department);
+            if (userData) {
+                form.setValue("_id", userData._id);
+                form.setValue("name", userData.name);
+                form.setValue("email", userData.email);
+                form.setValue("department", userData.department);
             }
-    }, [form, isLoading, data])
+    }, [form, isLoading, userData])
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

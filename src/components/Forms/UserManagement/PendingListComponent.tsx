@@ -12,7 +12,7 @@ import {
 import useSWR from "swr";
 import { fetcher } from "@/actions/swr";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Key, useState } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import RemoveUserComponent from "./RemoveUserComponent";
@@ -21,6 +21,7 @@ import PendingUserForm from "./PendingUserForm";
 const PendingListComponent = () => {
     const { data, isLoading } = useSWR({ url: "v1/user", params: { status: false } }, fetcher)
 
+    const pendingList = data?.data || []
     const [updateOpen, setUpdateOpen] = useState<boolean>(false)
     const [removeOpen, setRemoveOpen] = useState<boolean>(false)
     const [currentId, setCurrentId] = useState("")
@@ -51,9 +52,9 @@ const PendingListComponent = () => {
                 </TableRow>
             })
 
-        if (!isLoading && data) {
+        if (!isLoading && pendingList) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return data?.data?.map((item: any, key: Key) => {
+            return pendingList?.map((item: any, key: number) => {
                 return <TableRow key={key}>
                     <TableCell>
                         {item.name}
@@ -88,36 +89,35 @@ const PendingListComponent = () => {
         }
     }
 
-    return <>
-        <PendingUserForm id={currentId} open={updateOpen} onOpenChange={setUpdateOpen} />
-        <RemoveUserComponent type="reject" id={currentId} open={removeOpen} onOpenChange={setRemoveOpen} />
-        <Card className="p-0 !gap-0">
-            <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
-                <div className="text-xl font-bold whitespace-nowrap">Manage Users</div>
-            </CardHeader>
-            <CardContent className="p-0 grow-1">
-                {(isLoading || data?.count) ?
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Designation</TableHead>
-                                <TableHead>Date Registered</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {showData()}
-                        </TableBody>
-                    </Table> :
-                    <div className="p-4 text-center">No Pending Users</div>
-                }
-
-
-            </CardContent>
-        </Card>
-    </>
+    if (pendingList.length > 0)
+        return <>
+            <PendingUserForm id={currentId} open={updateOpen} onOpenChange={setUpdateOpen} />
+            <RemoveUserComponent id={currentId} open={removeOpen} onOpenChange={setRemoveOpen} />
+            <Card className="p-0 !gap-0">
+                <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
+                    <div className="text-xl font-bold whitespace-nowrap">Pending Registrations</div>
+                </CardHeader>
+                <CardContent className="p-0 grow-1">
+                    {(isLoading || pendingList.length > 0) ?
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Designation</TableHead>
+                                    <TableHead>Date Registered</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {showData()}
+                            </TableBody>
+                        </Table> :
+                        <div className="p-4 text-center">No Pending Users</div>
+                    }
+                </CardContent>
+            </Card>
+        </>
 }
 
 export default PendingListComponent;

@@ -28,10 +28,10 @@ import useSWR, { mutate } from "swr";
 import { LoaderCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
 import { ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE } from "@/lib/constants";
 import { toast } from "sonner";
 import { updateUser } from "@/actions/auth";
+
 const PendingUserForm = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
     //Fetch all payment options
@@ -39,6 +39,8 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
         id && open ? { url: "v1/user/" + id } : null,
         fetcher
     );
+
+    const userData = data?.data
 
     const [loading, setLoading] = useState(false)
 
@@ -65,7 +67,7 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
         setLoading(true)
         form.setValue("status", true);
 
-        updateUser({ data: values }).then(() => {
+        updateUser(id, values).then(() => {
             setLoading(false);
             onOpenChange(false);
             mutate({ url: "v1/user", params: { status: true } });
@@ -97,16 +99,16 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
 
     useEffect(() => {
         if (!isLoading)
-            if (data) {
+            if (userData) {
                 form.reset({
-                    _id: data._id,
-                    name: data.name,
-                    email: data.email,
-                    department: data.department,
+                    _id: userData._id,
+                    name: userData.name,
+                    email: userData.email,
+                    department: userData.department,
                     status: true,
                 });
             }
-    }, [form, isLoading, data])
+    }, [form, isLoading, userData])
 
     useEffect(() => {
         if (!open) {

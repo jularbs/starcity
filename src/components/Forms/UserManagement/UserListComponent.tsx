@@ -12,19 +12,23 @@ import {
 import useSWR from "swr";
 import { fetcher } from "@/actions/swr";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Key, useState } from "react";
+import { useState } from "react";
 import { obscureEmail } from "@/lib/utils";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import RemoveUserComponent from "./RemoveUserComponent";
+import UnblockUserComponent from "./UnblockUserComponent";
 import UpdateUserComponent from "./UpdateUserComponent";
 import { Edit, Trash } from "lucide-react";
 
 const UserListComponent = () => {
     const { data, isLoading } = useSWR({ url: "v1/user", params: { status: true } }, fetcher)
 
+    const userList = data?.data || []
+
     const [updateOpen, setUpdateOpen] = useState<boolean>(false)
     const [removeOpen, setRemoveOpen] = useState<boolean>(false)
+    const [unblockOpen, setUnblockOpen] = useState<boolean>(false)
     const [currentId, setCurrentId] = useState("")
 
     const showData = () => {
@@ -52,9 +56,9 @@ const UserListComponent = () => {
                 </TableRow>
             })
 
-        if (!isLoading && data) {
+        if (!isLoading && userList.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return data?.data?.map((item: any, key: Key) => {
+            return userList.map((item: any, key: number) => {
                 return <TableRow key={key}>
                     <TableCell>
                         {item.name}
@@ -75,6 +79,12 @@ const UserListComponent = () => {
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
+                            {item.mistakes > 3 && <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setCurrentId(item._id);
+                                    setUnblockOpen(true);
+                                }}>Unblock</Button>}
                             <Button size="icon"
                                 onClick={() => {
                                     setCurrentId(item._id);
@@ -96,12 +106,13 @@ const UserListComponent = () => {
     return <>
         <UpdateUserComponent id={currentId} open={updateOpen} onOpenChange={setUpdateOpen} />
         <RemoveUserComponent id={currentId} open={removeOpen} onOpenChange={setRemoveOpen} />
+        <UnblockUserComponent id={currentId} open={unblockOpen} onOpenChange={setUnblockOpen} />
         <Card className="p-0 !gap-0">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Manage Users</div>
             </CardHeader>
             <CardContent className="p-0 grow-1">
-                {(isLoading || data?.count) ?
+                {(isLoading || userList.length > 0) ?
                     <Table>
                         <TableHeader>
                             <TableRow>
