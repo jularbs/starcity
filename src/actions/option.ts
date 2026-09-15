@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api-client";
 
-export const saveOption = async ({ data }: { token?: string; data: Record<string, string> }) => {
+export const saveOption = async (data: Record<string, string>) => {
   const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/option`, {
     headers: {
       Accept: "application/json",

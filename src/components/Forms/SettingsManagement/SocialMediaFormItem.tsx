@@ -18,12 +18,15 @@ import { useEffect, useState } from "react"
 import { LoaderCircle } from "lucide-react"
 import { saveOption } from "@/actions/option"
 import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/errors"
 
 export function SocialMediaFormItem
     ({ label, option }:
         { label: string, option: string }) {
 
-    const { data, isLoading } = useSWR({ url: "v1/option/" + option }, fetcher)
+    const { data, isLoading } = useSWR({ url: "v1/option/name/" + option }, fetcher)
+    const optionData = data?.data;
+
     const [loading, setLoading] = useState(false);
 
     const formSchema = z.object({
@@ -40,15 +43,15 @@ export function SocialMediaFormItem
     });
 
     useEffect(() => {
-        if (!isLoading && data) {
-            form.setValue("value", data.value)
+        if (!isLoading && optionData) {
+            form.setValue("value", optionData.value)
         }
-    }, [isLoading, form, data])
+    }, [isLoading, form, optionData])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true);
-
-        saveOption({ data: values }).then(data => {
+        try {
+            setLoading(true);
+            await saveOption(values)
             setLoading(false);
             toast.success("Success!", {
                 style: {
@@ -56,12 +59,10 @@ export function SocialMediaFormItem
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: "Option saved successfully",
                 duration: 5000
             });
-            console.log(data)
-        }).catch(err => {
-            console.log("Error: ", err)
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -69,11 +70,10 @@ export function SocialMediaFormItem
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-
-        })
+        }
     }
 
     return <Form {...form}>
