@@ -1,24 +1,17 @@
 //Auth Functions
-export const SignIn = async ({
-  email,
-  password,
-}: {
-  email: string;
-  password: string;
-}) => {
+import { isApiError } from "@/lib/errors";
+
+export const SignIn = async ({ email, password }: { email: string; password: string }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signin`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signin`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -27,8 +20,9 @@ export const SignIn = async ({
     }
 
     return res.json();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
+    if (isApiError(e)) throw e;
+
     throw {
       error: "Server error, please try again later",
     };
@@ -47,17 +41,14 @@ export const SignUp = async ({
   confirmPassword: string;
 }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signup`,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({ name, email, password, confirmPassword }),
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signup`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({ name, email, password, confirmPassword }),
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -66,8 +57,9 @@ export const SignUp = async ({
     }
 
     return res.json();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
+    if (isApiError(e)) throw e;
+
     throw {
       error: "Server error, please try again later",
     };
@@ -76,10 +68,7 @@ export const SignUp = async ({
 
 export const SignOut = async () => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signout`,
-      { credentials: "include" }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signout`, { credentials: "include" });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -98,14 +87,11 @@ export const SignOut = async () => {
 
 export const validateToken = async (token: string | undefined) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {
@@ -124,13 +110,10 @@ export const validateToken = async (token: string | undefined) => {
 };
 
 export const refreshAccessToken = async () => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/refresh-token`,
-    {
-      method: "POST",
-      credentials: "include",
-    }
-  );
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/refresh-token`, {
+    method: "POST",
+    credentials: "include",
+  });
 
   if (!res.ok) {
     return res.json().then((error) => {
@@ -138,27 +121,19 @@ export const refreshAccessToken = async () => {
     });
   }
 
-  return res.json();
+  const response = await res.json();
+  return response.data ?? response;
 };
 
 //User Managment Functions
-export const removeUser = async ({
-  id,
-  token,
-}: {
-  id: string;
-  token: string | undefined;
-}) => {
+export const removeUser = async ({ id, token }: { id: string; token: string | undefined }) => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: "DELETE",
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      method: "DELETE",
+    });
 
     if (!res.ok) {
       return res.json().then((error) => {

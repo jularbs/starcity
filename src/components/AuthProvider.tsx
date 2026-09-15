@@ -1,29 +1,29 @@
 'use client';
 import { redirect } from "next/navigation";
-import { validateToken, refreshAccessToken } from "@/actions/auth";
-import { getCookie, setCookie } from 'typescript-cookie'
+import { validateToken } from "@/actions/auth";
+import { refreshAccessTokenOnce } from "@/lib/api-client";
+import { getCookie } from 'typescript-cookie'
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { usePathname } from 'next/navigation'
 
 export function AuthProvider({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const pathname = usePathname()
     const [authenticated, setAuthenticated] = useState(false);
 
     useEffect(() => {
+        let active = true;
         const token = getCookie('token');
         validateToken(token).then(() => {
-            setAuthenticated(true)
+            if (active) setAuthenticated(true)
         }).catch(() => {
-            // Access token may simply be expired, so try to refresh before signing the user out.
-            refreshAccessToken().then((data) => {
-                setCookie('token', data.token, { expires: 7, path: "/" });
-                setAuthenticated(true)
+            refreshAccessTokenOnce().then((newToken) => {
+                if (!newToken) throw new Error('Unable to refresh access token');
+                if (active) setAuthenticated(true)
             }).catch((err) => {
+                if (!active) return;
                 console.log(err)
                 toast.error("Authentication Error!", {
                     style: {
@@ -37,7 +37,11 @@ export function AuthProvider({
                 redirect("/auth/login")
             })
         })
-    }, [pathname])
+
+        return () => {
+            active = false;
+        };
+    }, [])
 
     if (authenticated)
         return <>{children}</>

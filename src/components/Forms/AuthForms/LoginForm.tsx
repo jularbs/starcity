@@ -26,6 +26,7 @@ import { redirect } from "next/navigation"
 import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { AlertError } from "@/components/AlertError"
 import { useLocalStorage } from 'usehooks-ts'
+import { getErrorMessage } from "@/lib/errors"
 export function LoginForm({
   className,
   ...props
@@ -59,26 +60,22 @@ export function LoginForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true)
     try {
-      const auth = await SignIn({
+      const response = await SignIn({
         ...values
       })
       setLoading(false);
 
-      //set cookie
+      const auth = response.data;
       setCookie('token', auth.token, { expires: 7, path: "/" })
-
-      //set user info to local storage
       setValue(auth.user);
 
       redirect("/dashboard");
     } catch (err) {
-      console.log("Error: ", err)
       setLoading(false);
       if (isRedirectError(err)) {
         throw err
       }
-      //@ts-expect-error error var unknown
-      setMessage({ success: "", error: err.error })
+      setMessage({ success: "", error: getErrorMessage(err) })
     };
 
   }

@@ -30,6 +30,7 @@ import { LoaderCircle } from "lucide-react";
 import { SignUp } from "@/actions/auth";
 import { AlertError } from "@/components/AlertError";
 import { AlertSuccess } from "@/components/AlertSuccess";
+import { getErrorMessage, getValidationErrorMessage } from "@/lib/errors";
 
 export function RegistrationForm({
     className,
@@ -41,6 +42,7 @@ export function RegistrationForm({
         success: "",
         error: ""
     })
+    const [validationErrors, setValidationErrors] = useState<({ [key: string]: string })>({});
     //FORMS
     const formSchema = z.object({
         name: z.string()
@@ -74,19 +76,15 @@ export function RegistrationForm({
         // Do something with the form values.
         setLoading(true)
         try {
-
-            const response = await SignUp({ ...values });
-            if (response) {
-                setLoading(false);
-                setMessage({ error: "", success: response.success })
-            }
-
-        } catch (err) {
-            console.log("Error: ", err)
+            await SignUp({ ...values });
             setLoading(false);
-
-            //@ts-expect-error error var unknown
-            setMessage({ success: "", error: err.error })
+            setMessage({ error: "", success: "Sign up successful, please wait for account approval." })
+            form.reset();
+            setValidationErrors({});
+        } catch (err) {
+            setLoading(false);
+            setMessage({ success: "", error: getErrorMessage(err) })
+            setValidationErrors(getValidationErrorMessage(err))
         };
 
     }
@@ -123,6 +121,9 @@ export function RegistrationForm({
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-xs font-light" />
+                                            {validationErrors.name && (
+                                                <p className="text-xs font-light text-red-500">{validationErrors.name}</p>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
@@ -143,6 +144,9 @@ export function RegistrationForm({
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-xs font-light" />
+                                            {validationErrors.email && (
+                                                <p className="text-xs font-light text-red-500">{validationErrors.email}</p>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
@@ -163,6 +167,9 @@ export function RegistrationForm({
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-xs font-light" />
+                                            {validationErrors.password && (
+                                                <p className="text-xs font-light text-red-500">{validationErrors.password}</p>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
@@ -183,6 +190,9 @@ export function RegistrationForm({
                                                 />
                                             </FormControl>
                                             <FormMessage className="text-xs font-light" />
+                                            {validationErrors.confirmPassword && (
+                                                <p className="text-xs font-light text-red-500">{validationErrors.confirmPassword}</p>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
