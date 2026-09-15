@@ -5,7 +5,7 @@ import { refreshAccessToken } from "@/actions/auth";
 // De-dupe concurrent 401s so only one refresh request is made at a time.
 let pendingRefresh: Promise<string | null> | null = null;
 
-async function refreshToken(): Promise<string | null> {
+export async function refreshAccessTokenOnce(): Promise<string | null> {
   if (!pendingRefresh) {
     pendingRefresh = refreshAccessToken()
       .then((data) => {
@@ -39,7 +39,7 @@ export async function apiFetch(input: string | URL, init: RequestInit = {}): Pro
 
   if (res.status !== 401) return res;
 
-  const newToken = await refreshToken();
+  const newToken = await refreshAccessTokenOnce();
   if (!newToken) return res;
 
   return fetch(input, requestWithToken(newToken));
