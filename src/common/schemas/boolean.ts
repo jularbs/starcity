@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
 export const BooleanSchema = z
-  .enum(['true', 'false'])
-  .transform((value) => value === 'true');
+  .union([z.boolean(), z.enum(['true', 'false'])])
+  .transform((value) =>
+    typeof value === 'boolean' ? value : value === 'true',
+  );
