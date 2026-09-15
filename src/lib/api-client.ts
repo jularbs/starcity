@@ -2,7 +2,6 @@
 import { getCookie, setCookie, removeCookie } from "typescript-cookie";
 import { refreshAccessToken } from "@/actions/auth";
 
-// De-dupe concurrent 401s so only one refresh request is made at a time.
 let pendingRefresh: Promise<string | null> | null = null;
 
 export async function refreshAccessTokenOnce(): Promise<string | null> {
@@ -23,8 +22,6 @@ export async function refreshAccessTokenOnce(): Promise<string | null> {
   return pendingRefresh;
 }
 
-// Authenticated fetch that transparently refreshes an expired access token
-// and retries the request once before giving up.
 export async function apiFetch(input: string | URL, init: RequestInit = {}): Promise<Response> {
   const requestWithToken = (token: string | undefined) => ({
     ...init,
@@ -40,7 +37,18 @@ export async function apiFetch(input: string | URL, init: RequestInit = {}): Pro
   if (res.status !== 401) return res;
 
   const newToken = await refreshAccessTokenOnce();
-  if (!newToken) return res;
+  if (!newToken) {
+    removeCookie("token", { path: "/" });
+    window.location.assign("/auth/login");
+    return res;
+  }
 
-  return fetch(input, requestWithToken(newToken));
+  const retriedResponse = await fetch(input, requestWithToken(newToken));
+
+  if (retriedResponse.status === 401) {
+    removeCookie("token", { path: "/" });
+    window.location.assign("/auth/login");
+  }
+
+  return retriedResponse;
 }
