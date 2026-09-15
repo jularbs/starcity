@@ -46,18 +46,8 @@ export const read = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  const { _id } = req.params;
+  const { id } = req.params;
   const { name, status, email, department } = req.body;
-
-  const user = await userService.getById(_id as unknown as Types.ObjectId);
-
-  if (!user) {
-    throw new AppError({
-      message: 'User not found',
-      code: 'USER_NOT_FOUND',
-      statusCode: 404,
-    });
-  }
 
   const update = {
     ...(name && { name }),
@@ -67,7 +57,7 @@ export const update = async (req: Request, res: Response) => {
   };
 
   const result = await userService.updateById(
-    _id as unknown as Types.ObjectId,
+    id as unknown as Types.ObjectId,
     update,
   );
   return res.status(200).json(createSuccessResponse(result));

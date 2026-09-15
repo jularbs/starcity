@@ -31,7 +31,7 @@ const buildFilter = (params: ListParams) => {
     });
   }
 
-  if (params.status) filters.status = params.status;
+  filters.status = params.status;
 
   if (params.department) filters.department = params.department;
 
@@ -52,9 +52,8 @@ const list = async ({
   limit?: number;
 }) => {
   const filters = buildFilter(params);
-
   return User.find(filters)
-    .select('_id name email createdAt department status lastLogin')
+    .select('_id name email createdAt department status lastLogin mistakes')
     .skip(skip ?? 0)
     .limit(limit ?? 0)
     .exec();
