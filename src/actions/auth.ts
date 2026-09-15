@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import { getCookie } from "typescript-cookie";
 
 export const SignIn = async ({ email, password }: { email: string; password: string }) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signin`, {
@@ -56,7 +57,11 @@ export const SignOut = async () => {
 };
 
 export const validateToken = async () => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`, {});
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`, {
+    headers: {
+      Authorization: `Bearer ${getCookie("token")}`,
+    },
+  });
 
   if (!res.ok) {
     throw await res.json();
