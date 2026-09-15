@@ -2,6 +2,7 @@ import slugify from 'slugify';
 import { optionService } from './option.service.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import type { Request, Response } from 'express';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 import { Types } from 'mongoose';
 
 export const manage = async (req: Request, res: Response) => {
@@ -20,15 +21,12 @@ export const manage = async (req: Request, res: Response) => {
       payload: { value: value },
       request: req,
     });
-    return res.json({
-      result,
-      success: 'Option has been updated successfully!',
-    });
+    return res.status(200).json(createSuccessResponse(result));
   } else {
     const normalizedName = name
       .trim()
       .split('_')
-      .join('')
+      .join(' ')
       .split('-')
       .join(' ')
       .toLowerCase();
@@ -50,10 +48,7 @@ export const manage = async (req: Request, res: Response) => {
       },
       request: req,
     });
-    return res.json({
-      result,
-      success: 'Option has been created successfully!',
-    });
+    return res.status(201).json(createSuccessResponse(result));
   }
 };
 
@@ -61,7 +56,7 @@ export const read = async (req: Request, res: Response) => {
   const { slug } = req.params;
   const data = await optionService.getBySlugOrThrow(slug as string);
 
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const list = async (req: Request, res: Response) => {
@@ -70,12 +65,12 @@ export const list = async (req: Request, res: Response) => {
     skip: Number(skip),
     limit: Number(limit),
   });
-  res.json(options);
+  res.status(200).json(createSuccessResponse(options));
 };
 
 export const remove = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   await optionService.deleteById(id as unknown as Types.ObjectId);
-  res.json({ success: 'Option deleted successfully' });
+  res.status(200).json(createSuccessResponse({}));
 };

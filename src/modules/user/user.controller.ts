@@ -8,6 +8,7 @@ import {
   generateSalt,
 } from '../auth/password.helpers.js';
 import { userService } from './user.service.js';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 export const remove = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -24,9 +25,7 @@ export const remove = async (req: Request, res: Response) => {
 
   await userService.removeById(id as unknown as Types.ObjectId);
 
-  return res.json({
-    success: 'User removed successfully',
-  });
+  return res.status(200).json(createSuccessResponse({}));
 };
 
 export const read = async (req: Request, res: Response) => {
@@ -43,7 +42,7 @@ export const read = async (req: Request, res: Response) => {
 
   delete user.hashed_password;
   delete user.salt;
-  return res.json(user);
+  return res.status(200).json(createSuccessResponse(user));
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -67,10 +66,11 @@ export const update = async (req: Request, res: Response) => {
     ...(department && { department }),
   };
 
-  await userService.updateById(_id as unknown as Types.ObjectId, update);
-  return res.json({
-    success: 'User updated successfully',
-  });
+  const result = await userService.updateById(
+    _id as unknown as Types.ObjectId,
+    update,
+  );
+  return res.status(200).json(createSuccessResponse(result));
 };
 
 export const list = async (req: Request, res: Response) => {
@@ -95,10 +95,16 @@ export const list = async (req: Request, res: Response) => {
   });
   const count = await userService.countUsers(params);
 
-  return res.json({
-    data: users,
-    count: count,
-  });
+  return res.status(200).json(
+    createSuccessResponse(users, {
+      count,
+      skip: parseInt(skip as string),
+      limit: parseInt(limit as string),
+      query,
+      department,
+      status,
+    }),
+  );
 };
 
 export const changePassword = async (req: Request, res: Response) => {
@@ -132,7 +138,7 @@ export const changePassword = async (req: Request, res: Response) => {
     request: req,
     payload: {},
   });
-  return res.json({ success: 'Password successfully changed' });
+  return res.status(200).json(createSuccessResponse({}));
 };
 
 export const unblockUser = async (req: Request, res: Response) => {
@@ -157,5 +163,5 @@ export const unblockUser = async (req: Request, res: Response) => {
     request: req,
     payload: {},
   });
-  return res.json({ success: 'User successfully unblocked' });
+  return res.status(200).json(createSuccessResponse({}));
 };

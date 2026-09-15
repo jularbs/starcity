@@ -3,6 +3,7 @@ import { paymentOptionService } from './paymentOption.service.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import type { Request, Response } from 'express';
 import type { Types } from 'mongoose';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 export const create = async (req: Request, res: Response) => {
   const { name } = req.body;
@@ -20,24 +21,24 @@ export const create = async (req: Request, res: Response) => {
     payload: { name: name },
     request: req,
   });
-  return res.json(result);
+  return res.status(201).json(createSuccessResponse(result));
 };
 
 export const read = async (req: Request, res: Response) => {
   const { slug } = req.params;
   const data = await paymentOptionService.getBySlugOrThrow(slug as string);
 
-  return res.json(data);
+  return res.status(200).json(createSuccessResponse(data));
 };
 
 export const publicList = async (req: Request, res: Response) => {
   const data = await paymentOptionService.list({ status: true });
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const manageList = async (req: Request, res: Response) => {
   const data = await paymentOptionService.list({});
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -58,17 +59,18 @@ export const update = async (req: Request, res: Response) => {
     payload: { name: name },
     request: req,
   });
-  res.json({ result, status: 'success' });
+  res.status(200).json(createSuccessResponse(result));
 };
 
 export const remove = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   await paymentOptionService.removeById(id as unknown as Types.ObjectId);
-  res.json({ success: 'Payment Option deleted successfully' });
   auditTrailService.create({
     action: `Deleted Payment Option ${id}`,
     payload: {},
     request: req,
   });
+
+  res.status(200).json(createSuccessResponse({}));
 };

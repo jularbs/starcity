@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import type { Types } from 'mongoose';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import { rideCategoryService } from './rideCategory.service.js';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 type RequestWithProfile = Request & { profile: { name: string } };
 
 export const create = async (req: RequestWithProfile, res: Response) => {
@@ -13,20 +14,17 @@ export const create = async (req: RequestWithProfile, res: Response) => {
     payload: result,
     request: req,
   });
-  return res.json({
-    data: result,
-    success: 'Ride Category added successfully!',
-  });
+  return res.status(200).json(createSuccessResponse(result));
 };
 
 export const read = async (req: Request, res: Response) => {
   const data = await rideCategoryService.getBySlug(req.params.slug as string);
-  return res.json(data);
+  return res.status(200).json(createSuccessResponse(data));
 };
 
 export const list = async (_req: Request, res: Response) => {
   const data = await rideCategoryService.list();
-  return res.json(data);
+  return res.status(200).json(createSuccessResponse(data));
 };
 
 export const update = async (req: RequestWithProfile, res: Response) => {
@@ -44,7 +42,7 @@ export const update = async (req: RequestWithProfile, res: Response) => {
     payload: result,
     request: req,
   });
-  return res.json({ result, status: 'success' });
+  return res.status(200).json(createSuccessResponse(result));
 };
 
 export const remove = async (req: RequestWithProfile, res: Response) => {
@@ -56,5 +54,5 @@ export const remove = async (req: RequestWithProfile, res: Response) => {
     payload: { id },
     request: req,
   });
-  res.json({ success: 'Ride Category deleted successfully' });
+  res.status(200).json(createSuccessResponse({}));
 };

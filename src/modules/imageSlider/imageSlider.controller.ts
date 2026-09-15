@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import { imageSliderService } from './imageSlider.service.js';
 import { Types } from 'mongoose';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 export const create = async (req: Request, res: Response) => {
   const { order, name, startDate, endDate } = req.body;
@@ -22,28 +23,25 @@ export const create = async (req: Request, res: Response) => {
 
   const result = await imageSliderService.create(imageSliderData);
 
-  res.json({
-    data: result,
-    success: 'Slider Item added successfully!',
-  });
-
   auditTrailService.create({
     action: 'Create new Image Slider Item',
     request: req,
     payload: { ...result, image: null },
   });
+
+  res.status(201).json(createSuccessResponse(result));
 };
 
 export const read = async (req: Request, res: Response) => {
   const { slug } = req.params;
   const is = await imageSliderService.getBySlug(slug as string);
 
-  return res.json(is);
+  return res.status(200).json(createSuccessResponse(is));
 };
 
 export const list = async (req: Request, res: Response) => {
   const result = await imageSliderService.list();
-  res.json(result);
+  res.status(200).json(createSuccessResponse(result));
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -70,10 +68,7 @@ export const update = async (req: Request, res: Response) => {
     payload: { ...result, image: null },
     request: req,
   });
-  return res.json({
-    data: result,
-    success: 'Image Slider item updated successfully!',
-  });
+  return res.status(200).json(createSuccessResponse(result));
 };
 
 export const remove = async (req: Request, res: Response) => {
@@ -86,5 +81,5 @@ export const remove = async (req: Request, res: Response) => {
     payload: {},
     request: req,
   });
-  return res.json({ success: 'Image Slider Item deleted successfully' });
+  return res.status(200).json(createSuccessResponse({}));
 };

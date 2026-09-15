@@ -1,5 +1,6 @@
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import type { Request, Response } from 'express';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 import {
   generateSalt,
   encryptPassword,
@@ -38,9 +39,11 @@ export const signup = async (req: Request, res: Response) => {
     salt,
   });
 
-  return res.json({
-    success: 'Signup Success! Please wait for your acccount to be processed.',
-  });
+  return res.status(201).json(
+    createSuccessResponse({
+      message: 'Signup Success! Please wait for your account to be processed.',
+    }),
+  );
 };
 
 export const signin = async (req: Request, res: Response) => {
@@ -113,17 +116,7 @@ export const signin = async (req: Request, res: Response) => {
     maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
   });
 
-  res.json({
-    token,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      department: user.department,
-    },
-  });
-
-  await userService.updateById(user._id, {
+  userService.updateById(user._id, {
     mistakes: 0,
     lastLogin: new Date(),
   });
@@ -134,6 +127,18 @@ export const signin = async (req: Request, res: Response) => {
     request: req,
     payload: { email: email },
   });
+
+  res.status(200).json(
+    createSuccessResponse({
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+      },
+    }),
+  );
 };
 
 export const refreshAccessToken = async (req: Request, res: Response) => {
@@ -192,15 +197,17 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
   });
 
-  return res.json({
-    token: newAccessToken,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      department: user.department,
-    },
-  });
+  return res.status(200).json(
+    createSuccessResponse({
+      token: newAccessToken,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+      },
+    }),
+  );
 };
 
 export const signout = async (req: Request, res: Response) => {
@@ -209,11 +216,9 @@ export const signout = async (req: Request, res: Response) => {
   const hashedRefreshToken = hashRefreshToken(token);
   await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
   res.clearCookie('refreshToken');
-  res.json({
-    message: 'Signout success',
-  });
+  res.status(200).json(createSuccessResponse({ message: 'Signout success' }));
 };
 
 export const validateToken = (_req: Request, res: Response) => {
-  return res.json({ message: 'VALID' });
+  return res.status(204).json(createSuccessResponse({}));
 };

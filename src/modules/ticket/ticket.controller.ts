@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 import slugify from 'slugify';
 import type { Types } from 'mongoose';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
@@ -26,24 +27,24 @@ export const create = async (req: Request, res: Response) => {
     payload: result,
     request: req,
   });
-  return res.json({ success: 'Ticket created successfully', data: result });
+  return res.status(200).json(createSuccessResponse(result));
 };
 
 export const read = async (req: Request, res: Response) => {
   const { slug } = req.params;
   const data = await ticketService.getBySlugOrThrow(slug as string);
 
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const publicList = async (req: Request, res: Response) => {
   const data = await ticketService.list({ status: true });
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const manageList = async (req: Request, res: Response) => {
   const data = await ticketService.list({});
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -65,12 +66,12 @@ export const update = async (req: Request, res: Response) => {
     id as unknown as Types.ObjectId,
     updatedData,
   );
-  res.json({ result, success: 'Ticket updated successfully!' });
   auditTrailService.create({
     action: `Updated ticket ${name}`,
     payload: result,
     request: req,
   });
+  res.status(200).json(createSuccessResponse(result));
 };
 
 export const remove = async (req: Request, res: Response) => {
@@ -79,10 +80,10 @@ export const remove = async (req: Request, res: Response) => {
   await ticketService.updateById(id as unknown as Types.ObjectId, {
     deletedAt: new Date(),
   });
-  res.json({ success: 'Ticket deleted successfully' });
   auditTrailService.create({
     action: `Deleted ticket ${id}`,
     payload: {},
     request: req,
   });
+  res.status(200).json(createSuccessResponse({}));
 };

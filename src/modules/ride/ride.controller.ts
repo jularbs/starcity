@@ -3,6 +3,7 @@ import type { Types } from 'mongoose';
 import type { Request, Response } from 'express';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import slugify from 'slugify';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 export const create = async (req: Request, res: Response) => {
   const imageFile = req.file;
@@ -19,21 +20,18 @@ export const create = async (req: Request, res: Response) => {
     request: req,
   });
 
-  res.status(200).json({
-    data: result,
-    success: 'Ride added successfully',
-  });
+  res.status(200).json(createSuccessResponse(result));
 };
 
 export const read = async (req: Request, res: Response) => {
   const { slug } = req.params;
   const data = await rideService.getBySlug(slug as string);
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const list = async (req: Request, res: Response) => {
   const data = await rideService.list();
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -50,10 +48,7 @@ export const update = async (req: Request, res: Response) => {
     request: req,
   });
 
-  return res.json({
-    result: r,
-    success: 'Ride/Attraction updated successfully!',
-  });
+  return res.status(200).json(createSuccessResponse(r));
 };
 
 export const remove = async (req: Request, res: Response) => {
@@ -67,7 +62,7 @@ export const remove = async (req: Request, res: Response) => {
   });
 
   //TODO: DELETE IMAGE
-  return res.json({ success: 'Ride deleted successfully' });
+  return res.status(200).json(createSuccessResponse({}));
 };
 
 export const readByRideCategoryId = async (req: Request, res: Response) => {
@@ -75,5 +70,5 @@ export const readByRideCategoryId = async (req: Request, res: Response) => {
   const data = await rideService.getByRideCategoryId(
     id as unknown as Types.ObjectId,
   );
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data, { rideCategoryId: id }));
 };

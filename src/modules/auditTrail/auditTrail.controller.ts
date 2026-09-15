@@ -1,6 +1,6 @@
 import { auditTrailService } from './auditTrail.service.js';
 import type { Request, Response } from 'express';
-
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 export const list = async (req: Request, res: Response) => {
   const { skip = 0, limit = 0 } = req.query;
 
@@ -10,5 +10,5 @@ export const list = async (req: Request, res: Response) => {
   });
 
   const count = await auditTrailService.count({});
-  return res.json({ data: auditTrails, count });
+  return res.json(createSuccessResponse(auditTrails, { count, skip, limit }));
 };

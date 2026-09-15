@@ -6,6 +6,7 @@ import {
 import { config } from '../../config/index.js';
 import { Request, Response } from 'express';
 import { createErrorResponse } from '../../common/errors/error-response.js';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 export const getMedia = async (req: Request, res: Response) => {
   const { key } = req.query;
@@ -50,11 +51,14 @@ export const uploadMediaFromEditor = async (req: Request, res: Response) => {
       imageFile,
       `attachments/${year}/${month}`,
     );
-    return res.json(imageInfo);
+    return res.status(201).json(createSuccessResponse(imageInfo));
   } catch (err) {
     console.log('Error on upload: ', err);
-    return res
-      .status(400)
-      .json({ error: 'File Upload failed. Please try again later.' });
+    return res.status(400).json(
+      createErrorResponse({
+        code: 'FILE_UPLOAD_FAILED',
+        message: 'File Upload failed. Please try again later.',
+      }),
+    );
   }
 };

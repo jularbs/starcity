@@ -4,6 +4,7 @@ import dateFnsTz from 'date-fns-tz';
 const { zonedTimeToUtc } = dateFnsTz;
 import { saleService } from './sale.service.js';
 import { Types } from 'mongoose';
+import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 export const resendAR = async (req: Request, res: Response) => {
   const { id } = req.body;
@@ -11,7 +12,7 @@ export const resendAR = async (req: Request, res: Response) => {
   await saleService.resendAcknowledgementReceiptBySaleId(
     id as unknown as Types.ObjectId,
   );
-  res.json({ message: 'E-mail resent successfully.' });
+  res.status(200).json(createSuccessResponse({}));
 };
 
 export const readBySaltRefID = async (req: Request, res: Response) => {
@@ -24,13 +25,15 @@ export const readBySaltRefID = async (req: Request, res: Response) => {
 
   const accessPasses = await accessPassService.getBySalesId(saleData._id);
 
-  res.json({ details: saleData, accessPasses });
+  res
+    .status(200)
+    .json(createSuccessResponse({ ...saleData.toObject(), accessPasses }));
 };
 
 export const read = async (req: Request, res: Response) => {
   const { refid } = req.params;
   const data = await saleService.getByRefIdWithDetails(refid as string);
-  res.json(data);
+  res.status(200).json(createSuccessResponse(data));
 };
 
 export const list = async (req: Request, res: Response) => {
@@ -58,12 +61,21 @@ export const list = async (req: Request, res: Response) => {
     endDate,
     searchQuery: search as string,
   });
-  res.json({ count, data });
+  res.status(200).json(
+    createSuccessResponse(data, {
+      count,
+      skip: parseInt(skip as string),
+      limit: parseInt(limit as string),
+      start,
+      end,
+      search,
+    }),
+  );
 };
 
 export const createCheckout = async (req: Request, res: Response) => {
   const result = await saleService.createCheckout(req.body);
-  res.json(result);
+  res.status(200).json(createSuccessResponse(result));
 };
 
 export const regenerateAccessPass = async (req: Request, res: Response) => {
@@ -71,15 +83,12 @@ export const regenerateAccessPass = async (req: Request, res: Response) => {
   await saleService.regenerateAccessPassBySaleId(
     id as unknown as Types.ObjectId,
   );
-  return res.json({
-    status: 'Success',
-    action: 'Access Passes Regenerated',
-  });
+  return res.status(200).json(createSuccessResponse({}));
 };
 
 export const resyncSaleByRefId = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   await saleService.resyncSaleByRefId(id as string);
-  return res.json({ status: 'Success', action: 'Sale Resynced' });
+  return res.status(200).json(createSuccessResponse({}));
 };
