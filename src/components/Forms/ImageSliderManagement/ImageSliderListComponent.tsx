@@ -1,5 +1,5 @@
 "use client"
-import { toggleImageSlider } from "@/actions/image-slider";
+import { updateImageSlider } from "@/actions/image-slider";
 import { fetcher } from "@/actions/swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -21,10 +21,12 @@ import useSWR, { mutate } from "swr";
 import ImageSliderImageComponent from "./ImageSliderImageComponent";
 import RemoveImageSliderComponent from "./RemoveImageSliderComponent";
 import UpdateImageSliderComponent from "./UpdateImageSliderComponent";
+import { getErrorMessage } from "@/lib/errors";
 
 const ImageSliderListComponent = () => {
 
     const { data, isLoading } = useSWR({ url: "v1/image-slider" }, fetcher)
+    const imageSliders = data?.data || [];
 
     const [statusLoading, setStatusLoading] = useState("");
     const [imageOpen, setImageOpen] = useState(false);
@@ -32,11 +34,14 @@ const ImageSliderListComponent = () => {
 
     const [updateOpen, setUpdateOpen] = useState(false);
     const [removeOpen, setRemoveOpen] = useState(false);
-    const [selectedSlug, setSelectedSlug] = useState("")
+    const [selectedId, setSelectedId] = useState("")
 
-    const toggleStatus = (id: string) => {
-        setStatusLoading(id);
-        toggleImageSlider({ id }).then(data => {
+    const toggleStatus = async (id: string, status: boolean) => {
+        try {
+            setStatusLoading(id);
+            const formData = new FormData();
+            formData.append("status", status ? "true" : "false");
+            const { data } = await updateImageSlider(id, formData);
             setStatusLoading("")
             toast.success("Success!", {
                 style: {
@@ -44,12 +49,11 @@ const ImageSliderListComponent = () => {
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: data.name + " toggled successfully",
                 duration: 5000
             });
-            //update list
             mutate({ url: "v1/image-slider" })
-        }).catch(error => {
+        } catch (error) {
             setStatusLoading("")
             toast.error("Invalid Request", {
                 style: {
@@ -57,11 +61,10 @@ const ImageSliderListComponent = () => {
                     color: "white",
                     border: "none"
                 },
-                description: error.error,
+                description: getErrorMessage(error),
                 duration: 5000
             });
-            console.log(error.error)
-        })
+        }
     }
 
     const showData = () => {
@@ -90,9 +93,9 @@ const ImageSliderListComponent = () => {
             });
         }
 
-        if (!isLoading && data) {
+        if (!isLoading && imageSliders.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return data.map((item: any, key: Key) => {
+            return imageSliders.map((item: any, key: Key) => {
                 return <TableRow key={key}>
                     <TableCell className="text-center">
                         {item.order}
@@ -108,7 +111,7 @@ const ImageSliderListComponent = () => {
                             <Switch
                                 checked={item.status}
                                 onCheckedChange={() => {
-                                    toggleStatus(item._id)
+                                    toggleStatus(item._id, !item.status)
                                 }}
                             />
                             {statusLoading == item._id && <LoaderCircle className="size-4 animate-spin" />}
@@ -125,14 +128,14 @@ const ImageSliderListComponent = () => {
                             ><ImageIcon /></Button>
                             <Button size="icon" variant="outline"
                                 onClick={() => {
-                                    setSelectedSlug(item.slug);
+                                    setSelectedId(item._id);
                                     setUpdateOpen(true);
                                 }}
                             ><Edit /></Button>
                             <Button size="icon" variant="outline"
                                 onClick={() => {
                                     setRemoveOpen(true)
-                                    setSelectedSlug(item.slug)
+                                    setSelectedId(item._id)
                                 }}
                             ><Trash /></Button>
                         </div>
@@ -143,8 +146,8 @@ const ImageSliderListComponent = () => {
     }
 
     return <>
-        <UpdateImageSliderComponent slug={selectedSlug} open={updateOpen} onOpenChange={setUpdateOpen} />
-        <RemoveImageSliderComponent slug={selectedSlug} open={removeOpen} onOpenChange={setRemoveOpen} />
+        <UpdateImageSliderComponent id={selectedId} open={updateOpen} onOpenChange={setUpdateOpen} />
+        <RemoveImageSliderComponent id={selectedId} open={removeOpen} onOpenChange={setRemoveOpen} />
         <ImageSliderImageComponent media={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
         <Card className="p-0 !gap-0">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">

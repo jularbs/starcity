@@ -32,14 +32,17 @@ import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
 import { format } from "date-fns";
 import { updateImageSlider } from "@/actions/image-slider";
 import Image from "next/image";
+import { getErrorMessage } from "@/lib/errors";
 
-const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
-    { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const UpdateImageSliderComponent = ({ id, open, onOpenChange }:
+    { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        slug && open ? { url: "v1/image-slider/" + slug } : null,
+        id && open ? { url: "v1/image-slider/" + id } : null,
         fetcher
     );
+
+    const imageSliderData = data?.data;
 
     const [loading, setLoading] = useState(false)
     const [previewImage, setPreviewImage] = useState({});
@@ -80,31 +83,31 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            slug: "",
-            name: "",
-            order: undefined,
+            slug: imageSliderData?.slug || "",
+            name: imageSliderData?.name || "",
+            order: imageSliderData?.order || undefined,
             dateRange: {
-                from: undefined,
-                to: undefined,
+                from: imageSliderData?.startDate ? new Date(imageSliderData.startDate) : undefined,
+                to: imageSliderData?.endDate ? new Date(imageSliderData.endDate) : undefined,
             },
             image: undefined
         },
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true)
+        try {
+            setLoading(true)
+            const formData = new FormData();
+            formData.set("name", values.name);
+            formData.set("slug", values.slug);
+            formData.set("order", values.order.toString());
+            formData.set("startDate", values.dateRange.from.toUTCString());
+            formData.set("endDate", values.dateRange.to.toUTCString());
+            if (values.image) {
+                formData.set('image', values.image);
+            }
 
-        const formData = new FormData();
-        formData.set("name", values.name);
-        formData.set("slug", values.slug);
-        formData.set("order", values.order.toString());
-        formData.set("startDate", values.dateRange.from.toUTCString());
-        formData.set("endDate", values.dateRange.to.toUTCString());
-        if (values.image) {
-            formData.set('image', values.image);
-        }
-
-        updateImageSlider({ data: formData }).then(data => {
+            const { data } = await updateImageSlider(id, formData)
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -113,14 +116,12 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: data.name + " updated successfully",
                 duration: 5000
             });
 
-            //TODOS: Update List
             mutate({ url: "v1/image-slider" })
-        }).catch(err => {
-            console.log("Error: ", err)
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -128,22 +129,22 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     useEffect(() => {
         if (!isLoading)
-            if (data) {
-                form.setValue("slug", data.slug);
-                form.setValue("name", data.name);
-                form.setValue("order", data.order);
-                form.setValue("dateRange", { from: new Date(data.startDate), to: new Date(data.endDate) })
-                setPreviewImage(data.image);
+            if (imageSliderData) {
+                form.setValue("slug", imageSliderData.slug);
+                form.setValue("name", imageSliderData.name);
+                form.setValue("order", imageSliderData.order);
+                form.setValue("dateRange", { from: new Date(imageSliderData.startDate), to: new Date(imageSliderData.endDate) })
+                setPreviewImage(imageSliderData.image);
             }
-    }, [data, isLoading, form])
+    }, [imageSliderData, isLoading, form])
 
 
     useEffect(() => {

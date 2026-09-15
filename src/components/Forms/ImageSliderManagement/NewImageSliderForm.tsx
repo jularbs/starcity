@@ -34,6 +34,7 @@ import { CalendarIcon, LoaderCircle } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addImageSlider } from "@/actions/image-slider"
 import { mutate } from "swr"
+import { getErrorMessage } from "@/lib/errors"
 
 export function NewImageSliderForm({
     className,
@@ -52,7 +53,7 @@ export function NewImageSliderForm({
         order: z.coerce.number({
             required_error: "Order is required",
             invalid_type_error: "Order must be a number"
-        }),
+        }).min(1, { message: "Order must be at least 1" }),
         dateRange: z.object(
             {
                 from: z.date({
@@ -92,18 +93,18 @@ export function NewImageSliderForm({
 
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true);
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.set("name", values.name);
+            formData.set("order", values.order.toString());
+            formData.set("startDate", values.dateRange.from.toUTCString());
+            formData.set("endDate", values.dateRange.to.toUTCString());
+            if (values.image) {
+                formData.set('image', values.image);
+            }
 
-        const formData = new FormData();
-        formData.set("name", values.name);
-        formData.set("order", values.order.toString());
-        formData.set("startDate", values.dateRange.from.toUTCString());
-        formData.set("endDate", values.dateRange.to.toUTCString());
-        if (values.image) {
-            formData.set('image', values.image);
-        }
-
-        addImageSlider({ data: formData }).then(data => {
+            const { data } = await addImageSlider(formData)
             setLoading(false);
             setMessage({ error: "", success: data.success });
             mutate({ url: "v1/image-slider" });
@@ -118,11 +119,10 @@ export function NewImageSliderForm({
                 image: undefined
             })
             setPreviewImage("");
-        }).catch(err => {
-            console.log("Error: ", err)
+        } catch (err) {
             setLoading(false);
-            setMessage({ success: "", error: err.error })
-        })
+            setMessage({ success: "", error: getErrorMessage(err) })
+        }
     }
 
 

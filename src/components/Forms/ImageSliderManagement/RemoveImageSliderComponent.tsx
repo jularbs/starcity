@@ -3,19 +3,21 @@
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { getErrorMessage } from "@/lib/errors";
 import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { removeImageSlider } from "@/actions/image-slider";
 
-const RemoveImageSliderComponent = ({ slug = "", open, onOpenChange }:
-    { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const RemoveImageSliderComponent = ({ id = "", open, onOpenChange }:
+    { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     const [loading, setLoading] = useState(false)
 
-    const handleDelete = () => {
-        setLoading(true);
-        removeImageSlider({ slug }).then((response) => {
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+            await removeImageSlider(id)
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -24,11 +26,11 @@ const RemoveImageSliderComponent = ({ slug = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: response.success,
+                description: "Image slider item deleted successfully",
                 duration: 5000
             });
             mutate({ url: "v1/image-slider" });
-        }).catch((err) => {
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request", {
                 style: {
@@ -36,10 +38,10 @@ const RemoveImageSliderComponent = ({ slug = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     return (
@@ -59,7 +61,7 @@ const RemoveImageSliderComponent = ({ slug = "", open, onOpenChange }:
                         handleDelete()
                     }}>
                         {loading && <LoaderCircle className="animate-spin" />}
-                        Delete Item
+                        Delete Image Slider
                     </Button>
                 </div>
             </DialogContent>
