@@ -3,19 +3,17 @@
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-import { fetcher, fetcherWithToken } from "@/actions/swr"
+import { fetcher } from "@/actions/swr"
 import useSWR from "swr";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Label } from "@radix-ui/react-label";
 import { format } from "date-fns";
 import { Key, useState } from "react";
 import UpdatePromoComponent from "./UpdatePromoComponent";
-import { getCookie } from "typescript-cookie";
 
 const ReadPromoComponent = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token");
     //Fetch all payment options
     const { data: paymentOptions, isLoading: isPaymentOptionsLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         { url: "v1/payment-option" },
@@ -24,8 +22,8 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data: promoData, isLoading: isPromoLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        id && open ? { url: "v1/promo/" + id, token: token } : null,
-        fetcherWithToken
+        id && open ? { url: "v1/promo/" + id } : null,
+        fetcher
     );
 
     const [updateOpen, setUpdateOpen] = useState(false);

@@ -39,7 +39,6 @@ import {
 import useSWR, { mutate } from "swr";
 import { fetcher } from "@/actions/swr";
 import { createRide } from "@/actions/ride"
-import { getCookie } from "typescript-cookie"
 import { AlertError } from "@/components/AlertError"
 import { AlertSuccess } from "@/components/AlertSuccess"
 import Image from "next/image"
@@ -48,7 +47,6 @@ export function NewRideForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-    const token = getCookie("token");
     const [categoryOpen, setCategoryOpen] = useState(false)
     const { data: categoriesData, isLoading: isCategoriesLoading } = useSWR({ url: "v1/ride-categories" }, fetcher)
 
@@ -97,7 +95,7 @@ export function NewRideForm({
             formData.set('image', values.image);
         }
 
-        createRide({ data: formData, token: token }).then(data => {
+        createRide({ data: formData }).then(data => {
             setLoading(false);
             setMessage({ error: "", success: data.success });
             mutate({ url: "v1/ride" });

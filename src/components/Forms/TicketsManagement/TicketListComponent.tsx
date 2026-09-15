@@ -1,5 +1,5 @@
 "use client"
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { updateTicket } from "@/actions/ticket";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -20,7 +20,7 @@ const TicketListComponent = () => {
 
     const { data, isLoading } = useSWR(
         { url: "v1/ticket/manage" },
-        fetcherWithToken
+        fetcher
     );
 
     const ticketsData = data?.data || [];

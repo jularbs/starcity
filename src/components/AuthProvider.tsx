@@ -2,7 +2,6 @@
 import { redirect } from "next/navigation";
 import { validateToken } from "@/actions/auth";
 import { refreshAccessTokenOnce } from "@/lib/api-client";
-import { getCookie } from 'typescript-cookie'
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,8 +14,7 @@ export function AuthProvider({
 
     useEffect(() => {
         let active = true;
-        const token = getCookie('token');
-        validateToken(token).then(() => {
+        validateToken().then(() => {
             if (active) setAuthenticated(true)
         }).catch(() => {
             refreshAccessTokenOnce().then((newToken) => {

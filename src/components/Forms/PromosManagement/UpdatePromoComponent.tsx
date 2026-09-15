@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form"
 import { useEffect, useState, Key } from "react";
 
-import { fetcher, fetcherWithToken } from "@/actions/swr"
+import { fetcher } from "@/actions/swr"
 import useSWR, { mutate } from "swr";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input";
@@ -30,12 +30,10 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { updatePromo } from "@/actions/promo";
 import { toast } from "sonner";
-import { getCookie } from "typescript-cookie";
 
 const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token");
     //Fetch all payment options
     const { data: paymentOptions, isLoading: isPaymentOptionsLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         { url: "v1/payment-option" },
@@ -43,8 +41,8 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
     );
 
     const { data: promoData, isLoading: isPromoLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        id && open ? { url: "v1/promo/" + id, token: token } : null,
-        fetcherWithToken
+        id && open ? { url: "v1/promo/" + id } : null,
+        fetcher
     );
 
     const [loading, setLoading] = useState(false)
@@ -161,7 +159,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
             formData.set("endDate", values.dateRange.to.toUTCString());
             formData.set("paymentOptions", JSON.stringify(values.paymentOptions));
 
-            const response = await updatePromo({ data: formData, token: token });
+            const response = await updatePromo({ data: formData });
             console.log(response)
             if (response) {
                 setLoading(false);
@@ -177,8 +175,8 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                 });
 
                 //TODOS: Update List
-                mutate({ url: "v1/promo/" + response.data._id, token })
-                mutate({ url: "v1/promo", token })
+                mutate({ url: "v1/promo/" + response.data._id })
+                mutate({ url: "v1/promo" })
             }
 
         } catch (err) {

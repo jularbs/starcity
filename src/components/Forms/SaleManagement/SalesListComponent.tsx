@@ -31,11 +31,10 @@ import { ChartNoAxesColumn, CircleDollarSign, DownloadIcon, LoaderCircle, Ticket
 
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 
 // import useSWR from "swr";
-import { getCookie } from "typescript-cookie";
 import { Key, useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -66,18 +65,15 @@ const SalesListComponent = () => {
     const [skip, setSkip] = useState(0)
     const [limit] = useState(10)
 
-    const token = getCookie("token");
     const { data, isLoading } = useSWR({
         url: "v1/sale",
-        token: token,
         params: { skip: skip, limit: limit, start: startDate!.toISOString(), end: endDate!.toISOString(), search: searchQuery }
-    }, fetcherWithToken)
+    }, fetcher)
 
     const { data: summaryData, isLoading: isSummaryLoading, error } = useSWR({
         url: "v1/sale",
-        token: token,
         params: { skip: 0, limit: 0, start: startDate!.toISOString(), end: endDate!.toISOString(), search: searchQuery }
-    }, fetcherWithToken)
+    }, fetcher)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const showTicketItems = (items: any) => {

@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/table"
 
 import useSWR from "swr";
-import { getCookie } from "typescript-cookie";
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Key, useState } from "react";
 import { obscureEmail } from "@/lib/utils";
@@ -22,8 +21,7 @@ import UpdateUserComponent from "./UpdateUserComponent";
 import { Edit, Trash } from "lucide-react";
 
 const UserListComponent = () => {
-    const token = getCookie("token")
-    const { data, isLoading } = useSWR({ url: "v1/user", params: { status: true }, token: token }, fetcherWithToken)
+    const { data, isLoading } = useSWR({ url: "v1/user", params: { status: true } }, fetcher)
 
     const [updateOpen, setUpdateOpen] = useState<boolean>(false)
     const [removeOpen, setRemoveOpen] = useState<boolean>(false)

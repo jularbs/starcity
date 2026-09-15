@@ -33,7 +33,6 @@ import { cn, getImageSource } from "@/lib/utils";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 // import Image from "next/image";
-import { getCookie } from "typescript-cookie";
 import { updateRide } from "@/actions/ride";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
 import Image from "next/image";
@@ -41,7 +40,6 @@ import Image from "next/image";
 const UpdateRideComponent = ({ slug, open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token");
     const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         slug && open ? { url: "v1/ride/" + slug } : null,
         fetcher
@@ -96,7 +94,7 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
             formData.set('image', values.image);
         }
 
-        updateRide({ data: formData, token: token }).then(data => {
+        updateRide({ data: formData }).then(data => {
             setLoading(false);
             onOpenChange(false);
             mutate({ url: "v1/ride" });

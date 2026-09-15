@@ -7,17 +7,15 @@ import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { removeUser } from "@/actions/auth";
-import { getCookie } from "typescript-cookie";
 
 const RemoveUserComponent = ({ id = "", open, onOpenChange, type = "remove" }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>>, type?: string }) => {
-    const token = getCookie("token");
 
     const [loading, setLoading] = useState(false)
 
     const handleDelete = () => {
         setLoading(true);
-        removeUser({ id, token }).then((response) => {
+        removeUser({ id }).then((response) => {
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -29,8 +27,8 @@ const RemoveUserComponent = ({ id = "", open, onOpenChange, type = "remove" }:
                 description: response.success,
                 duration: 5000
             });
-            mutate({ url: "v1/user", params: { status: true }, token: token });
-            mutate({ url: "v1/user", params: { status: false }, token: token });
+            mutate({ url: "v1/user", params: { status: true } });
+            mutate({ url: "v1/user", params: { status: false } });
         }).catch((err) => {
             setLoading(false);
             toast.error("Invalid Request", {

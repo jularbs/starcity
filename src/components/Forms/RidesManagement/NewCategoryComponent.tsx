@@ -20,12 +20,10 @@ import { LoaderCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { getCookie } from "typescript-cookie"
 import { addRideCategory } from "@/actions/ride"
 const NewCategoryComponent = ({ open, onOpenChange }:
     { open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token");
     const [loading, setLoading] = useState(false);
 
     const formSchema = z.object({
@@ -45,7 +43,7 @@ const NewCategoryComponent = ({ open, onOpenChange }:
         setLoading(true)
         try {
 
-            const response = await addRideCategory({ data: values, token: token });
+            const response = await addRideCategory({ data: values });
             if (response) {
                 setLoading(false);
                 onOpenChange(false);

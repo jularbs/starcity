@@ -26,7 +26,6 @@ import {
 
 import Image from "next/image"
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
-import { getCookie } from "typescript-cookie"
 import { AlertError } from "@/components/AlertError"
 import { AlertSuccess } from "@/components/AlertSuccess"
 import { format } from "date-fns"
@@ -40,7 +39,6 @@ export function NewImageSliderForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-    const token = getCookie("token");
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState({
         error: "",
@@ -105,10 +103,10 @@ export function NewImageSliderForm({
             formData.set('image', values.image);
         }
 
-        addImageSlider({ data: formData, token }).then(data => {
+        addImageSlider({ data: formData }).then(data => {
             setLoading(false);
             setMessage({ error: "", success: data.success });
-            mutate({ url: "v1/image-slider", token });
+            mutate({ url: "v1/image-slider" });
             setPreviewImage("");
             form.reset({
                 name: "",

@@ -1,6 +1,4 @@
-//TODOS: Integrate file upload callbacks
 import { uploadFromEditor } from "@/actions/media";
-import { getCookie } from "typescript-cookie";
 import { getImageSource } from "./utils";
 import { toast } from "sonner";
 import { InitOptions } from "@tinymce/tinymce-react/lib/cjs/main/ts/components/Editor";
@@ -35,7 +33,6 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
         const id = "attachment-" + new Date().getTime();
         const formData = new FormData();
         formData.append("image", file, id);
-        const token = getCookie("token");
         toast("File uploading..", {
           style: {
             background: "rgb(61, 97, 255)",
@@ -45,7 +42,7 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
           duration: 5000,
         });
 
-        uploadFromEditor({ data: formData, token: token })
+        uploadFromEditor({ data: formData })
           .then((data) => {
             toast.success("Success!", {
               style: {

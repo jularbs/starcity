@@ -7,17 +7,15 @@ import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { removeRide } from "@/actions/ride";
-import { getCookie } from "typescript-cookie";
 
 const RemoveRideComponent = ({ slug, open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token")
     const [loading, setLoading] = useState(false)
 
     const handleDelete = () => {
         setLoading(true);
-        removeRide({ slug, token }).then((response) => {
+        removeRide({ slug }).then((response) => {
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {

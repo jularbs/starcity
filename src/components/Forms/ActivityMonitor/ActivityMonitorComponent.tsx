@@ -18,21 +18,19 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import useSWR from "swr";
-import { getCookie } from "typescript-cookie";
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Key, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 const ActivityMonitorComponent = () => {
-    const token = getCookie("token")
     const [currentPage, setCurrentPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [skip, setSkip] = useState(0)
     const [limit] = useState(15)
 
-    const { data, isLoading } = useSWR({ url: "v1/audit-trail", params: { skip: skip, limit: limit }, token: token }, fetcherWithToken)
+    const { data, isLoading } = useSWR({ url: "v1/audit-trail", params: { skip: skip, limit: limit } }, fetcher)
 
     const [payload, setPayload] = useState({})
     const [payloadOpen, setPayloadOpen] = useState(false);

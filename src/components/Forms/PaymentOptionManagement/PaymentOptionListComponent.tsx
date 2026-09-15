@@ -1,6 +1,6 @@
 "use client"
 import { updatePaymentOption } from "@/actions/payment-options";
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch"
 import { getErrorMessage } from "@/lib/errors";
@@ -12,7 +12,7 @@ import useSWR, { mutate } from "swr";
 const PaymentOptionListComponent = () => {
     const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         { url: "v1/payment-option/manage" },
-        fetcherWithToken
+        fetcher
     );
 
     const paymentOptionData = data?.data;

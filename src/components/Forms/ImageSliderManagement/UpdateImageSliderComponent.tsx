@@ -28,7 +28,6 @@ import { cn, getImageSource } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar"
 
 import { toast } from "sonner";
-import { getCookie } from "typescript-cookie";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
 import { format } from "date-fns";
 import { updateImageSlider } from "@/actions/image-slider";
@@ -37,7 +36,6 @@ import Image from "next/image";
 const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token");
     const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         slug && open ? { url: "v1/image-slider/" + slug } : null,
         fetcher
@@ -106,7 +104,7 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
             formData.set('image', values.image);
         }
 
-        updateImageSlider({ data: formData, token: token }).then(data => {
+        updateImageSlider({ data: formData }).then(data => {
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -120,7 +118,7 @@ const UpdateImageSliderComponent = ({ slug, open, onOpenChange }:
             });
 
             //TODOS: Update List
-            mutate({ url: "v1/image-slider", token })
+            mutate({ url: "v1/image-slider" })
         }).catch(err => {
             console.log("Error: ", err)
             setLoading(false);

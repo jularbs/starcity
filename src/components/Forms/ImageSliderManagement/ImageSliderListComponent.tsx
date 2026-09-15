@@ -1,6 +1,6 @@
 "use client"
 import { toggleImageSlider } from "@/actions/image-slider";
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,15 +18,13 @@ import { Edit, ImageIcon, LoaderCircle, Trash } from "lucide-react";
 import { Key, useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-import { getCookie } from "typescript-cookie";
 import ImageSliderImageComponent from "./ImageSliderImageComponent";
 import RemoveImageSliderComponent from "./RemoveImageSliderComponent";
 import UpdateImageSliderComponent from "./UpdateImageSliderComponent";
 
 const ImageSliderListComponent = () => {
-    const token = getCookie("token")
 
-    const { data, isLoading } = useSWR({ url: "v1/image-slider", token }, fetcherWithToken)
+    const { data, isLoading } = useSWR({ url: "v1/image-slider" }, fetcher)
 
     const [statusLoading, setStatusLoading] = useState("");
     const [imageOpen, setImageOpen] = useState(false);
@@ -38,7 +36,7 @@ const ImageSliderListComponent = () => {
 
     const toggleStatus = (id: string) => {
         setStatusLoading(id);
-        toggleImageSlider({ id, token }).then(data => {
+        toggleImageSlider({ id }).then(data => {
             setStatusLoading("")
             toast.success("Success!", {
                 style: {
@@ -50,7 +48,7 @@ const ImageSliderListComponent = () => {
                 duration: 5000
             });
             //update list
-            mutate({ url: "v1/image-slider", token })
+            mutate({ url: "v1/image-slider" })
         }).catch(error => {
             setStatusLoading("")
             toast.error("Invalid Request", {

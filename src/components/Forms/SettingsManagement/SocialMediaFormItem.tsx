@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import useSWR from "swr"
 import { fetcher } from "@/actions/swr"
-import { getCookie } from "typescript-cookie"
 import {
     Form,
     FormControl,
@@ -24,7 +23,6 @@ export function SocialMediaFormItem
     ({ label, option }:
         { label: string, option: string }) {
 
-    const token = getCookie("token");
     const { data, isLoading } = useSWR({ url: "v1/option/" + option }, fetcher)
     const [loading, setLoading] = useState(false);
 
@@ -50,7 +48,7 @@ export function SocialMediaFormItem
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setLoading(true);
 
-        saveOption({ data: values, token }).then(data => {
+        saveOption({ data: values }).then(data => {
             setLoading(false);
             toast.success("Success!", {
                 style: {

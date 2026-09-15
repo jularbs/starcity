@@ -18,11 +18,9 @@ import {
     Form,
     FormField,
 } from "@/components/ui/form"
-import { getCookie } from "typescript-cookie";
 import { saveOption } from "@/actions/option";
 
 const PageManagementComponent = ({ option }: { option: string }) => {
-    const token = getCookie("token");
     const { data, isLoading } = useSWR(option ? { url: "v1/option/" + option.toUpperCase() } : null, fetcher);
     const [loading, setLoading] = useState(false);
     const [editorLoading, setEditorLoading] = useState(true);
@@ -44,7 +42,7 @@ const PageManagementComponent = ({ option }: { option: string }) => {
         setLoading(true)
 
         console.log(values);
-        saveOption({ data: values, token: token }).then(response => {
+        saveOption({ data: values }).then(response => {
             setLoading(false);
             toast.success("Success!", {
                 style: {

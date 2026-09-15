@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/table"
 
 import useSWR from "swr";
-import { getCookie } from "typescript-cookie";
-import { fetcherWithToken } from "@/actions/swr";
+import { fetcher } from "@/actions/swr";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Key, useState } from "react";
 import { format } from "date-fns";
@@ -20,8 +19,7 @@ import RemoveUserComponent from "./RemoveUserComponent";
 import PendingUserForm from "./PendingUserForm";
 
 const PendingListComponent = () => {
-    const token = getCookie("token")
-    const { data, isLoading } = useSWR({ url: "v1/user", params: { status: false }, token: token }, fetcherWithToken)
+    const { data, isLoading } = useSWR({ url: "v1/user", params: { status: false } }, fetcher)
 
     const [updateOpen, setUpdateOpen] = useState<boolean>(false)
     const [removeOpen, setRemoveOpen] = useState<boolean>(false)

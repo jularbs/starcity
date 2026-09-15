@@ -6,18 +6,16 @@ import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
 import { toast } from "sonner";
-import { getCookie } from "typescript-cookie";
 import { removeImageSlider } from "@/actions/image-slider";
 
 const RemoveImageSliderComponent = ({ slug = "", open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
-    const token = getCookie("token");
     const [loading, setLoading] = useState(false)
 
     const handleDelete = () => {
         setLoading(true);
-        removeImageSlider({ slug, token }).then((response) => {
+        removeImageSlider({ slug }).then((response) => {
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -29,7 +27,7 @@ const RemoveImageSliderComponent = ({ slug = "", open, onOpenChange }:
                 description: response.success,
                 duration: 5000
             });
-            mutate({ url: "v1/image-slider", token: token });
+            mutate({ url: "v1/image-slider" });
         }).catch((err) => {
             setLoading(false);
             toast.error("Invalid Request", {

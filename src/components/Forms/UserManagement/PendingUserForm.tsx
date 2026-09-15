@@ -23,10 +23,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { useEffect, useState } from "react";
 
-import { fetcherWithToken } from "@/actions/swr"
+import { fetcher } from "@/actions/swr"
 import useSWR, { mutate } from "swr";
 import { LoaderCircle } from "lucide-react";
-import { getCookie } from "typescript-cookie";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +35,9 @@ import { updateUser } from "@/actions/auth";
 const PendingUserForm = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
     //Fetch all payment options
-    const token = getCookie("token");
     const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        id && open ? { url: "v1/user/" + id, token } : null,
-        fetcherWithToken
+        id && open ? { url: "v1/user/" + id } : null,
+        fetcher
     );
 
     const [loading, setLoading] = useState(false)
@@ -67,11 +65,11 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
         setLoading(true)
         form.setValue("status", true);
 
-        updateUser({ data: values, token: token }).then(() => {
+        updateUser({ data: values }).then(() => {
             setLoading(false);
             onOpenChange(false);
-            mutate({ url: "v1/user", params: { status: true }, token: token });
-            mutate({ url: "v1/user", params: { status: false }, token: token });
+            mutate({ url: "v1/user", params: { status: true } });
+            mutate({ url: "v1/user", params: { status: false } });
             toast.success("Success!", {
                 style: {
                     background: "rgb(56, 142, 60)",

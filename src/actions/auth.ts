@@ -55,28 +55,14 @@ export const SignOut = async () => {
   return res.json();
 };
 
-export const validateToken = async (token: string | undefined) => {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+export const validateToken = async () => {
+  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`, {});
 
-    if (!res.ok) {
-      return res.json().then((error) => {
-        console.log("VALIDATE TOKEN ERROR: ", error);
-        throw error;
-      });
-    }
-
-    return res.json();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (err) {
-    throw {
-      error: "Server error, please try again later",
-    };
+  if (!res.ok) {
+    throw await res.json();
   }
+
+  return res.json();
 };
 
 export const refreshAccessToken = async () => {
@@ -93,11 +79,8 @@ export const refreshAccessToken = async () => {
   return response.data ?? response;
 };
 
-export const removeUser = async ({ id, token }: { id: string; token: string | undefined }) => {
+export const removeUser = async ({ id }: { id: string }) => {
   const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
     method: "DELETE",
   });
 
@@ -108,16 +91,9 @@ export const removeUser = async ({ id, token }: { id: string; token: string | un
   return res.json();
 };
 
-export const updateUser = async ({
-  data,
-  token,
-}: {
-  data: Record<string, string | boolean>;
-  token: string | undefined;
-}) => {
+export const updateUser = async ({ data }: { data: Record<string, string | boolean> }) => {
   const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user`, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: "application/json",
       "Content-Type": "application/json",
     },
