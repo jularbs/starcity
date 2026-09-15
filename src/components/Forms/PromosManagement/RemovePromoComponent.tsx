@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { removePromo } from "@/actions/promo";
+import { getErrorMessage } from "@/lib/errors";
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
@@ -13,9 +14,10 @@ const RemovePromoComponent = ({ id = "", open, onOpenChange }:
 
     const [loading, setLoading] = useState(false)
 
-    const handleDelete = () => {
-        setLoading(true);
-        removePromo({ id }).then((response) => {
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+            await removePromo(id);
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -24,11 +26,11 @@ const RemovePromoComponent = ({ id = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: response.success,
+                description: "Promo deleted successfully",
                 duration: 5000
             });
             mutate({ url: "v1/promo" });
-        }).catch((err) => {
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -36,10 +38,10 @@ const RemovePromoComponent = ({ id = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     return (

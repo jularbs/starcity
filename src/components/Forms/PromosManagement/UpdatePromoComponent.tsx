@@ -30,20 +30,25 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { updatePromo } from "@/actions/promo";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     //Fetch all payment options
-    const { data: paymentOptions, isLoading: isPaymentOptionsLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        { url: "v1/payment-option" },
+    const { data: paymentOptionsData, isLoading: isPaymentOptionsLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
+        { url: "v1/payment-option/manage" },
         fetcher
     );
+
+    const paymentOptions = paymentOptionsData?.data || [];
 
     const { data: promoData, isLoading: isPromoLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         id && open ? { url: "v1/promo/" + id } : null,
         fetcher
     );
+
+    const promo = promoData?.data;
 
     const [loading, setLoading] = useState(false)
 
@@ -145,39 +150,30 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true)
         try {
-            const formData = new FormData();
-            formData.set("_id", values._id)
-            formData.set("campaignName", values.campaignName);
-            formData.set("code", values.code);
-            formData.set("minimumRequired", values.minimumRequired.toString());
-            formData.set("percentageDiscount", values.percentageDiscount.toString());
-            formData.set("fixedDiscount", values.fixedDiscount.toString());
-            formData.set("maxDiscount", values.maxDiscount.toString());
-            formData.set("startDate", values.dateRange.from.toUTCString());
-            formData.set("endDate", values.dateRange.to.toUTCString());
-            formData.set("paymentOptions", JSON.stringify(values.paymentOptions));
+            const updatedPromo = {
+                ...values,
+                startDate: values.dateRange.from,
+                endDate: values.dateRange.to,
+                acceptedPaymentMethods: values.paymentOptions,
+            };
+            setLoading(true)
+            const { data } = await updatePromo(id, updatedPromo);
+            setLoading(false);
+            onOpenChange(false);
+            toast.success("Success!", {
+                style: {
+                    background: "rgb(56, 142, 60)",
+                    color: "white",
+                    border: "none"
+                },
+                description: data.campaignName + " updated successfully",
+                duration: 5000
+            });
 
-            const response = await updatePromo({ data: formData });
-            console.log(response)
-            if (response) {
-                setLoading(false);
-                onOpenChange(false);
-                toast.success("Success!", {
-                    style: {
-                        background: "rgb(56, 142, 60)",
-                        color: "white",
-                        border: "none"
-                    },
-                    description: response.success,
-                    duration: 5000
-                });
-
-                //TODOS: Update List
-                mutate({ url: "v1/promo/" + response.data._id })
-                mutate({ url: "v1/promo" })
-            }
+            //TODOS: Update List
+            mutate({ url: "v1/promo/" + id })
+            mutate({ url: "v1/promo" })
 
         } catch (err) {
             console.log("Error: ", err)
@@ -188,8 +184,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                //@ts-expect-error error var unknown
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
         };
@@ -198,18 +193,18 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
 
     useEffect(() => {
         if (!isPromoLoading)
-            if (promoData) {
-                form.setValue("_id", promoData?._id)
-                form.setValue("campaignName", promoData?.campaignName)
-                form.setValue("code", promoData?.code)
-                form.setValue("minimumRequired", promoData?.minimumRequired)
-                form.setValue("percentageDiscount", promoData?.percentageDiscount)
-                form.setValue("fixedDiscount", promoData?.fixedDiscount)
-                form.setValue("maxDiscount", promoData?.maxDiscount)
-                form.setValue("paymentOptions", promoData?.acceptedPaymentMethods)
-                form.setValue("dateRange", { from: new Date(promoData?.startDate), to: new Date(promoData?.endDate) })
+            if (promo) {
+                form.setValue("_id", promo?._id)
+                form.setValue("campaignName", promo?.campaignName)
+                form.setValue("code", promo?.code)
+                form.setValue("minimumRequired", promo?.minimumRequired)
+                form.setValue("percentageDiscount", promo?.percentageDiscount)
+                form.setValue("fixedDiscount", promo?.fixedDiscount)
+                form.setValue("maxDiscount", promo?.maxDiscount)
+                form.setValue("paymentOptions", promo?.acceptedPaymentMethods)
+                form.setValue("dateRange", { from: new Date(promo?.startDate), to: new Date(promo?.endDate) })
             }
-    }, [promoData, isPromoLoading, form])
+    }, [promo, isPromoLoading, form])
 
     useEffect(() => {
         if (!open) {

@@ -1,7 +1,7 @@
 "use client"
 import { toast } from "sonner"
 import { fetcher } from "@/actions/swr"
-import { togglePromo } from "@/actions/promo";
+import { updatePromo } from "@/actions/promo";
 import useSWR, { mutate } from "swr"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import { useState } from "react";
 import UpdatePromoComponent from "./UpdatePromoComponent";
 import ReadPromoComponent from "./ReadPromoComponent";
 import RemovePromoComponent from "./RemovePromoComponent";
+import { getErrorMessage } from "@/lib/errors";
 
 export function PromoListComponent() {
     const [statusLoading, setStatusLoading] = useState("");
@@ -35,6 +36,8 @@ export function PromoListComponent() {
         { url: "v1/promo" },
         fetcher
     );
+
+    const promoList = data?.data || []
 
     const showLoading = () => {
         return new Array(10).fill(0).map((item, key) => {
@@ -60,9 +63,10 @@ export function PromoListComponent() {
         })
     }
 
-    const toggleStatus = (id: string) => {
-        setStatusLoading(id)
-        togglePromo({ id }).then(data => {
+    const toggleStatus = async (id: string, status: boolean) => {
+        try {
+            setStatusLoading(id)
+            const { data } = await updatePromo(id, { status });
             setStatusLoading("")
             toast.success("Success!", {
                 style: {
@@ -70,12 +74,12 @@ export function PromoListComponent() {
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: data.campaignName + " toggled successfully",
                 duration: 5000
             });
             //update list
             mutate({ url: "v1/promo" })
-        }).catch(e => {
+        } catch (err) {
             setStatusLoading("")
             toast.error("Invalid Request", {
                 style: {
@@ -83,17 +87,18 @@ export function PromoListComponent() {
                     color: "white",
                     border: "none"
                 },
-                description: e.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-            console.log(e.error)
-        })
+            console.log(err)
+        }
+
     }
 
     const showData = () => {
-        if (data) {
+        if (promoList) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return data.map((item: any, key: number) => {
+            return promoList.map((item: any, key: number) => {
                 return <TableRow key={key} className="first">
                     <TableCell className="pl-4">
                         {item.campaignName}
@@ -109,7 +114,7 @@ export function PromoListComponent() {
                         <div className="flex items-center gap-1">
                             <Switch
                                 checked={item.status}
-                                onCheckedChange={() => { toggleStatus(item._id) }}
+                                onCheckedChange={() => { toggleStatus(item._id, !item.status) }}
                             />
                             {statusLoading == item._id && <LoaderCircle className="size-4 animate-spin" />}
                         </div>
@@ -117,7 +122,7 @@ export function PromoListComponent() {
                     <TableCell className="flex gap-2">
                         <Button className="size-6" variant="outline"
                             onClick={() => {
-                                setCurrentId(item.id)
+                                setCurrentId(item._id)
                                 setReadOpen(true)
                             }}>
                             <Info />

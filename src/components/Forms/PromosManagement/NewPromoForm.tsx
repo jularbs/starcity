@@ -39,16 +39,19 @@ import { Calendar } from "@/components/ui/calendar"
 import { format, addDays } from "date-fns"
 import { createPromo } from "@/actions/promo"
 import { } from "typescript-cookie"
+import { getErrorMessage } from "@/lib/errors"
 
 export function NewPromoForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
     //Fetch all payment options
-    const { data: paymentOptions, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        { url: "v1/payment-option" },
+    const { data, isLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
+        { url: "v1/payment-option/manage" },
         fetcher
     );
+
+    const paymentOptions = data?.data || []
 
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState({
@@ -96,45 +99,42 @@ export function NewPromoForm({
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        setLoading(true)
         try {
-            const formData = new FormData();
-            formData.set("campaignName", values.campaignName);
-            formData.set("code", values.code);
-            formData.set("minimumRequired", values.minimumRequired.toString());
-            formData.set("percentageDiscount", values.percentageDiscount.toString());
-            formData.set("fixedDiscount", values.fixedDiscount.toString());
-            formData.set("maxDiscount", values.maxDiscount.toString());
-            formData.set("startDate", values.dateRange.from.toUTCString());
-            formData.set("endDate", values.dateRange.to.toUTCString());
-            formData.set("paymentOptions", JSON.stringify(values.paymentOptions));
-
-            const response = await createPromo({ data: formData });
-            if (response) {
-                setLoading(false);
-                setMessage({ error: "", success: response.success });
-                form.reset({
-                    campaignName: "",
-                    code: "",
-                    minimumRequired: undefined,
-                    percentageDiscount: undefined,
-                    fixedDiscount: undefined,
-                    maxDiscount: undefined,
-                    dateRange: {
-                        from: new Date(),
-                        to: addDays(new Date(), 30),
-                    },
-                    paymentOptions: []
-                },);
-                mutate({ url: "v1/promo" });
+            const newPromo = {
+                campaignName: values.campaignName,
+                code: values.code,
+                minimumRequired: values.minimumRequired,
+                percentageDiscount: values.percentageDiscount,
+                fixedDiscount: values.fixedDiscount,
+                maxDiscount: values.maxDiscount,
+                startDate: values.dateRange.from,
+                endDate: values.dateRange.to,
+                dateRange: values.dateRange,
+                acceptedPaymentMethods: values.paymentOptions,
+                maxUsage: 100, //TODOS: Add to form to handle max usage
             }
-
-        } catch (err) {
-            console.log("Error: ", err)
+            setLoading(true)
+            const { data } = await createPromo(newPromo);
             setLoading(false);
-            //@ts-expect-error error var unknown
-            setMessage({ success: "", error: err.error })
+            setMessage({ error: "", success: data.campaignName + " created successfully" });
+            form.reset({
+                campaignName: "",
+                code: "",
+                minimumRequired: undefined,
+                percentageDiscount: undefined,
+                fixedDiscount: undefined,
+                maxDiscount: undefined,
+                dateRange: {
+                    from: new Date(),
+                    to: addDays(new Date(), 30),
+                },
+                paymentOptions: []
+            },);
+            mutate({ url: "v1/promo" });
+        } catch (err) {
+            console.error("Error creating promo: ", err);
+            setLoading(false);
+            setMessage({ success: "", error: getErrorMessage(err) })
         };
 
     }

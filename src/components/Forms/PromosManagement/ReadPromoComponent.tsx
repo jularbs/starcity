@@ -15,10 +15,12 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
     { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     //Fetch all payment options
-    const { data: paymentOptions, isLoading: isPaymentOptionsLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
-        { url: "v1/payment-option" },
+    const { data: paymentOptionsData, isLoading: isPaymentOptionsLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
+        { url: "v1/payment-option/manage" },
         fetcher
     );
+
+    const paymentOptions = paymentOptionsData?.data || []
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data: promoData, isLoading: isPromoLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
@@ -26,6 +28,7 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
         fetcher
     );
 
+    const promo = promoData?.data;
     const [updateOpen, setUpdateOpen] = useState(false);
 
     const showPaymentMethods = () => {
@@ -42,7 +45,7 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
             //TODOS: Declare Types
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return paymentOptions.map((item: any, index: Key) => {
-                if (promoData.acceptedPaymentMethods?.includes(item._id))
+                if (promo.acceptedPaymentMethods?.includes(item._id))
                     return <div className={"flex items-center p-3 space-x-2 rounded-sm border-1 border-black"} key={index}>
                         <label
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -62,43 +65,43 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
         }
     }
 
-    if (promoData)
+    if (promo)
         return (
             <>
                 <Dialog open={open} onOpenChange={onOpenChange}>
                     <DialogContent className="max-h-[100vh] overflow-y-auto">
                         <DialogHeader className="gap-0">
                             <DialogTitle className="flex items-center justify-between">
-                                <span>{promoData.campaignName}</span>
-                                <span className="pr-4 text-[10px] uppercase">{promoData.status ? "Active" : "Disabled"}</span>
+                                <span>{promo.campaignName}</span>
+                                <span className="pr-4 text-[10px] uppercase">{promo.status ? "Active" : "Disabled"}</span>
                             </DialogTitle>
-                            <DialogDescription className="text-sm font-medium text-neutral-600">{promoData.code}</DialogDescription>
+                            <DialogDescription className="text-sm font-medium text-neutral-600">{promo.code}</DialogDescription>
                         </DialogHeader>
                         <div className="flex flex-col gap-4">
                             <div className="grid">
                                 <Label className="text-sm font-semibold">Promo Duration</Label>
-                                {promoData.startDate && <div>{format(promoData?.startDate, "LLL dd, y")} - {format(promoData?.endDate, "LLL dd, y")}</div>}
+                                {promo.startDate && <div>{format(promo?.startDate, "LLL dd, y")} - {format(promo?.endDate, "LLL dd, y")}</div>}
                             </div>
                             <div className="grid">
                                 <Label className="text-sm font-semibold">Minimum Transaction Requirement</Label>
-                                <div>₱{promoData.minimumRequired}</div>
+                                <div>₱{promo.minimumRequired}</div>
                             </div>
 
                             <div className="grid grid-cols-2">
                                 <div className="grid">
                                     <Label className="text-sm font-semibold">Percentage Discount</Label>
-                                    <div>₱{promoData.percentageDiscount}</div>
+                                    <div>₱{promo.percentageDiscount}</div>
                                 </div>
 
                                 <div className="grid">
                                     <Label className="text-sm font-semibold">Fixed Discount</Label>
-                                    <div>₱{promoData.fixedDiscount}</div>
+                                    <div>₱{promo.fixedDiscount}</div>
                                 </div>
                             </div>
 
                             <div className="grid">
                                 <Label className="text-sm font-semibold">Max Discount</Label>
-                                <div>₱{promoData.maxDiscount}</div>
+                                <div>₱{promo.maxDiscount}</div>
                             </div>
                             <div className="grid">
                                 <Label className="mb-1 text-sm font-semibold">Accepted Payment Method</Label>
@@ -115,7 +118,7 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-                <UpdatePromoComponent id={promoData._id} open={updateOpen} onOpenChange={setUpdateOpen} />
+                <UpdatePromoComponent id={promo._id} open={updateOpen} onOpenChange={setUpdateOpen} />
             </>
 
         );
