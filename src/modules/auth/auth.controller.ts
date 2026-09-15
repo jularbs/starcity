@@ -153,10 +153,9 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
   const hashedRefreshToken = hashRefreshToken(token);
   const storedToken =
-    await refreshTokenRepository.findByToken(hashedRefreshToken);
+    await refreshTokenRepository.consumeByToken(hashedRefreshToken);
 
-  if (!storedToken || storedToken.expiresAt < new Date()) {
-    res.clearCookie('refreshToken');
+  if (!storedToken) {
     throw new AppError({
       message: 'Invalid or expired refresh token.',
       code: 'INVALID_REFRESH_TOKEN',
@@ -166,8 +165,6 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
   const user = await userService.getById(storedToken.userId);
   if (!user || !user.status) {
-    await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
-    res.clearCookie('refreshToken');
     throw new AppError({
       message: 'Invalid or expired refresh token.',
       code: 'INVALID_REFRESH_TOKEN',
@@ -175,8 +172,6 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     });
   }
 
-  // rotate refresh token so a stolen token can only be replayed once
-  await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);
   const newRefreshToken = generateRefreshToken();
   await refreshTokenRepository.storeRefreshToken(
     user._id,

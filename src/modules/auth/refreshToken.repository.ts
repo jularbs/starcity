@@ -23,8 +23,16 @@ const findByToken = async (token: string) => {
   return RefreshToken.findOne({ token });
 };
 
+const consumeByToken = async (token: string) => {
+  return RefreshToken.findOneAndDelete({
+    token,
+    expiresAt: { $gt: new Date() },
+  });
+};
+
 export const refreshTokenRepository = {
   storeRefreshToken,
   removeRefreshTokenByToken,
   findByToken,
+  consumeByToken,
 };
