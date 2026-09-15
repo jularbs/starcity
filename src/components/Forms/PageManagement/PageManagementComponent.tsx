@@ -10,6 +10,7 @@ import { modules } from "@/lib/tinymce";
 import { LoaderCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errors";
 
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,7 +22,9 @@ import {
 import { saveOption } from "@/actions/option";
 
 const PageManagementComponent = ({ option }: { option: string }) => {
-    const { data, isLoading } = useSWR(option ? { url: "v1/option/" + option.toUpperCase() } : null, fetcher);
+    const { data, isLoading } = useSWR(option ? { url: "v1/option/name/" + option.toUpperCase() } : null, fetcher);
+    const optionData = data?.data;
+
     const [loading, setLoading] = useState(false);
     const [editorLoading, setEditorLoading] = useState(true);
 
@@ -39,10 +42,9 @@ const PageManagementComponent = ({ option }: { option: string }) => {
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true)
-
-        console.log(values);
-        saveOption({ data: values }).then(response => {
+        try {
+            setLoading(true)
+            await saveOption(values);
             setLoading(false);
             toast.success("Success!", {
                 style: {
@@ -50,10 +52,11 @@ const PageManagementComponent = ({ option }: { option: string }) => {
                     color: "white",
                     border: "none"
                 },
-                description: response.success,
+                description: "Option saved successfully",
                 duration: 5000
             });
-        }).catch((err) => {
+        } catch (err) {
+            console.error(err);
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -61,19 +64,22 @@ const PageManagementComponent = ({ option }: { option: string }) => {
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     useEffect(() => {
         if (!isLoading)
-            if (data) {
-                form.setValue("name", data.name)
-                form.setValue("value", data.value)
+            if (optionData) {
+                form.setValue("name", optionData.name)
+                form.setValue("value", optionData.value)
+            } else {
+                form.setValue("name", option.toUpperCase())
+                form.setValue("value", "")
             }
-    }, [data, isLoading, form, option])
+    }, [optionData, isLoading, form, option])
 
     return <Card className="py-0 overflow-y-hidden">
         <CardContent className="p-0">
@@ -99,7 +105,7 @@ const PageManagementComponent = ({ option }: { option: string }) => {
                             <Editor
                                 apiKey={process.env.NEXT_PUBLIC_TINY_KEY}
                                 init={modules}
-                                initialValue={data?.value}
+                                initialValue={optionData?.value}
                                 onEditorChange={field.onChange}
                                 onInit={() => {
                                     setEditorLoading(false);
@@ -109,8 +115,6 @@ const PageManagementComponent = ({ option }: { option: string }) => {
                     />
                 </form>
             </Form>
-
-
         </CardContent>
     </Card>
 }
