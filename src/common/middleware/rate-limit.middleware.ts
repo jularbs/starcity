@@ -12,8 +12,7 @@ export function createRateLimiter({
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     message: {
-      error: 'RATE_LIMIT_EXCEEDED',
-      message,
+      error: { code: 'RATE_LIMIT_EXCEEDED', message },
     },
     keyGenerator: (req) => ipKeyGenerator(getClientIP(req)),
   });
@@ -24,9 +23,11 @@ export function catchAllLimiter() {
     windowMs: 15 * 60 * 1000, // 15 minutes
     limit: 25,
     message: {
-      error: 'RATE_LIMIT_EXCEEDED',
-      message:
-        'Too many failed 404 requests from this IP, please try again after 15 minutes',
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message:
+          'Too many failed 404 requests from this IP, please try again after 15 minutes',
+      },
     },
     standardHeaders: 'draft-8',
     legacyHeaders: false,
