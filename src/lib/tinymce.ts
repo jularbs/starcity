@@ -1,6 +1,7 @@
 import { uploadFromEditor } from "@/actions/media";
 import { getImageSource } from "./utils";
 import { toast } from "sonner";
+import { getErrorMessage } from "./errors";
 import { InitOptions } from "@tinymce/tinymce-react/lib/cjs/main/ts/components/Editor";
 
 export const modules: InitOptions = {
@@ -43,7 +44,7 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
         });
 
         uploadFromEditor({ data: formData })
-          .then((data) => {
+          .then((imageInfo) => {
             toast.success("Success!", {
               style: {
                 background: "rgb(56, 142, 60)",
@@ -53,7 +54,7 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
               description: "File uploaded successfully.",
               duration: 5000,
             });
-            callback(getImageSource(data), { title: file.name });
+            callback(getImageSource(imageInfo), { title: file.name });
           })
           .catch((err) => {
             toast.error("Upload failed", {
@@ -62,14 +63,14 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
                 color: "white",
                 border: "none",
               },
-              description: err.error,
+              description: getErrorMessage(err),
               duration: 5000,
             });
           });
       };
       reader.readAsDataURL(file);
     } else {
-      toast.error("Upload failed", {
+      toast.error("No file selected", {
         style: {
           background: "rgba(220, 46, 46, 1)",
           color: "white",

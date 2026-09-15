@@ -10,5 +10,6 @@ export const uploadFromEditor = async ({ data }: { data: FormData; token?: strin
     throw await res.json();
   }
 
-  return res.json();
+  const response = await res.json();
+  return response.data;
 };
