@@ -26,15 +26,14 @@ import {
 import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { createTicket } from "@/actions/ticket";
-import { getCookie } from "typescript-cookie";
 import { mutate } from "swr";
 import { AlertSuccess } from "@/components/AlertSuccess";
 import { AlertError } from "@/components/AlertError";
+import { getErrorMessage } from "@/lib/errors";
 export function NewTicketForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-    const token = getCookie("token");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ error: "", success: "" })
     const formSchema = z.object({
@@ -57,12 +56,11 @@ export function NewTicketForm({
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        console.log(values)
-        setLoading(true)
-        createTicket({ data: values, token: token }).then(response => {
+        try {
+            setLoading(true)
+            const { data } = await createTicket(values);
             setLoading(false);
-            setMessage({ error: "", success: response.success });
+            setMessage({ error: "", success: data.name + " created successfully" });
             form.reset({
                 name: "",
                 code: "",
@@ -70,12 +68,11 @@ export function NewTicketForm({
                 shortDescription: "",
                 details: "",
             })
-            mutate({ url: "v1/ticket" });
-        }).catch(e => {
+            mutate({ url: "v1/ticket/manage" });
+        } catch (e) {
             setLoading(false);
-            setMessage({ success: "", error: e.error })
-        })
-
+            setMessage({ success: "", error: getErrorMessage(e) })
+        }
     }
 
     return (
@@ -85,7 +82,7 @@ export function NewTicketForm({
                     <CardTitle className="text-2xl">Create New Ticket</CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <Form {...form}>
+                    <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)}>
                             <div className="flex flex-col gap-6">
                                 {message.success && <AlertSuccess title="Success!" message={message.success} />}

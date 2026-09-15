@@ -22,22 +22,22 @@ import { fetcher } from "@/actions/swr";
 import useSWR, { mutate } from "swr";
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { getCookie } from "typescript-cookie"
 import { updateTicket } from "@/actions/ticket"
+import { getErrorMessage } from "@/lib/errors"
 
 const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
-
-    const token = getCookie("token");
 
     //Component State
     const [loading, setLoading] = useState(false)
 
     //fetch ticket data
-    const { data: ticketData, isLoading: isTicketLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
+    const { data, isLoading: isTicketLoading } = useSWR( //TODOS: Show Fetch Error using Sonnar  
         slug && open ? { url: "v1/ticket/" + slug } : null,
         fetcher
     );
+
+    const ticketData = data?.data;
 
     //Form Functions
     const formSchema = z.object({
@@ -62,9 +62,9 @@ const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true)
-
-        updateTicket({ data: values, token: token }).then(response => {
+        try {
+            setLoading(true)
+            const { data } = await updateTicket(values._id, values)
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -73,11 +73,11 @@ const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: response.success,
+                description: data.name + ' updated successfully',
                 duration: 5000
             });
-            mutate({ url: "v1/ticket" });
-        }).catch(err => {
+            mutate({ url: "v1/ticket/manage" });
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -85,10 +85,10 @@ const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     useEffect(() => {

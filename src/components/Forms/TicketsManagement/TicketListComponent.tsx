@@ -1,28 +1,29 @@
 "use client"
-import { fetcher } from "@/actions/swr";
-import { toggleTicket } from "@/actions/ticket";
+import { fetcherWithToken } from "@/actions/swr";
+import { updateTicket } from "@/actions/ticket";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { LoaderCircle } from "lucide-react";
-import { Key, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
-import { getCookie } from 'typescript-cookie'
 import UpdateTicketComponent from "./UpdateTicketComponent";
 import Link from "next/link";
+import { getErrorMessage } from "@/lib/errors";
 
 const TicketListComponent = () => {
-    const token = getCookie("token");
     const [statusLoading, setStatusLoading] = useState("");
 
     const [currentSlug, setCurrentSlug] = useState("");
     const [updateOpen, setUpdateOpen] = useState(false);
 
     const { data, isLoading } = useSWR(
-        { url: "v1/ticket" },
-        fetcher
+        { url: "v1/ticket/manage" },
+        fetcherWithToken
     );
+
+    const ticketsData = data?.data || [];
 
     const showLoading = () => {
         return <>
@@ -31,9 +32,11 @@ const TicketListComponent = () => {
         </>
     }
 
-    const toggleStatus = (id: string) => {
-        setStatusLoading(id)
-        toggleTicket({ token, id }).then(data => {
+    const toggleStatus = async (id: string, status: boolean) => {
+        try {
+            setStatusLoading(id)
+            const { data } = await updateTicket(id, { status });
+
             setStatusLoading("")
             toast.success("Success!", {
                 style: {
@@ -41,12 +44,11 @@ const TicketListComponent = () => {
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: data.name + ' toggled ' + (data.status ? 'on' : 'off'),
                 duration: 5000
             });
-            //update list
-            mutate({ url: "v1/ticket" })
-        }).catch(e => {
+            mutate({ url: "v1/ticket/manage" });
+        } catch (e) {
             setStatusLoading("")
             toast.error("Invalid Request", {
                 style: {
@@ -54,18 +56,18 @@ const TicketListComponent = () => {
                     color: "white",
                     border: "none"
                 },
-                description: e.error,
+                description: getErrorMessage(e),
                 duration: 5000
             });
-            console.log(e.error)
-        })
+            console.log(e)
+        }
     }
 
     const showTickets = () => {
-        if (data) {
+        if (ticketsData.length > 0) {
             //TODOS: Declare Types
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return data.map((item: any, key: Key) => {
+            return ticketsData.map((item: any, key: number) => {
                 return <div key={key}>
                     <Card key={key}>
                         <CardHeader className="flex items-center justify-between">
@@ -74,7 +76,7 @@ const TicketListComponent = () => {
                                 {statusLoading == item._id && <LoaderCircle className="size-4 animate-spin" />}
                                 <Switch
                                     checked={item.status}
-                                    onCheckedChange={() => { toggleStatus(item._id) }}
+                                    onCheckedChange={() => { toggleStatus(item._id, !item.status) }}
                                 />
                             </div>
                         </CardHeader>
