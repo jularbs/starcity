@@ -41,10 +41,6 @@ export const getMedia = async (req: Request, res: Response) => {
 export const uploadMediaFromEditor = async (req: Request, res: Response) => {
   const imageFile = req.file;
 
-  if (!imageFile) {
-    return res.status(400).json({ error: 'Image is required' });
-  }
-
   const date = new Date();
   const month = date.getUTCMonth() + 1;
   const year = date.getUTCFullYear();

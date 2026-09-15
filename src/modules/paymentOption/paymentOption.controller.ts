@@ -8,46 +8,26 @@ export const create = async (req: Request, res: Response) => {
   const { name } = req.body;
   const slug = slugify.default(name).toLowerCase();
 
-  try {
-    const result = await paymentOptionService.create({
-      name,
-      slug,
-      status: false,
-      deletedAt: null,
-      meta: {},
-    });
-    auditTrailService.create({
-      action: 'Created New Payment Option',
-      payload: { name: name },
-      request: req,
-    });
-    return res.json(result);
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  const result = await paymentOptionService.create({
+    name,
+    slug,
+    status: false,
+    deletedAt: null,
+    meta: {},
+  });
+  auditTrailService.create({
+    action: 'Created New Payment Option',
+    payload: { name: name },
+    request: req,
+  });
+  return res.json(result);
 };
 
 export const read = async (req: Request, res: Response) => {
-  try {
-    const { slug } = req.params;
-    const data = await paymentOptionService.getBySlug(slug as string);
+  const { slug } = req.params;
+  const data = await paymentOptionService.getBySlugOrThrow(slug as string);
 
-    if (!data) {
-      return res.status(404).json({
-        error: 'Payment Option not found',
-      });
-    }
-
-    return res.json(data);
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  return res.json(data);
 };
 
 export const publicList = async (req: Request, res: Response) => {
@@ -61,40 +41,24 @@ export const manageList = async (req: Request, res: Response) => {
 };
 
 export const update = async (req: Request, res: Response) => {
-  try {
-    const { slug, name, status } = req.body;
-    const { id } = req.params;
+  const { slug, name, status } = req.body;
+  const { id } = req.params;
 
-    const paymentOption = await paymentOptionService.getById(
-      id as unknown as Types.ObjectId,
-    );
-    if (!paymentOption) {
-      return res.status(404).json({
-        error: 'Payment Option not found',
-      });
-    }
+  const result = await paymentOptionService.updateById(
+    id as unknown as Types.ObjectId,
+    {
+      name,
+      slug,
+      status,
+    },
+  );
 
-    const result = await paymentOptionService.updateById(
-      id as unknown as Types.ObjectId,
-      {
-        name,
-        slug,
-        status,
-      },
-    );
-
-    auditTrailService.create({
-      action: `Updated Payment Option ${slug}`,
-      payload: { name: name },
-      request: req,
-    });
-    res.json({ result, status: 'success' });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  auditTrailService.create({
+    action: `Updated Payment Option ${slug}`,
+    payload: { name: name },
+    request: req,
+  });
+  res.json({ result, status: 'success' });
 };
 
 export const remove = async (req: Request, res: Response) => {

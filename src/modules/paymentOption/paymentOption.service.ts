@@ -45,6 +45,18 @@ const getBySlug = async (slug: string) => {
   return await paymentOptionRepository.findBySlug(slug);
 };
 
+const getBySlugOrThrow = async (slug: string) => {
+  const paymentOption = await paymentOptionRepository.findBySlug(slug);
+  if (!paymentOption) {
+    throw new AppError({
+      message: `Payment option with slug "${slug}" not found`,
+      code: 'PAYMENT_OPTION_NOT_FOUND',
+      statusCode: 404,
+    });
+  }
+  return paymentOption;
+};
+
 const getById = async (id: Types.ObjectId) => {
   return await paymentOptionRepository.findById(id);
 };
@@ -71,6 +83,7 @@ export const paymentOptionService = {
   create,
   updateById,
   getBySlug,
+  getBySlugOrThrow,
   getById,
   list,
   removeById,

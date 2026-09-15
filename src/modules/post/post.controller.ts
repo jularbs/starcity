@@ -52,33 +52,18 @@ export const create = async (req: Request, res: Response) => {
 
 export const read = async (req: Request, res: Response) => {
   const { slug } = req.params;
-  try {
-    const result = await postService.getBySlug(slug as string);
-    res.json(result);
-  } catch (err) {
-    res.status(400).json({
-      error: 'Error occurred while fetching the post.',
-      message: err,
-    });
-  }
+  const result = await postService.getBySlug(slug as string);
+  res.json(result);
 };
 
 export const list = async (req: Request, res: Response) => {
   const { skip, limit } = req.query;
-  try {
-    const result = await postService.list({
-      skip: parseInt(skip as string),
-      limit: parseInt(limit as string),
-    });
-    const count = await postService.count();
-    res.json({ data: result, count });
-  } catch (err) {
-    console.log(err);
-    return res.status(400).json({
-      error: 'error occured',
-      message: err,
-    });
-  }
+  const result = await postService.list({
+    skip: parseInt(skip as string),
+    limit: parseInt(limit as string),
+  });
+  const count = await postService.count();
+  res.json({ data: result, count });
 };
 
 export const update = async (req: Request, res: Response) => {
@@ -93,32 +78,25 @@ export const update = async (req: Request, res: Response) => {
     '...',
   );
 
-  try {
-    const updatePayload = {
-      title: title,
-      content: content,
-      slug: slug,
-      excerpt: excerpt,
-      status: status,
-      publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
-      ...(imageFile && { featuredImage: imageFile }),
-    };
-    const result = await postService.updateById(
-      id as unknown as Types.ObjectId,
-      updatePayload,
-    );
-    res.json(result);
-    auditTrailService.create({
-      action: `Updated post ${id}`,
-      payload: result,
-      request: req,
-    });
-  } catch (err) {
-    return res.status(400).json({
-      error: 'Error on updating post. Please try again later.',
-      payload: err,
-    });
-  }
+  const updatePayload = {
+    title: title,
+    content: content,
+    slug: slug,
+    excerpt: excerpt,
+    status: status,
+    publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
+    ...(imageFile && { featuredImage: imageFile }),
+  };
+  const result = await postService.updateById(
+    id as unknown as Types.ObjectId,
+    updatePayload,
+  );
+  res.json(result);
+  auditTrailService.create({
+    action: `Updated post ${id}`,
+    payload: result,
+    request: req,
+  });
 };
 
 export const remove = async (req: Request, res: Response) => {

@@ -182,7 +182,7 @@ export const paymayaPaymentSuccess = async (req: Request, res: Response) => {
 
   sale.status = status;
   sale.paymentDetails = {
-    option: await pOption._id,
+    option: pOption._id,
     referenceNumber: requestReferenceNumber,
     status: status,
   };

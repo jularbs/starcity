@@ -13,14 +13,15 @@ export const create = async (req: Request, res: Response) => {
     media: imageFile,
   });
 
-  res.status(200).json({
-    data: result,
-    success: 'Ride added successfully',
-  });
   auditTrailService.create({
     action: 'Create new ride',
     payload: { result },
     request: req,
+  });
+
+  res.status(200).json({
+    data: result,
+    success: 'Ride added successfully',
   });
 };
 

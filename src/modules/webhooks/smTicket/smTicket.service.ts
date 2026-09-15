@@ -31,34 +31,29 @@ const create = async (data: CreateSmTicketInput) => {
     ? data.ticketExpiry
     : `${format(new Date(getOpenParkExpiry()), 'yyyy-LL-dd')} 23:59:59`;
 
-  try {
-    const ticket = await smTicketRepository.create({
-      ...data,
-      ticketExpiry: expiry,
-      method: 'Purchase',
-    });
+  const ticket = await smTicketRepository.create({
+    ...data,
+    ticketExpiry: expiry,
+    method: 'Purchase',
+  });
 
-    try {
-      await turnstileSyncService.addAccessPassToTurnstile({
-        accesspassCode: data.tokenId,
-        origin: 'smticket',
-        date: new Date().toISOString(),
-        expiry: expiry,
-        ticketType: data.ticketType,
-      });
-    } catch {
-      smQueueService.create({
-        tokenID: data.tokenId,
-        RideCode: data.ticketType,
-        status: 'for delivery',
-        ticketExpiry: expiry,
-      });
-    }
-    return ticket;
-  } catch (err) {
-    console.log('ERROR IN CREATING SM TICKET: ', err);
-    throw err;
+  try {
+    await turnstileSyncService.addAccessPassToTurnstile({
+      accesspassCode: data.tokenId,
+      origin: 'smticket',
+      date: new Date().toISOString(),
+      expiry: expiry,
+      ticketType: data.ticketType,
+    });
+  } catch {
+    smQueueService.create({
+      tokenID: data.tokenId,
+      RideCode: data.ticketType,
+      status: 'for delivery',
+      ticketExpiry: expiry,
+    });
   }
+  return ticket;
 };
 
 const voidTicket = async (tokenId: string) => {

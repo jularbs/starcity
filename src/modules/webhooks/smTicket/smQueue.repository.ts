@@ -15,30 +15,15 @@ export const smQueueRepository = {
     newQ.status = data.status;
     newQ.ticketExpiry = data.ticketExpiry;
 
-    try {
-      await newQ.save();
-      return newQ;
-    } catch (err) {
-      console.log('ERROR IN QUEUEING SM TICKET: ', err);
-      throw err;
-    }
+    await newQ.save();
+    return newQ;
   },
   remove: async (tokenID: string) => {
-    try {
-      const result = await SmQueue.deleteOne({ tokenID });
-      return result;
-    } catch (err) {
-      console.log('ERROR IN REMOVING SM TICKET FROM QUEUE: ', err);
-      throw err;
-    }
+    const result = await SmQueue.deleteOne({ tokenID });
+    return result;
   },
   list: async () => {
-    try {
-      const result = await SmQueue.find().exec();
-      return result;
-    } catch (err) {
-      console.log('ERROR IN LISTING SM TICKET QUEUE: ', err);
-      throw err;
-    }
+    const result = await SmQueue.find().exec();
+    return result;
   },
 };

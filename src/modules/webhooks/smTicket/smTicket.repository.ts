@@ -9,21 +9,11 @@ type CreateSmTicket = {
 
 export const smTicketRepository = {
   create: async (data: CreateSmTicket) => {
-    try {
-      const ticket = await SmTicket.create(data);
-      return ticket;
-    } catch (err) {
-      console.log('ERROR IN RECORDING SM TICKET: ', err);
-      throw err;
-    }
+    const ticket = await SmTicket.create(data);
+    return ticket;
   },
   void: async (tokenId: string) => {
-    try {
-      const ticket = await SmTicket.create({ tokenId, method: 'Void' });
-      return ticket;
-    } catch (err) {
-      console.log('ERROR IN VOIDING SM TICKET: ', err);
-      throw err;
-    }
+    const ticket = await SmTicket.create({ tokenId, method: 'Void' });
+    return ticket;
   },
 };
