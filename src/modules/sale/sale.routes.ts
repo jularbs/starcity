@@ -34,6 +34,33 @@ router.get(
 );
 
 router.get(
+  '/v1/sale/access-pass',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 25,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
+  validateRequest({ query: readSaltRefidSchema }),
+  readBySaltRefID,
+);
+
+router.get(
+  '/v1/sale/regenerate/:id',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  validateRequest({ params: saleIdParamsSchema }),
+  regenerateAccessPass,
+);
+
+router.get(
+  '/v1/sale/resync/:id',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
+  validateRequest({ params: saleIdParamsSchema }),
+  resyncSaleByRefId,
+);
+
+router.get(
   '/v1/sale/:refid',
   createRateLimiter({
     windowMs: 15 * 60 * 1000,
@@ -42,17 +69,6 @@ router.get(
   }),
   validateRequest({ params: saleRefidParamsSchema }),
   read,
-);
-
-router.get(
-  '/v1/access-pass',
-  createRateLimiter({
-    windowMs: 15 * 60 * 1000,
-    limit: 25,
-    message: 'Too many attempts, please try again in 15 minutes.',
-  }),
-  validateRequest({ query: readSaltRefidSchema }),
-  readBySaltRefID,
 );
 
 router.post(
@@ -67,7 +83,7 @@ router.post(
 );
 
 router.post(
-  '/v1/create-checkout',
+  '/v1/sale/checkout',
   createRateLimiter({
     windowMs: 5 * 60 * 1000,
     limit: 5,
@@ -83,22 +99,6 @@ router.post(
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   validateRequest({ body: resendARSchema }),
   resendAR,
-);
-
-router.get(
-  '/v1/regenerate-sale/:id',
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  validateRequest({ params: saleIdParamsSchema }),
-  regenerateAccessPass,
-);
-
-router.get(
-  '/v1/resync-sale/:id',
-  requireSignin,
-  authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  validateRequest({ params: saleIdParamsSchema }),
-  resyncSaleByRefId,
 );
 
 export default router;
