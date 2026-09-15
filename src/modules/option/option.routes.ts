@@ -1,9 +1,10 @@
 import express from 'express';
 const router = express.Router();
-import { manage, read, list, remove } from './option.controller.js';
+import { manage, read, readByName, list, remove } from './option.controller.js';
 import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
 import { optionIdParamsSchema } from './dto/optionIdParams.dto.js';
 import { optionSlugParamsSchema } from './dto/optionSlugParams.dto.js';
+import { optionNameParamsSchema } from './dto/optionNameParams.dto.js';
 import { manageOptionSchema } from './dto/manageOption.dto.js';
 import { listOptionSchema } from './dto/listOption.dto.js';
 import {
@@ -25,6 +26,12 @@ router.post(
 );
 
 router.get('/v1/option', validateRequest({ query: listOptionSchema }), list);
+
+router.get(
+  '/v1/option/name/:name',
+  validateRequest({ params: optionNameParamsSchema }),
+  readByName,
+);
 
 router.get(
   '/v1/option/:slug',

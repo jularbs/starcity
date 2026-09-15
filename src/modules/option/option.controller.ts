@@ -59,6 +59,13 @@ export const read = async (req: Request, res: Response) => {
   res.status(200).json(createSuccessResponse(data));
 };
 
+export const readByName = async (req: Request, res: Response) => {
+  const { name } = req.params;
+  const data = await optionService.getByName(name as string);
+
+  res.status(200).json(createSuccessResponse(data));
+};
+
 export const list = async (req: Request, res: Response) => {
   const { skip = 0, limit = 10 } = req.query;
   const options = await optionService.list({
