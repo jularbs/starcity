@@ -9,11 +9,12 @@ export default async function Page({ params }: {
 }) {
     const { option } = await params;
     const htmlContent = await getOptionByName({ name: option.toUpperCase() });
+    const content = htmlContent?.data;
     const rides = await getRides({});
-
+    const rideList = rides?.data;
 
     const displayRides = () => {
-        return shuffle(rides.slice(0, 5)).map((ride, index) => {
+        return shuffle(rideList.slice(0, 5)).map((ride, index) => {
             return <RideCard data={ride} key={index} id={index} />;
         });
     };
@@ -21,8 +22,8 @@ export default async function Page({ params }: {
     return (
         <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row pt-3">
             <div className="grow">
-                <div className="font-sigmar-one text-2xl text-center m-3">{htmlContent.name.replace(/_/g, " ")}</div>
-                <div className="html-content-container font-montserrat p-4" dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent.value) }} />
+                <div className="font-sigmar-one text-2xl text-center m-3">{content.name.replace(/_/g, " ")}</div>
+                <div className="html-content-container font-montserrat p-4" dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.value) }} />
             </div>
             <div className="flex-[350px] grow-0 shrink-0 p-3">
                 <p className="text-center font-extrabold text-2xl lg:text-lg mb-2">Our Rides and Attractions</p>
