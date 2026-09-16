@@ -19,10 +19,10 @@ const port = config.app.port;
 
 const startServer = async () => {
   await connectMongoDB();
-  await verifyMySqlConnection();
   await syncModelIndexes(User);
-  await verifyEmailServer();
-  await verifyS3Connection();
+  verifyMySqlConnection();
+  verifyEmailServer();
+  verifyS3Connection();
   startCronJobs();
 
   const server = app.listen(port, () => {
