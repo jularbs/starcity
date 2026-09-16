@@ -249,13 +249,6 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/rides-management/categories`}>
-                          <span>Ride Categories</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
                   </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
