@@ -1,4 +1,3 @@
-//TODOS: Resend Email Function
 //TODOS: Zoned Time for timestamps
 //TODOS: Filter function?
 //TODOS: CSV export
@@ -40,6 +39,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn, showCurrency } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { Input } from "@/components/ui/input";
+import ResendARComponent from "./ResendARComponent";
 
 const SalesListComponent = () => {
     const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()))
@@ -62,6 +62,9 @@ const SalesListComponent = () => {
     const [totalPages, setTotalPages] = useState(1)
     const [skip, setSkip] = useState(0)
     const [limit] = useState(10)
+
+    const [resendArOpen, setResendArOpen] = useState(false);
+    const [selectedId, setSelectedId] = useState("")
 
     const { data, isLoading } = useSWR({
         url: "v1/sale",
@@ -112,7 +115,12 @@ const SalesListComponent = () => {
                                 <Button className="text-xs rounded-sm h-7">View Tickets</Button>
                             </a>
 
-                            <Button className="text-xs rounded-sm h-7">Resend Email</Button>
+                            <Button className="text-xs rounded-sm h-7"
+                                onClick={() => {
+                                    setSelectedId(item._id);
+                                    setResendArOpen(true);
+                                }}
+                            >Resend Email</Button>
                         </div>
                     </TableCell>
                 </TableRow>
@@ -207,6 +215,7 @@ const SalesListComponent = () => {
     }, [summaryData, isSummaryLoading, startDate, endDate])
 
     return <>
+        <ResendARComponent id={selectedId} open={resendArOpen} onOpenChange={setResendArOpen} />
         <div className="flex w-full max-w-2xl gap-2">
             <Input placeholder="Search for Reference Numbe or Customer Name..."
                 value={inputSearch}
