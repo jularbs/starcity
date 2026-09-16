@@ -18,11 +18,8 @@ export const getAccessPasses = async ({
   );
 
   if (!res.ok) {
-    return res.json().then((error) => {
-      throw error;
-    });
+    throw await res.json();
   }
 
   return res.json();
-  // return res.json();
 };
