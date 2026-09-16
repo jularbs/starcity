@@ -5,6 +5,9 @@ import { getErrorMessage } from "./errors";
 import { InitOptions } from "@tinymce/tinymce-react/lib/cjs/main/ts/components/Editor";
 
 export const modules: InitOptions = {
+  onboarding: false,
+  branding: false,
+  promotion: false,
   height: 800,
   plugins: "link image code table lists advlist media",
   default_link_target: "_blank",

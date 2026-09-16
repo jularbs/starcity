@@ -103,7 +103,8 @@ const PageManagementComponent = ({ option }: { option: string }) => {
                         name="value"
                         render={({ field }) => (
                             <Editor
-                                apiKey={process.env.NEXT_PUBLIC_TINY_KEY}
+                                tinymceScriptSrc={"/tinymce/tinymce.min.js"}
+                                licenseKey="gpl"
                                 init={modules}
                                 initialValue={optionData?.value}
                                 onEditorChange={field.onChange}
