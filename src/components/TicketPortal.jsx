@@ -12,7 +12,7 @@ import { Button } from "./ui/button";
 import useSWR from "swr";
 import { LoaderCircle, Minus, Plus, X } from "lucide-react";
 import { getOptionByName } from "@/actions/option";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { applyPromoCode } from "@/actions/promo";
 
@@ -34,9 +34,13 @@ import { sanitizeHtml } from "@/lib/sanitize";
 const TicketPortal = ({ open, onOpenChange }) => {
   const router = useRouter();
 
-  const { data: paymentOptions } = useSWR({ url: "v1/payment-option" }, fetcher);
-  const { data: ticketData } = useSWR({ url: "v1/ticket" }, fetcher);
-  const { data: ticketFooterData } = useSWR({ name: "TICKETS_FOOTER" }, getOptionByName);
+  const { data: paymentOptionsResponse } = useSWR({ url: "v1/payment-option" }, fetcher);
+  const { data: ticketDataResponse } = useSWR({ url: "v1/ticket" }, fetcher);
+  const { data: ticketFooterResponse } = useSWR({ name: "TICKETS_FOOTER" }, getOptionByName);
+
+  const paymentOptions = paymentOptionsResponse?.data || [];
+  const ticketData = ticketDataResponse?.data || [];
+  const ticketFooterData = ticketFooterResponse?.data || [];
 
   //States
   const [loading, setLoading] = useState({
@@ -485,7 +489,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
     //initiate customer details
     const buyerDetails = {
       customerName: `${personalDetails.firstName} ${personalDetails.lastName}`,
-      email: personalDetails.confirmEmail,
+      emailAddress: personalDetails.confirmEmail,
       contactNumber: personalDetails.contactNumber,
     };
 
@@ -494,7 +498,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
       ...buyerDetails,
       promoCode: appliedCode,
     })
-      .then(async (data) => {
+      .then(async (response) => {
+        const data = response.data;
         setMessage({
           ...message,
           success: "Please wait. You will be redirected to payment page.",

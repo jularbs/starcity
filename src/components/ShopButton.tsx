@@ -18,11 +18,12 @@ import TicketPortal from "./TicketPortal";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 const ShopButton = ({ children }: { children: ReactNode }) => {
-    //TODOS: Error handling and loading state on consent clause
-    const { data: consentClause } = useSWR(
+    const { data: consentClauseResponse } = useSWR(
         { name: "ETICKET_CONSENT_CLAUSE" },
         getOptionByName
     );
+
+    const consentClause = consentClauseResponse?.data || null;
 
     const [isOpen, setIsOpen] = useState(false)
     const [isTicketPortalOpen, setIsTicketPortalOpen] = useState(false)

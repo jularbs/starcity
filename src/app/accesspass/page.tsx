@@ -10,9 +10,6 @@ export default async function Page({
 }: {
     searchParams: Promise<{ [key: string]: string }>
 }) {
-
-
-
     const filters = await searchParams;
     try {
         const { data } = await getAccessPasses({
@@ -24,7 +21,7 @@ export default async function Page({
 
         if (filters.t) {
             const singleTicket = accessPasses.find((item: { accessToken: string; }) => item.accessToken == filters.t);
-            const termsAndConditionData = await getOptionByName({ name: `TNC_${singleTicket.ticketId.slug.toUpperCase()}` });
+            const { data: termsAndConditionData } = await getOptionByName({ name: `TNC_${singleTicket.ticketId.slug.toUpperCase()}` });
             return <SingleTicketViewer singleTicket={singleTicket} termsAndCondition={termsAndConditionData} details={details} />
         }
 
