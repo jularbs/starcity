@@ -1,9 +1,7 @@
 //TODOS: Resend Email Function
 //TODOS: Zoned Time for timestamps
-//TODOS: Use ISO format on Dates for requests
 //TODOS: Filter function?
 //TODOS: CSV export
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 import {
     Table,
@@ -27,7 +25,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ChartNoAxesColumn, CircleDollarSign, DownloadIcon, LoaderCircle, Tickets, UserCircle } from "lucide-react";
+import { ChartNoAxesColumn, CircleDollarSign, DownloadIcon, Tickets, UserCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
@@ -67,12 +65,12 @@ const SalesListComponent = () => {
 
     const { data, isLoading } = useSWR({
         url: "v1/sale",
-        params: { skip: skip, limit: limit, start: startDate!.toISOString(), end: endDate!.toISOString(), search: searchQuery }
+        params: { skip: skip, limit: limit, start: format(startDate!, "yyyy-MM-dd"), end: format(endDate!, "yyyy-MM-dd"), search: searchQuery }
     }, fetcher)
 
-    const { data: summaryData, isLoading: isSummaryLoading, error } = useSWR({
+    const { data: summaryData, isLoading: isSummaryLoading } = useSWR({
         url: "v1/sale",
-        params: { skip: 0, limit: 0, start: startDate!.toISOString(), end: endDate!.toISOString(), search: searchQuery }
+        params: { skip: 0, limit: 0, start: format(startDate!, "yyyy-MM-dd"), end: format(endDate!, "yyyy-MM-dd"), search: searchQuery }
     }, fetcher)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,14 +85,6 @@ const SalesListComponent = () => {
         });
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const showTicketItemsUnformateed = (items: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return items.map((item: any, index: Key) => {
-            return `${item.ticketId.name} x ${item.qty}`
-        });
-    };
-
     const showData = () => {
         if (data && !isLoading) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,7 +96,7 @@ const SalesListComponent = () => {
                         <div>
                             <div className="font-semibold uppercase">{item.paymentDetails?.option?.name}</div>
                             <div>{item.paymentDetails?.referenceNumber}</div>
-                            {/* <div>{item.paymentDetails?.status}</div> */}
+                            <div>{item.paymentDetails?.status}</div>
                         </div>
                     </TableCell>
                     <TableCell>
@@ -115,7 +105,7 @@ const SalesListComponent = () => {
                         </div>
                     </TableCell>
                     <TableCell>{showCurrency(item.orderTotal)}</TableCell>
-                    <TableCell>{format(new Date(item.createdAt), "PPP p")}</TableCell>
+                    <TableCell>{format(new Date(item.updatedAt), "PPP p")}</TableCell>
                     <TableCell>
                         <div className="flex justify-end gap-2">
                             <a target="_blank" href={`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/accesspass?s=${item.salt}&r=${item.refId}`}>
@@ -195,11 +185,7 @@ const SalesListComponent = () => {
         });
         if (!isSummaryLoading)
             if (summaryData) {
-                //FOR DEBUG
-                console.log("SERVER COMPUTED START DATE: ", startDate?.toString())
-                console.log("SERVER COMPUTED START DATE TO ISO STRING: ", startDate?.toISOString())
-                console.log("SERVER COMPUTED START DATE TO UTC STRING: ", startDate?.toUTCString())
-                const customers = summaryData.count;
+                const customers = summaryData.data.length;
                 const total = summaryData.data?.reduce(
                     (acc: number, obj: Record<string, number>) => acc + obj.orderTotal,
                     0
