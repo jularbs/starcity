@@ -14,7 +14,7 @@ export function errorHandler(
       console.error({ err: error }, 'application error');
     } else {
       console.warn(
-        { code: error.code, message: error.message },
+        { code: error.code, message: error.message, details: error.details },
         'request rejected',
       );
     }
