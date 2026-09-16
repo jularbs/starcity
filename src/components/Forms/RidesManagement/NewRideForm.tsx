@@ -1,4 +1,3 @@
-//TODOS: Implement Image Preview on Select
 "use client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -43,12 +42,14 @@ import { AlertError } from "@/components/AlertError"
 import { AlertSuccess } from "@/components/AlertSuccess"
 import Image from "next/image"
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
+import { getErrorMessage } from "@/lib/errors"
 export function NewRideForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
     const [categoryOpen, setCategoryOpen] = useState(false)
     const { data: categoriesData, isLoading: isCategoriesLoading } = useSWR({ url: "v1/ride-categories" }, fetcher)
+    const categoriesList = categoriesData?.data;
 
     const [previewImage, setPreviewImage] = useState("");
     const [loading, setLoading] = useState(false)
@@ -87,7 +88,7 @@ export function NewRideForm({
 
         const formData = new FormData();
         formData.set("name", values.name);
-        formData.set("categoryId", values.categoryId);
+        formData.set("rideCategoryId", values.categoryId);
         formData.set("heightRequirements", values.heightRequirements);
         formData.set("status", values.status);
         formData.set("description", values.description);
@@ -95,9 +96,10 @@ export function NewRideForm({
             formData.set('image', values.image);
         }
 
-        createRide({ data: formData }).then(data => {
+        try {
+            const { data } = await createRide(formData);
             setLoading(false);
-            setMessage({ error: "", success: data.success });
+            setMessage({ error: "", success: data.name + " created successfully" });
             mutate({ url: "v1/ride" });
             setPreviewImage("");
             form.reset({
@@ -108,18 +110,15 @@ export function NewRideForm({
                 heightRequirements: "",
                 image: undefined
             },);
-
-        }).catch(err => {
-            console.log("Error: ", err)
+        } catch (err) {
             setLoading(false);
-            setMessage({ success: "", error: err.error })
-        })
+            setMessage({ success: "", error: getErrorMessage(err) })
+        }
     }
 
     const showCategories = () => {
         if (!isCategoriesLoading) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return categoriesData.map((item: any, key: Key) => {
+            return categoriesList.map((item: { _id: string, name: string }, key: Key) => {
                 return <SelectItem value={item._id} key={key}>{item.name}</SelectItem>
             })
         }

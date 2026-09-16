@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api-client";
 
-export const addRideCategory = async ({ data }: { data: Record<string, string>; token?: string }) => {
+export const addRideCategory = async (data: Record<string, unknown>) => {
   const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride-category`, {
     headers: {
       Accept: "application/json",
@@ -17,7 +17,7 @@ export const addRideCategory = async ({ data }: { data: Record<string, string>; 
   return res.json();
 };
 
-export const createRide = async ({ data }: { data: FormData; token?: string }) => {
+export const createRide = async (data: FormData) => {
   const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride`, {
     method: "POST",
     body: data,
@@ -30,9 +30,9 @@ export const createRide = async ({ data }: { data: FormData; token?: string }) =
   return res.json();
 };
 
-export const updateRide = async ({ data }: { data: FormData; token?: string }) => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride`, {
-    method: "PUT",
+export const updateRide = async (id: string, data: FormData) => {
+  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride/${id}`, {
+    method: "PATCH",
     body: data,
   });
 
@@ -43,8 +43,8 @@ export const updateRide = async ({ data }: { data: FormData; token?: string }) =
   return res.json();
 };
 
-export const removeRide = async ({ slug }: { slug: string; token?: string }) => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride/${slug}`, {
+export const removeRide = async (id: string) => {
+  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/ride/${id}`, {
     method: "DELETE",
   });
 

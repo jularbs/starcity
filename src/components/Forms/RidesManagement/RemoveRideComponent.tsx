@@ -7,15 +7,17 @@ import { LoaderCircle } from "lucide-react";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { removeRide } from "@/actions/ride";
+import { getErrorMessage } from "@/lib/errors";
 
-const RemoveRideComponent = ({ slug, open, onOpenChange }:
-    { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const RemoveRideComponent = ({ id, open, onOpenChange }:
+    { id: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     const [loading, setLoading] = useState(false)
 
-    const handleDelete = () => {
-        setLoading(true);
-        removeRide({ slug }).then((response) => {
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+            await removeRide(id)
             setLoading(false);
             onOpenChange(false);
             toast.success("Success!", {
@@ -24,11 +26,11 @@ const RemoveRideComponent = ({ slug, open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: response.success,
+                description: "Ride removed successfully",
                 duration: 5000
             });
             mutate({ url: "v1/ride" });
-        }).catch((err) => {
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -36,10 +38,10 @@ const RemoveRideComponent = ({ slug, open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     return (

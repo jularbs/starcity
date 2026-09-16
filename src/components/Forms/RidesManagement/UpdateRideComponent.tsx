@@ -1,4 +1,3 @@
-//TODOS: Handle error success messages
 "use client";
 
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
@@ -17,7 +16,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { Key, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Select,
     SelectContent,
@@ -32,10 +31,11 @@ import { LoaderCircle } from "lucide-react";
 import { cn, getImageSource } from "@/lib/utils";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
-// import Image from "next/image";
+
 import { updateRide } from "@/actions/ride";
 import { ACCEPTED_IMAGE_TYPES } from "@/lib/constants"
 import Image from "next/image";
+import { getErrorMessage } from "@/lib/errors";
 
 const UpdateRideComponent = ({ slug, open, onOpenChange }:
     { slug: string, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
@@ -45,7 +45,10 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
         fetcher
     );
 
+    const rideData = data?.data;
+
     const { data: categoriesData, isLoading: isCategoriesLoading } = useSWR({ url: "v1/ride-categories" }, fetcher)
+    const categoriesList = categoriesData?.data;
 
     const [loading, setLoading] = useState(false)
     const [previewImage, setPreviewImage] = useState({});
@@ -93,8 +96,8 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
         if (values.image) {
             formData.set('image', values.image);
         }
-
-        updateRide({ data: formData }).then(data => {
+        try {
+            const { data } = await updateRide(rideData._id, formData)
             setLoading(false);
             onOpenChange(false);
             mutate({ url: "v1/ride" });
@@ -104,12 +107,11 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: data.success,
+                description: data.name + " created succesfully",
                 duration: 5000
             });
 
-        }).catch(err => {
-            console.log("Error: ", err)
+        } catch (err) {
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -117,16 +119,15 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
-        })
+        }
     }
 
     const showCategories = () => {
         if (!isCategoriesLoading) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return categoriesData.map((item: any, key: Key) => {
+            return categoriesList.map((item: { _id: string, name: string }, key: number) => {
                 return <SelectItem value={item._id} key={key}>{item.name}</SelectItem>
             })
         }
@@ -134,16 +135,16 @@ const UpdateRideComponent = ({ slug, open, onOpenChange }:
 
     useEffect(() => {
         if (!isLoading)
-            if (data) {
-                form.setValue("slug", data.slug);
-                form.setValue("name", data.name);
-                form.setValue("categoryId", data.rideCategoryId?._id);
-                form.setValue("status", data.status);
-                form.setValue("heightRequirements", data.heightRequirements);
-                form.setValue("description", data.description);
-                setPreviewImage(data.media);
+            if (rideData) {
+                form.setValue("slug", rideData?.slug);
+                form.setValue("name", rideData?.name);
+                form.setValue("categoryId", rideData?.rideCategoryId?._id);
+                form.setValue("status", rideData?.status);
+                form.setValue("heightRequirements", rideData?.heightRequirements);
+                form.setValue("description", rideData?.description);
+                setPreviewImage(rideData?.media);
             }
-    }, [data, isLoading, form])
+    }, [rideData, isLoading, form])
 
 
     useEffect(() => {

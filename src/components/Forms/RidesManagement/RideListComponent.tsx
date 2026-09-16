@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
     Table,
     TableBody,
@@ -15,13 +14,12 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
 import useSWR from "swr";
 import { fetcher } from "@/actions/swr";
-import { Key, useState } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, ImageIcon, Trash } from "lucide-react";
 import RideImageComponent from "./RideImageComponent";
@@ -30,7 +28,10 @@ import UpdateRideComponent from "./UpdateRideComponent";
 
 const RideListComponent = () => {
     const { data, isLoading } = useSWR({ url: "v1/ride" }, fetcher)
+    const rideList = data?.data;
+
     const { data: categoriesData, isLoading: isCategoriesLoading } = useSWR({ url: "v1/ride-categories" }, fetcher)
+    const categoriesList = categoriesData?.data;
 
     const [currentSlug, setCurrentSlug] = useState("");
     const [imageOpen, setImageOpen] = useState(false);
@@ -39,16 +40,17 @@ const RideListComponent = () => {
 
     const [selectedCategory, setSelectedCategory] = useState({ name: "All Attractions", id: "" })
     const [selectedImage, setSelectedImage] = useState({})
+    const [selectedId, setSelectedId] = useState<string>("")
 
     const showData = () => {
-        if (data && !isLoading) {
-            return data.filter(
+        if (rideList && !isLoading) {
+            return rideList.filter(
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (ride: any) => {
                     if (selectedCategory.id == "" || ride.rideCategoryId._id == selectedCategory.id) return ride
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ).map((item: any, key: Key) => {
+            ).map((item: any, key: number) => {
                 return <TableRow key={key}>
                     <TableCell className="pl-4">{item.name}</TableCell>
                     <TableCell>{item.rideCategoryId?.name}</TableCell>
@@ -74,7 +76,7 @@ const RideListComponent = () => {
                             <Edit />
                         </Button>
                         <Button className="size-6" variant="outline" onClick={() => {
-                            setCurrentSlug(item.slug)
+                            setSelectedId(item._id)
                             setRemoveOpen(true);
                         }}>
                             <Trash />
@@ -84,8 +86,7 @@ const RideListComponent = () => {
             })
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return new Array(20).fill(0).map((item: any, key: Key) => {
+        return new Array(20).fill(0).map((_item: unknown, key: number) => {
             return <TableRow key={key}>
                 <TableCell><Skeleton className="h-6 w-55" /></TableCell>
                 <TableCell><Skeleton className="h-6 w-40" /></TableCell>
@@ -104,8 +105,7 @@ const RideListComponent = () => {
 
     const showCategoryFilter = () => {
         if (!isCategoriesLoading) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return categoriesData.map((item: any, key: Key) => {
+            return categoriesList.map((item: { name: string, _id: string }, key: number) => {
                 return <DropdownMenuItem key={key}
                     onClick={() => {
                         setSelectedCategory({ name: item.name, id: item._id })
@@ -119,7 +119,7 @@ const RideListComponent = () => {
 
     return <>
         <RideImageComponent media={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
-        <RemoveRideComponent slug={currentSlug} open={removeOpen} onOpenChange={setRemoveOpen} />
+        <RemoveRideComponent id={selectedId} open={removeOpen} onOpenChange={setRemoveOpen} />
         <UpdateRideComponent slug={currentSlug} open={updateOpen} onOpenChange={setUpdateOpen} />
         <Card className="p-0 !gap-0">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">

@@ -1,5 +1,5 @@
 "use client"
-//FORMS
+
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { addRideCategory } from "@/actions/ride"
+import { getErrorMessage } from "@/lib/errors"
 const NewCategoryComponent = ({ open, onOpenChange }:
     { open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
@@ -40,32 +41,27 @@ const NewCategoryComponent = ({ open, onOpenChange }:
     });
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        setLoading(true)
         try {
-
-            const response = await addRideCategory({ data: values });
-            if (response) {
-                setLoading(false);
-                onOpenChange(false);
-                toast.success("Success!", {
-                    style: {
-                        background: "rgb(56, 142, 60)",
-                        color: "white",
-                        border: "none"
-                    },
-                    description: response.success,
-                    duration: 5000
-                });
-                form.reset({
-                    name: "",
-                    description: ""
-                });
-                //TODOS: Update List
-                mutate({ url: "v1/ride-categories" })
-            }
+            setLoading(true)
+            const { data } = await addRideCategory(values);
+            setLoading(false);
+            onOpenChange(false);
+            toast.success("Success!", {
+                style: {
+                    background: "rgb(56, 142, 60)",
+                    color: "white",
+                    border: "none"
+                },
+                description: data.name + " category addedd successfully",
+                duration: 5000
+            });
+            form.reset({
+                name: "",
+                description: ""
+            });
+            mutate({ url: "v1/ride-categories" })
 
         } catch (err) {
-            console.log("Error: ", err)
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {
@@ -73,8 +69,7 @@ const NewCategoryComponent = ({ open, onOpenChange }:
                     color: "white",
                     border: "none"
                 },
-                //@ts-expect-error error var unknown
-                description: err.error,
+                description: getErrorMessage(err),
                 duration: 5000
             });
         };
