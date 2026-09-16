@@ -12,11 +12,15 @@ export default async function Home() {
   const imageSlidersData = getImageSliders({})
   const [rides, rideCategories, imageSliders] = await Promise.all([ridesData, rideCategoriesData, imageSlidersData]);
 
+  const imageSliderList = imageSliders?.data;
+  const rideCategoryList = rideCategories?.data;
+  const rideList = rides?.data;
+
   return (
     <div className="">
       <TopFoldAdvertisement />
-      <ImageSlider data={imageSliders} />
-      <RidesSection rides={rides} categories={rideCategories} />
+      <ImageSlider data={imageSliderList} />
+      <RidesSection rides={rideList} categories={rideCategoryList} />
       <ConfirmationModal />
     </div>
   );
