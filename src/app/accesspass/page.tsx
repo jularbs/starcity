@@ -15,12 +15,12 @@ export default async function Page({
 
     const filters = await searchParams;
     try {
-        const data = await getAccessPasses({
+        const { data } = await getAccessPasses({
             salt: filters.s,
             refid: filters.r
         })
 
-        const { details, accessPasses } = data;
+        const { accessPasses, ...details } = data;
 
         if (filters.t) {
             const singleTicket = accessPasses.find((item: { accessToken: string; }) => item.accessToken == filters.t);

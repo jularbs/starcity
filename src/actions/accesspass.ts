@@ -8,15 +8,13 @@ export const getAccessPasses = async ({
   cache?: NextFetchRequestConfig;
 }) => {
   const res = await fetch(
-    `${
-      process.env.NEXT_PUBLIC_API_ENDPOINT
-    }/v1/access-pass?${new URLSearchParams({
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/sale/access-pass?${new URLSearchParams({
       salt: salt,
       refid: refid,
     }).toString()}`,
     {
       next: cache,
-    }
+    },
   );
 
   if (!res.ok) {
