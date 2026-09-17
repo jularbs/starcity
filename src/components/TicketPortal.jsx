@@ -18,7 +18,7 @@ import { applyPromoCode } from "@/actions/promo";
 
 //Date FNS
 import add from "date-fns/add";
-import { utcToZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 import { format } from "date-fns";
 import getDay from "date-fns/getDay";
 import nextThursday from "date-fns/nextThursday";
@@ -579,7 +579,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
 
   const computeExpiry = () => {
     const adjustDays = [1, 2, 3];
-    const expiryDate = utcToZonedTime(
+    const expiryDate = toZonedTime(
       add(new Date(), {
         months: 1,
       }),
