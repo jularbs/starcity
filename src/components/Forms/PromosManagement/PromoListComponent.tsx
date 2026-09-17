@@ -150,14 +150,14 @@ export function PromoListComponent() {
         <RemovePromoComponent id={currentId} open={removeOpen} onOpenChange={setRemoveOpen} />
         <ReadPromoComponent id={currentId} open={readOpen} onOpenChange={setReadOpen} />
         <UpdatePromoComponent id={currentId} open={updateOpen} onOpenChange={setUpdateOpen} />
-        <Card className="p-0 !gap-0">
+        <Card className="p-0 gap-0!">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Promos</div>
                 <div className="flex justify-end gap-2">
                     <Button>Download CSV</Button>
                 </div>
             </CardHeader>
-            <CardContent className="p-0 grow-1">
+            <CardContent className="p-0 grow">
                 <Table>
                     <TableHeader>
                         <TableRow>

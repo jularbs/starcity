@@ -77,7 +77,7 @@ const NewCategoryComponent = ({ open, onOpenChange }:
     }
 
     return <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[100vh] overflow-y-auto">
+        <DialogContent className="max-h-screen overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>
                     <div>Add New Category</div>

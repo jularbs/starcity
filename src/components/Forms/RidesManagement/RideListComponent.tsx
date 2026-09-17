@@ -121,7 +121,7 @@ const RideListComponent = () => {
         <RideImageComponent media={selectedImage} open={imageOpen} onOpenChange={setImageOpen} />
         <RemoveRideComponent id={selectedId} open={removeOpen} onOpenChange={setRemoveOpen} />
         <UpdateRideComponent slug={currentSlug} open={updateOpen} onOpenChange={setUpdateOpen} />
-        <Card className="p-0 !gap-0">
+        <Card className="p-0 gap-0!">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Rides and Attractions</div>
                 <div className="flex justify-end gap-2">
@@ -136,7 +136,7 @@ const RideListComponent = () => {
                     </DropdownMenu>
                 </div>
             </CardHeader>
-            <CardContent className="p-0 grow-1">
+            <CardContent className="p-0 grow">
                 <Table>
                     <TableHeader>
                         <TableRow>

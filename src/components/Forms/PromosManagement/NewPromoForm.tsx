@@ -158,7 +158,7 @@ export function NewPromoForm({
                     control={form.control}
                     name="paymentOptions"
                     render={({ field }) => (
-                        <div className={`flex items-center p-3 space-x-2 rounded-sm border-1 ${field.value?.includes(item._id) ? "border-black bg-neutral-500/10" : ""}`} key={index}>
+                        <div className={`flex items-center p-3 space-x-2 rounded-sm border ${field.value?.includes(item._id) ? "border-black bg-neutral-500/10" : ""}`} key={index}>
                             <Checkbox id="terms1"
                                 value={item._id}
                                 checked={field.value?.includes(item._id)}
@@ -389,7 +389,7 @@ export function NewPromoForm({
                                     name="paymentOptions"
                                     render={() => (
                                         <FormItem>
-                                            <FormLabel className="!text-primary">Accepted Payment Methods</FormLabel>
+                                            <FormLabel className="text-primary!">Accepted Payment Methods</FormLabel>
                                             <FormMessage className="text-xs font-light" />
                                             {showPaymentMethods()}
                                         </FormItem>

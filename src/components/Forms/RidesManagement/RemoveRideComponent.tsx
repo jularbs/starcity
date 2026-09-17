@@ -46,7 +46,7 @@ const RemoveRideComponent = ({ id, open, onOpenChange }:
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[100vh] overflow-y-auto">
+            <DialogContent className="max-h-screen overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Are you sure?</DialogTitle>
                     <DialogDescription>Do you really want to delete this ride/attraction? This action cannot be undone.</DialogDescription>

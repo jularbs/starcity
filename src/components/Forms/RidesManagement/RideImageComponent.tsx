@@ -8,7 +8,7 @@ const RideImageComponent = ({ media, open, onOpenChange }:
     { media: Record<string, string>, open: boolean, onOpenChange: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
     return <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[100vh] overflow-y-auto p-0 border-0 gap-0">
+        <DialogContent className="max-h-screen overflow-y-auto p-0 border-0 gap-0">
             <DialogHeader className="gap-0">
                 <DialogTitle className="flex justify-between p-4">
                     <div>Ride image</div>

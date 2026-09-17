@@ -46,7 +46,7 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return paymentOptions.map((item: any, index: Key) => {
                 if (promo.acceptedPaymentMethods?.includes(item._id))
-                    return <div className={"flex items-center p-3 space-x-2 rounded-sm border-1 border-black"} key={index}>
+                    return <div className={"flex items-center p-3 space-x-2 rounded-sm border border-black"} key={index}>
                         <label
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
@@ -69,7 +69,7 @@ const ReadPromoComponent = ({ id = "", open, onOpenChange }:
         return (
             <>
                 <Dialog open={open} onOpenChange={onOpenChange}>
-                    <DialogContent className="max-h-[100vh] overflow-y-auto">
+                    <DialogContent className="max-h-screen overflow-y-auto">
                         <DialogHeader className="gap-0">
                             <DialogTitle className="flex items-center justify-between">
                                 <span>{promo.campaignName}</span>

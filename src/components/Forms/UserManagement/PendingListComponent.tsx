@@ -93,11 +93,11 @@ const PendingListComponent = () => {
         return <>
             <PendingUserForm id={currentId} open={updateOpen} onOpenChange={setUpdateOpen} />
             <RemoveUserComponent id={currentId} open={removeOpen} onOpenChange={setRemoveOpen} />
-            <Card className="p-0 !gap-0">
+            <Card className="p-0 gap-0!">
                 <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                     <div className="text-xl font-bold whitespace-nowrap">Pending Registrations</div>
                 </CardHeader>
-                <CardContent className="p-0 grow-1">
+                <CardContent className="p-0 grow">
                     {(isLoading || pendingList.length > 0) ?
                         <Table>
                             <TableHeader>

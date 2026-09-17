@@ -46,7 +46,7 @@ const ResendARComponent = ({ id = "", open, onOpenChange }:
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[100vh] overflow-y-auto">
+            <DialogContent className="max-h-screen overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Are you sure?</DialogTitle>
                     <DialogDescription>

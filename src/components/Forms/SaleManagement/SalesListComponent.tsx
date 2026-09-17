@@ -140,7 +140,7 @@ const SalesListComponent = () => {
     const showPagination = () => {
         return <div className="flex items-center justify-between p-4">
             <div className="hidden text-xs font-semibold sm:block">Showing {skip + 1} - {currentPage * limit > data?.count ? data?.count : currentPage * limit} of {data?.count}</div>
-            <Pagination className="!mx-0 w-auto">
+            <Pagination className="mx-0! w-auto">
                 <PaginationContent>
                     <PaginationItem>
                         <PaginationPrevious href="#"
@@ -188,7 +188,7 @@ const SalesListComponent = () => {
             </Button>
         </div>
         <SalesSummaryComponent startDate={startDate} endDate={endDate} />
-        <Card className="p-0 !gap-0">
+        <Card className="p-0 gap-0!">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Sales Summary</div>
                 <div className="flex justify-end gap-2">
@@ -250,11 +250,11 @@ const SalesListComponent = () => {
 
                 </div>
             </CardHeader>
-            <CardContent className="p-0 grow-1">
+            <CardContent className="p-0 grow">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">Reference ID</TableHead>
+                            <TableHead className="w-50">Reference ID</TableHead>
                             <TableHead>Customer Name</TableHead>
                             <TableHead>Payment Details</TableHead>
                             <TableHead>Tickets</TableHead>

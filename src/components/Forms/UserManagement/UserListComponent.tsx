@@ -107,11 +107,11 @@ const UserListComponent = () => {
         <UpdateUserComponent id={currentId} open={updateOpen} onOpenChange={setUpdateOpen} />
         <RemoveUserComponent id={currentId} open={removeOpen} onOpenChange={setRemoveOpen} />
         <UnblockUserComponent id={currentId} open={unblockOpen} onOpenChange={setUnblockOpen} />
-        <Card className="p-0 !gap-0">
+        <Card className="p-0 gap-0!">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Manage Users</div>
             </CardHeader>
-            <CardContent className="p-0 grow-1">
+            <CardContent className="p-0 grow">
                 {(isLoading || userList.length > 0) ?
                     <Table>
                         <TableHeader>

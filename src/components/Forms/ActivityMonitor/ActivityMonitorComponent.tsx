@@ -38,7 +38,7 @@ const ActivityMonitorComponent = () => {
     const showPagination = () => {
         return <div className="flex items-center justify-between p-4">
             <div className="hidden text-xs font-semibold sm:block">Showing {skip + 1} - {currentPage * limit > data?.count ? data?.count : currentPage * limit} of {data?.count}</div>
-            <Pagination className="!mx-0 w-auto">
+            <Pagination className="mx-0! w-auto">
                 <PaginationContent>
                     <PaginationItem>
                         <PaginationPrevious href="#"
@@ -133,7 +133,7 @@ const ActivityMonitorComponent = () => {
 
     const showPayload = () => {
         return <Dialog open={payloadOpen} onOpenChange={setPayloadOpen}>
-            <DialogContent className="max-h-[100vh] overflow-y-auto">
+            <DialogContent className="max-h-screen overflow-y-auto">
                 <DialogHeader className="gap-0">
                     <DialogTitle className="flex items-center justify-between">
                     </DialogTitle>
@@ -145,11 +145,11 @@ const ActivityMonitorComponent = () => {
         </Dialog>
     }
     return <>
-        <Card className="p-0 !gap-0">
+        <Card className="p-0 gap-0!">
             <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">
                 <div className="text-xl font-bold whitespace-nowrap">Activity Monitor</div>
             </CardHeader>
-            <CardContent className="p-0 grow-1">
+            <CardContent className="p-0 grow">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -157,7 +157,7 @@ const ActivityMonitorComponent = () => {
                             <TableHead>Action</TableHead>
                             <TableHead>Date Time</TableHead>
                             <TableHead>IP Address</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
+                            <TableHead className="w-25">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

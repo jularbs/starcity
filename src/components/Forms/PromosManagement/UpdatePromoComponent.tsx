@@ -71,7 +71,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                     control={form.control}
                     name="paymentOptions"
                     render={({ field }) => (
-                        <div className={`flex items-center p-3 space-x-2 rounded-sm border-1 ${field.value?.includes(item._id) ? "border-black bg-neutral-500/10" : ""}`} key={index}>
+                        <div className={`flex items-center p-3 space-x-2 rounded-sm border ${field.value?.includes(item._id) ? "border-black bg-neutral-500/10" : ""}`} key={index}>
                             <Checkbox
                                 value={item._id}
                                 checked={field.value?.includes(item._id)}
@@ -228,7 +228,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
 
-            <DialogContent className="max-h-[100vh] overflow-y-auto">
+            <DialogContent className="max-h-screen overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-1">
                         <span>Update Promo</span>
@@ -419,7 +419,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                                 name="paymentOptions"
                                 render={() => (
                                     <FormItem>
-                                        <FormLabel className="!text-primary">Accepted Payment Methods</FormLabel>
+                                        <FormLabel className="text-primary!">Accepted Payment Methods</FormLabel>
                                         <FormMessage className="text-xs font-light" />
                                         {showPaymentMethods()}
                                     </FormItem>
