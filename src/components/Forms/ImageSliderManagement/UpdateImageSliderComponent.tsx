@@ -85,7 +85,7 @@ const UpdateImageSliderComponent = ({ id, open, onOpenChange }:
         defaultValues: {
             slug: imageSliderData?.slug || "",
             name: imageSliderData?.name || "",
-            order: imageSliderData?.order || undefined,
+            order: imageSliderData?.order || 0,
             dateRange: {
                 from: imageSliderData?.startDate ? new Date(imageSliderData.startDate) : undefined,
                 to: imageSliderData?.endDate ? new Date(imageSliderData.endDate) : undefined,

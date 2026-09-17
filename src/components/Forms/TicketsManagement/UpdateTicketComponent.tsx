@@ -55,7 +55,7 @@ const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
             _id: "",
             name: "",
             code: "",
-            price: undefined,
+            price: 0,
             shortDescription: "",
             details: "",
         },

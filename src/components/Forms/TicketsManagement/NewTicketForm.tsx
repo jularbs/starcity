@@ -49,7 +49,7 @@ export function NewTicketForm({
         defaultValues: {
             name: "",
             code: "",
-            price: undefined,
+            price: 0,
             shortDescription: "",
             details: "",
         },

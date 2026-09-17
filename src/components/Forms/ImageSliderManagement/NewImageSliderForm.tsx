@@ -82,7 +82,7 @@ export function NewImageSliderForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
-            order: undefined,
+            order: 0,
             dateRange: {
                 from: undefined,
                 to: undefined,
