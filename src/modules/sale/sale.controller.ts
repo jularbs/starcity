@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { accessPassService } from '../accessPass/accessPass.service.js';
-import dateFnsTz from 'date-fns-tz';
-const { zonedTimeToUtc } = dateFnsTz;
+import { fromZonedTime } from 'date-fns-tz';
 import { saleService } from './sale.service.js';
 import { Types } from 'mongoose';
 import { createSuccessResponse } from '../../common/utils/success-response.js';
@@ -39,11 +38,11 @@ export const read = async (req: Request, res: Response) => {
 export const list = async (req: Request, res: Response) => {
   const { skip = 0, limit = 10, start, end, search = '' } = req.query;
 
-  const startDate = zonedTimeToUtc(
+  const startDate = fromZonedTime(
     `${start}T00:00:00.000`,
     'Asia/Manila',
   ).toISOString();
-  const endDate = zonedTimeToUtc(
+  const endDate = fromZonedTime(
     `${end}T23:59:59.999`,
     'Asia/Manila',
   ).toISOString();

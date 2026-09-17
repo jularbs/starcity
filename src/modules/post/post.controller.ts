@@ -4,13 +4,11 @@ import slugify from 'slugify';
 import { smartTrim } from '../../common/utils/smart-trim.js';
 import { stripHtml } from 'string-strip-html';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
-import dateFnsTz from 'date-fns-tz';
+import { fromZonedTime } from 'date-fns-tz';
 
 import { postService } from './post.service.js';
 import { Types } from 'mongoose';
 import { createSuccessResponse } from '../../common/utils/success-response.js';
-
-const { zonedTimeToUtc } = dateFnsTz;
 
 export const create = async (req: AuthenticatedRequest, res: Response) => {
   const { title, content, status, publishDate } = req.body;
@@ -32,7 +30,7 @@ export const create = async (req: AuthenticatedRequest, res: Response) => {
     excerpt,
     featuredImage: imageFile,
     status,
-    publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
+    publishDate: fromZonedTime(publishDate, 'Asia/Manila'),
   });
   auditTrailService.create({
     action: 'Created new post',
@@ -85,7 +83,7 @@ export const update = async (req: Request, res: Response) => {
     slug: slug,
     ...(excerpt && { excerpt }),
     status: status,
-    publishDate: zonedTimeToUtc(publishDate, 'Asia/Manila'),
+    publishDate: fromZonedTime(publishDate, 'Asia/Manila'),
     ...(imageFile && { featuredImage: imageFile }),
   };
   const result = await postService.updateById(

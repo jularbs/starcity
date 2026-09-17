@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { sendMail } from '../../modules/email/email.service.js';
 import { emailQueueService } from '../../modules/email/emailQueue.service.js';
 import { convertArrayToCSV } from 'convert-array-to-csv';
-import dateFnsTz from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 import { config } from '../../config/index.js';
 import { accessPassQueueService } from '../../modules/accessPassQueue/accessPassQueue.service.js';
@@ -20,7 +20,6 @@ import { paymentOptionService } from '../../modules/paymentOption/paymentOption.
 import { turnstileSyncService } from '../../modules/turnstileSync/turnstileSync.service.js';
 import { saleService } from '../../modules/sale/sale.service.js';
 import { smQueueService } from '../../modules/webhooks/smTicket/smQueue.service.js';
-const { zonedTimeToUtc, utcToZonedTime } = dateFnsTz;
 
 export const cronSyncAP = async () => {
   const queues = await accessPassQueueService.listQueues();
@@ -119,8 +118,8 @@ export const generateDailyReport = async () => {
   //Works only when server is UTC set.
   const datetime = new Date().toISOString().split('T')[0];
 
-  const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila');
-  const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila');
+  const start = fromZonedTime(`${datetime}T00:00:00.000`, 'Asia/Manila');
+  const end = fromZonedTime(`${datetime}T23:59:59.999`, 'Asia/Manila');
 
   //Works only when server is PHT set.
   //set date range to be covered
@@ -178,7 +177,7 @@ export const generateDailyReport = async () => {
 
     return {
       confirmationTime: format(
-        utcToZonedTime(data.updatedAt, 'Asia/Manila'),
+        toZonedTime(data.updatedAt, 'Asia/Manila'),
         'PPp',
       ),
       customerName: data.customerName,
@@ -220,7 +219,7 @@ export const generateDailyReport = async () => {
     from: config.email.address,
     subject: `Sales Summary for ${datetime}`,
     html: `
-    <h1>Sales Summary for ${format(utcToZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(utcToZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>
+    <h1>Sales Summary for ${format(toZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(toZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>
     <p>Total Number of Transactions: ${numOfTransaction}</p>
     <p>Total Price of Transactions: ₱${Number(totalTransactionPrice).toFixed(2)}</p>
     <p>Total Number of Tickets Sold: ${ticketsSold}</p>
@@ -301,8 +300,8 @@ export const generateQRdeliveryReport = async () => {
   //Works only when server is UTC set.
   const datetime = new Date().toISOString().split('T')[0];
 
-  const start = zonedTimeToUtc(`${datetime}T00:00:00.000`, 'Asia/Manila');
-  const end = zonedTimeToUtc(`${datetime}T23:59:59.999`, 'Asia/Manila');
+  const start = fromZonedTime(`${datetime}T00:00:00.000`, 'Asia/Manila');
+  const end = fromZonedTime(`${datetime}T23:59:59.999`, 'Asia/Manila');
 
   const accessPassData = await accessPassService.getInRange(
     start.toISOString(),
@@ -311,10 +310,7 @@ export const generateQRdeliveryReport = async () => {
 
   const dataArray = accessPassData.map((data) => {
     return {
-      generationDate: format(
-        utcToZonedTime(data.createdAt, 'Asia/Manila'),
-        'PPp',
-      ),
+      generationDate: format(toZonedTime(data.createdAt, 'Asia/Manila'), 'PPp'),
       referenceNumber: (data.salesId as unknown as InstanceType<typeof Sale>)
         ?.refId,
       ticketType: (data.ticketId as unknown as InstanceType<typeof Ticket>)
@@ -330,7 +326,7 @@ export const generateQRdeliveryReport = async () => {
     from: config.email.address,
     subject: `QR Values Delivery Report for ${datetime}`,
     html: `
-    <h1>QR Values Delivery Report for ${format(utcToZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(utcToZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>
+    <h1>QR Values Delivery Report for ${format(toZonedTime(start, 'Asia/Manila'), 'PPp')} - ${format(toZonedTime(end, 'Asia/Manila'), 'PPp')} </h1>
     <p>Total Number of QR Values Delivered: ${accessPassData.length}</p>
     `,
     attachments: [

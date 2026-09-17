@@ -1,13 +1,12 @@
 //HELPERS
-const { utcToZonedTime } = dateFnsTz;
 import { add, format, getDay, nextThursday } from 'date-fns';
-import dateFnsTz from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 export const getOpenParkExpiry = () => {
   //adjustable day indices 1 is monday, 2 is tuesday, 3 is wednesday
   const adjustDays = [1, 2, 3];
 
-  const expiryDate = utcToZonedTime(
+  const expiryDate = toZonedTime(
     add(new Date(), {
       months: 1,
     }),
