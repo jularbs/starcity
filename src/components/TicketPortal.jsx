@@ -27,13 +27,10 @@ import { Input } from "./ui/input";
 import { fetcher } from "@/actions/fetcher";
 import { createCheckout, createDragonPayCheckout, requestPaymayaCheckout } from "@/actions/sale";
 
-import { useRouter } from "next/navigation";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 //Forms
 const TicketPortal = ({ open, onOpenChange }) => {
-  const router = useRouter();
-
   const { data: paymentOptionsResponse } = useSWR({ url: "v1/payment-option" }, fetcher);
   const { data: ticketDataResponse } = useSWR({ url: "v1/ticket" }, fetcher);
   const { data: ticketFooterResponse } = useSWR({ name: "TICKETS_FOOTER" }, getOptionByName);
@@ -269,7 +266,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
         <div>
           <div className="mb-4 text-lg font-bold text-center text-black">Cart Summary</div>
           <div className="my-3">{showCartSummary()}</div>
-          <div className="w-40 h-[1px] bg-black my-2 ml-auto"></div>
+          <div className="w-40 h-px bg-black my-2 ml-auto"></div>
 
           {discount > 0 && (
             <>
@@ -335,15 +332,15 @@ const TicketPortal = ({ open, onOpenChange }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Button
-                    className="w-[1rem] h-[1rem] bg-white shadow-none text-black m-2 hover:text-white cursor-pointer"
+                    className="w-4 h-4 bg-white shadow-none text-black m-2 hover:text-white cursor-pointer"
                     onClick={() => handleRemoveItem(ticket)}
                   >
                     <Minus />
                   </Button>
 
-                  <div className="mx-3 text-xl text-center w-[30px]">{ticket.qty}</div>
+                  <div className="mx-3 text-xl text-center w-7.5">{ticket.qty}</div>
                   <Button
-                    className="w-[1rem] h-[1rem] bg-white shadow-none text-black m-2 hover:text-white cursor-pointer"
+                    className="w-4 h-4 bg-white shadow-none text-black m-2 hover:text-white cursor-pointer"
                     onClick={() => handleAddItem(ticket)}
                   >
                     <Plus />
@@ -419,7 +416,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           </div>
         ) : (
           <div className="flex items-center ml-2 text-black" onClick={handleRemovePromoCode}>
-            <X className="w-[18px] mr-1" />
+            <X className="w-4.5 mr-1" />
             <span className="text-sm uppercase">{appliedCode}</span>
           </div>
         )}
@@ -711,7 +708,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 max-h-[100vh] overflow-y-auto rounded-none border-0">
+      <DialogContent className="p-0 max-h-screen overflow-y-auto rounded-none border-0">
         <DialogTitle className="hidden">Ticket Portal</DialogTitle>
         <DialogHeader>
           <DialogDescription asChild>{showSteps()}</DialogDescription>
