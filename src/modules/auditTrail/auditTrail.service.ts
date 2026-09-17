@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import type { AuthenticatedRequest } from '../../common/types/request.types.js';
 import { auditTrailRepository } from './auditTrail.repository.js';
 import { getClientIP } from '../../common/utils/client-ip.js';
 
@@ -17,7 +17,7 @@ const count = async (params: { filter?: Record<string, any> }) => {
 const create = async (data: {
   action: string;
   user?: string;
-  request?: Request;
+  request?: AuthenticatedRequest;
   payload?: Record<string, any>;
 }) => {
   const user = data.user

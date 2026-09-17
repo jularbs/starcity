@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import type { AuthenticatedRequest } from '../../common/types/request.types.js';
 import slugify from 'slugify';
 import { smartTrim } from '../../common/utils/smart-trim.js';
 import { stripHtml } from 'string-strip-html';
@@ -11,17 +12,7 @@ import { createSuccessResponse } from '../../common/utils/success-response.js';
 
 const { zonedTimeToUtc } = dateFnsTz;
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    profile?: {
-      department?: string;
-      name?: string;
-      _id?: string;
-    };
-  }
-}
-
-export const create = async (req: Request, res: Response) => {
+export const create = async (req: AuthenticatedRequest, res: Response) => {
   const { title, content, status, publishDate } = req.body;
   const imageFile = req.file;
 

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
-import { AppError } from '../../common/errors/app-error.js';
 import type { Types } from 'mongoose';
+import { AppError } from '../../common/errors/app-error.js';
+import type { AuthenticatedRequest } from '../../common/types/request.types.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import {
   authenticate,
@@ -97,7 +98,10 @@ export const list = async (req: Request, res: Response) => {
   );
 };
 
-export const changePassword = async (req: Request, res: Response) => {
+export const changePassword = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   const { currentPassword, newPassword } = req.body;
 
   const _id = req.profile?._id;

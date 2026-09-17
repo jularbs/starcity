@@ -1,19 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../../config/index.js';
-import { NextFunction, Request, Response } from 'express';
-
-declare module 'express-serve-static-core' {
-  interface Request {
-    profile?: jwt.JwtPayload & {
-      department?: string;
-      name?: string;
-      _id?: string;
-    };
-  }
-}
+import type { NextFunction, Response } from 'express';
+import type { AuthenticatedRequest } from '../types/request.types.js';
 
 export const requireSignin = (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
 ) => {
@@ -54,7 +45,7 @@ export const requireSignin = (
 
 export const authzMiddleware =
   (...department) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const userRole = req.profile?.department;
 
     if (!userRole || (department.length && !department.includes(userRole))) {
