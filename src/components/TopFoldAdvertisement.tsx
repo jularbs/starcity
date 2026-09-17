@@ -6,7 +6,7 @@ const TopFoldAdvertisement = () => {
 
     return <>
         <ReactPlayer
-            url='https://youtu.be/bGTCSyM2Zro'
+            src='https://youtu.be/bGTCSyM2Zro'
             className="aspect-video z-0 -mt-navbar-height"
             loop={true}
             volume={0}
