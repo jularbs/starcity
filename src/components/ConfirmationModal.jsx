@@ -36,10 +36,10 @@ const ConfirmationModal = () => {
     if (refid && payment) {
       setLoading(true);
       setIsOpen(true);
-      getSaleDetails({ refid: refid }).then((data) => {
+      getSaleDetails({ refid: refid }).then((response) => {
+        const { data } = response;
         setLoading(false);
         setSaleDetails(data);
-        console.log(data);
       });
     }
   }, [refid, payment]);
@@ -62,16 +62,11 @@ const ConfirmationModal = () => {
           if (isSuccess(saleDetails.paymentDetails.status))
             return (
               <div className="text-center p-3">
-                <CircleCheckBigIcon
-                  className="text-green-600 mx-auto mb-2"
-                  size={60}
-                />
-                <div className="font-bold text-2xl">
-                  Thank you for your purchase!
-                </div>
+                <CircleCheckBigIcon className="text-green-600 mx-auto mb-2" size={60} />
+                <div className="font-bold text-2xl">Thank you for your purchase!</div>
                 <div className="text-xs px-4 leading-4 text-neutral-600">
-                  We have sent you an email with all the details of your order,
-                  acknowledgement receipt and how to view your tickets.
+                  We have sent you an email with all the details of your order, acknowledgement receipt and how to view
+                  your tickets.
                 </div>
               </div>
             );
@@ -79,13 +74,10 @@ const ConfirmationModal = () => {
           return (
             <div className="text-center p-3">
               <Info className="mx-auto mb-2 text-neutral-400" size={60} />
-              <div className="font-bold text-2xl">
-                Your transaction is pending.
-              </div>
+              <div className="font-bold text-2xl">Your transaction is pending.</div>
               <div className="text-xs px-4 leading-4 text-neutral-600">
-                You will receive an email regarding instructions on how to
-                complete your transaction. Tickets and acknowledgement receipt
-                will be sent once completed
+                You will receive an email regarding instructions on how to complete your transaction. Tickets and
+                acknowledgement receipt will be sent once completed
               </div>
             </div>
           );
@@ -112,11 +104,7 @@ const ConfirmationModal = () => {
                 <div className="mt-7 p-4">
                   <div className="flex justify-between items-center text-[16px] mb-3">
                     <div className="font-bold">Reference Number</div>
-                    {loading ? (
-                      <Skeleton className="h-4 w-[150px]" />
-                    ) : (
-                      <div className="">{saleDetails?.refId}</div>
-                    )}
+                    {loading ? <Skeleton className="h-4 w-[150px]" /> : <div className="">{saleDetails?.refId}</div>}
                   </div>
                   <div className="flex justify-between items-center text-[16px] mb-3">
                     <div className="font-bold">Customer Name</div>
@@ -147,9 +135,7 @@ const ConfirmationModal = () => {
                     {loading ? (
                       <Skeleton className="h-4 w-[120px]" />
                     ) : (
-                      <div className="">
-                        {saleDetails?.paymentDetails?.option?.name}
-                      </div>
+                      <div className="">{saleDetails?.paymentDetails?.option?.name}</div>
                     )}
                   </div>
                   <div className="flex justify-between text-[16px] mb-3">
@@ -157,9 +143,7 @@ const ConfirmationModal = () => {
                     {loading ? (
                       <Skeleton className="h-4 w-[150px]" />
                     ) : (
-                      <div className="">
-                        {saleDetails?.paymentDetails?.referenceNumber}
-                      </div>
+                      <div className="">{saleDetails?.paymentDetails?.referenceNumber}</div>
                     )}
                   </div>
                   <div className="flex justify-between text-[16px] mb-3">
@@ -167,9 +151,7 @@ const ConfirmationModal = () => {
                     {loading ? (
                       <Skeleton className="h-4 w-[80px]" />
                     ) : (
-                      <div className="">
-                        {saleDetails?.paymentDetails?.status}
-                      </div>
+                      <div className="">{saleDetails?.paymentDetails?.status}</div>
                     )}
                   </div>
                 </div>
