@@ -96,7 +96,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
   }, [ticketData]);
 
   useEffect(() => {
-    if (paymentOptions && paymentOptions.length > 0) setAvailablePaymentOptions(paymentOptions);
+    if (paymentOptions && paymentOptions.length > 0) setAvailablePaymentOptions(paymentOptions.map((item) => item._id));
   }, [paymentOptions]);
 
   useEffect(() => {
@@ -289,8 +289,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
         </div>
         <div className="mt-4">
           {/* Paymaya */}
-          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "paymaya").length ==
-            1 && (
+          {paymentOptions.some((po) => po.slug == "paymaya" && availablePaymentOptions.includes(po._id)) && (
             <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("paymaya")}>
               Pay with Paymaya, Visa, Mastercard
               {loading["paymaya"] && <LoaderCircle className="animate-spin" />}
@@ -298,8 +297,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           )}
 
           {/* Dragonpay */}
-          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "dragonpay").length ==
-            1 && (
+          {paymentOptions.some((po) => po.slug == "dragonpay" && availablePaymentOptions.includes(po._id)) && (
             <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("dragonpay")}>
               Pay with Dragonpay
               {loading["dragonpay"] && <LoaderCircle className="animate-spin" />}
@@ -307,7 +305,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           )}
 
           {/* Gcash */}
-          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "gcash").length == 1 && (
+          {paymentOptions.some((po) => po.slug == "gcash" && availablePaymentOptions.includes(po._id)) && (
             <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("paymaya")}>
               Pay with Gcash
               {loading["gcash"] && <LoaderCircle className="animate-spin" />}
@@ -315,7 +313,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
           )}
 
           {/* BPI */}
-          {availablePaymentOptions.filter((po) => po.status == true).filter((po) => po.slug == "bpi").length == 1 && (
+          {paymentOptions.some((po) => po.slug == "bpi" && availablePaymentOptions.includes(po._id)) && (
             <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("bpi")}>
               Pay with BPI Checkout
               {loading["bpi"] && <LoaderCircle className="animate-spin" />}
@@ -433,7 +431,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
     setDiscount(0);
     setAppliedCode("");
     setPromoCode("");
-    setAvailablePaymentOptions(paymentOptions);
+    setAvailablePaymentOptions(paymentOptions.map((item) => item._id));
     setValidation({ ...validation, promoCode: "" });
   };
 
@@ -443,25 +441,24 @@ const TicketPortal = ({ open, onOpenChange }) => {
 
     //if valid
     if (promoCode !== "") {
-      setValidation({ ...validation, promoCode: "" });
-
-      applyPromoCode({
-        code: promoCode,
-        transactionAmount: computeTotal(),
-      })
-        .then((data) => {
-          setDiscount(data.discount);
-          setAppliedCode(data.code);
-          setAvailablePaymentOptions(data.paymentMethods);
-          setLoading({ ...loading, promoCode: false });
-        })
-        .catch((err) => {
-          setValidation({
-            ...validation,
-            promoCode: err.error,
-          });
-          setLoading({ ...loading, promoCode: false });
+      try {
+        setValidation({ ...validation, promoCode: "" });
+        const { data } = await applyPromoCode({
+          code: promoCode,
+          transactionAmount: computeTotal(),
         });
+        setDiscount(data.discount);
+        setAppliedCode(data.code);
+        setAvailablePaymentOptions(data.paymentMethods);
+        setLoading({ ...loading, promoCode: false });
+      } catch (err) {
+        const data = err.error || {};
+        setValidation({
+          ...validation,
+          promoCode: data.message,
+        });
+        setLoading({ ...loading, promoCode: false });
+      }
     } else {
       setValidation({
         ...validation,
