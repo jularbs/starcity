@@ -6,7 +6,6 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
 import { catchAllLimiter } from './common/middleware/rate-limit.middleware.js';
-
 import rideCategoryRoutes from './modules/rideCategory/rideCategory.routes.js';
 import rideRoutes from './modules/ride/ride.routes.js';
 import ticketRoutes from './modules/ticket/ticket.routes.js';
@@ -25,6 +24,7 @@ import auditTrailRoutes from './modules/auditTrail/auditTrail.routes.js';
 
 import { errorHandler } from './common/middleware/error-handler.middleware.js';
 import { notFoundHandler } from './common/middleware/not-found.handler.js';
+import { sanitizeRequestForMongoDB } from './common/middleware/mongo-sanitize.mniddleware.js';
 const app = express();
 const allowedDomains = config.cors.origin;
 
@@ -54,6 +54,8 @@ app.use(morgan(config.app.isDevelopment ? 'dev' : 'combined'));
 app.use(express.json({ limit: '200kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.use(sanitizeRequestForMongoDB);
 
 app.get('/robots.txt', (_req, res) => {
   res.type('text/plain');
