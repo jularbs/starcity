@@ -22,26 +22,37 @@ export const signup = async (req: Request, res: Response) => {
   const user = await userService.getByEmail(email);
 
   if (user) {
-    throw new AppError({
-      message:
-        'Email address is already registered. Please proceed to logging in.',
-      code: 'EXISTING_EMAIL',
-      statusCode: 400,
-    });
+    return res.status(201).json(
+      createSuccessResponse({
+        message:
+          'If registration is successful, please wait for your account to be processed.',
+      }),
+    );
   }
 
   const salt = generateSalt();
   const hashed_password = encryptPassword({ password, salt });
-  await userService.create({
-    name,
-    email,
-    hashed_password,
-    salt,
-  });
+
+  try {
+    await userService.create({
+      name,
+      email,
+      hashed_password,
+      salt,
+    });
+  } catch {
+    return res.status(201).json(
+      createSuccessResponse({
+        message:
+          'If registration is successful, please wait for your account to be processed.',
+      }),
+    );
+  }
 
   return res.status(201).json(
     createSuccessResponse({
-      message: 'Signup Success! Please wait for your account to be processed.',
+      message:
+        'If registration is successful, please wait for your account to be processed.',
     }),
   );
 };
@@ -53,17 +64,16 @@ export const signin = async (req: Request, res: Response) => {
 
   if (!user) {
     throw new AppError({
-      message: 'Email is not yet registered. Please create an account.',
-      code: 'EMAIL_NOT_REGISTERED',
+      message: 'Email and password do not match.',
+      code: 'INVALID_CREDENTIALS',
       statusCode: 400,
     });
   }
 
   if (user.mistakes > 3) {
     throw new AppError({
-      message:
-        'Your account has been blocked due to many failed attempts to sign in. Please contact web administrator',
-      code: 'ACCOUNT_BLOCKED',
+      message: 'Email and password do not match.',
+      code: 'INVALID_CREDENTIALS',
       statusCode: 400,
     });
   }
@@ -88,8 +98,8 @@ export const signin = async (req: Request, res: Response) => {
 
   if (!user.status) {
     throw new AppError({
-      message: 'Account not yet approved',
-      code: 'ACCOUNT_PENDING',
+      message: 'Email and password do not match.',
+      code: 'INVALID_CREDENTIALS',
       statusCode: 400,
     });
   }
