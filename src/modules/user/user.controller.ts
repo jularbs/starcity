@@ -7,6 +7,7 @@ import {
   authenticate,
   encryptPassword,
   generateSalt,
+  passwordStrengthValidation,
 } from '../auth/password.helpers.js';
 import { userService } from './user.service.js';
 import { createSuccessResponse } from '../../common/utils/success-response.js';
@@ -106,6 +107,31 @@ export const changePassword = async (
 
   const _id = req.profile?._id;
   const user = await userService.getById(_id as unknown as Types.ObjectId);
+
+  if (!user) {
+    throw new AppError({
+      message: 'User not found',
+      code: 'USER_NOT_FOUND',
+      statusCode: 404,
+    });
+  }
+
+  const strength = await passwordStrengthValidation(newPassword, [
+    user.name,
+    user.email,
+  ]);
+  if (strength.score < 3) {
+    throw new AppError({
+      message:
+        strength.feedback.warning +
+          ' ' +
+          strength.feedback.suggestions.join(' ') ||
+        'Password does not meet the required strength. Please enter another password',
+      code: 'PASSWORD_POLICY',
+      statusCode: 400,
+    });
+  }
+
   if (
     !authenticate({
       password: currentPassword,

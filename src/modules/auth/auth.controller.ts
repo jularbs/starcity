@@ -5,6 +5,7 @@ import {
   generateSalt,
   encryptPassword,
   authenticate,
+  passwordStrengthValidation,
 } from './password.helpers.js';
 import {
   generateRefreshToken,
@@ -28,6 +29,20 @@ export const signup = async (req: Request, res: Response) => {
           'If registration is successful, please wait for your account to be processed.',
       }),
     );
+  }
+
+  const strength = await passwordStrengthValidation(password, [name, email]);
+
+  if (strength.score < 3) {
+    throw new AppError({
+      message:
+        strength.feedback.warning +
+          ' ' +
+          strength.feedback.suggestions.join(' ') ||
+        'Password does not meet the required strength. Please enter another password',
+      code: 'PASSWORD_POLICY',
+      statusCode: 400,
+    });
   }
 
   const salt = generateSalt();

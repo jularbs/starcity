@@ -6,12 +6,9 @@ export const signupSchema = z
       .string()
       .min(2, { message: 'Name must be at least 2 characters long' }),
     email: z.email({ message: 'Invalid email address' }),
-    password: z
-      .string()
-      .regex(/^(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/, {
-        message:
-          'Password must be 8 characters long and must contain at least one number, one uppercase letter, and one special character',
-      }),
+    password: z.string().min(8, {
+      message: 'Password must be 8 characters long',
+    }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.confirmPassword === data.password, {
