@@ -18,6 +18,13 @@ import {
 } from './user.controller.js';
 import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
 import { changePasswordSchema } from './dto/changePassword.dto.js';
+import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
+
+const changePasswordRateLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 3,
+  message: 'Too many attempts, please try again in 60 minutes.',
+});
 
 router.delete(
   '/v1/user/:id',
@@ -46,6 +53,7 @@ router.get(
 router.patch(
   '/v1/user/change-password',
   requireSignin,
+  changePasswordRateLimit,
   validateRequest({ body: changePasswordSchema }),
   changePassword,
 );
