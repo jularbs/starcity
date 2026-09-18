@@ -316,7 +316,6 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                                             </PopoverTrigger>
                                             <PopoverContent className="w-auto p-0 mt-2 border-2 rounded-lg bg-background border-muted" align="start">
                                                 <Calendar
-                                                    initialFocus
                                                     mode="range"
                                                     defaultMonth={field.value.from}
                                                     selected={{
