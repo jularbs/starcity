@@ -16,7 +16,7 @@ const RideCard = ({ data, id }) => {
   return (
     <Dialog key={id}>
       <DialogTrigger>
-        <div className="relative aspect-[3/2] cursor-pointer">
+        <div className="relative aspect-3/2 cursor-pointer">
           <Image
             src={getImageSource(data.media)}
             width={600}
@@ -24,15 +24,11 @@ const RideCard = ({ data, id }) => {
             alt={data.name}
             className="absolute w-full h-full object-cover"
           />
-          <div className="w-full h-full bg-gradient-to-t from-black to-transparent opacity-50"></div>
-          <div className="absolute bottom-0 right-0 text-white text-xs p-4">
-            {data.status}
-          </div>
+          <div className="w-full h-full bg-linear-to-t from-black to-transparent opacity-50"></div>
+          <div className="absolute bottom-0 right-0 text-white text-xs p-4">{data.status}</div>
           <div className="p-4 absolute bottom-0 w-full text-white text-left">
             <div className="text-2xl font-extrabold">{data.name}</div>
-            <div className="text-xs pr-[50px] whitespace-pre-wrap line-clamp-2">
-              {data.heightRequirements}
-            </div>
+            <div className="text-xs pr-12.5 whitespace-pre-wrap line-clamp-2">{data.heightRequirements}</div>
           </div>
         </div>
       </DialogTrigger>

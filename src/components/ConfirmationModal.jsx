@@ -104,28 +104,24 @@ const ConfirmationModal = () => {
                 <div className="mt-7 p-4">
                   <div className="flex justify-between items-center text-[16px] mb-3">
                     <div className="font-bold">Reference Number</div>
-                    {loading ? <Skeleton className="h-4 w-[150px]" /> : <div className="">{saleDetails?.refId}</div>}
+                    {loading ? <Skeleton className="h-4 w-37.5" /> : <div className="">{saleDetails?.refId}</div>}
                   </div>
                   <div className="flex justify-between items-center text-[16px] mb-3">
                     <div className="font-bold">Customer Name</div>
                     {loading ? (
-                      <Skeleton className="h-4 w-[190px]" />
+                      <Skeleton className="h-4 w-47.5" />
                     ) : (
                       <div className="">{saleDetails?.customerName}</div>
                     )}
                   </div>
                   <div className="flex justify-between items-center text-[16px] mb-3">
                     <div className="font-bold">Contact Number</div>
-                    {loading ? (
-                      <Skeleton className="h-4 w-[120px]" />
-                    ) : (
-                      <div className="">{saleDetails?.contactNumber}</div>
-                    )}
+                    {loading ? <Skeleton className="h-4 w-30" /> : <div className="">{saleDetails?.contactNumber}</div>}
                   </div>
                   <div className="flex justify-between items-center text-[16px] mb-10">
                     <div className="font-bold">Email Address</div>
                     {loading ? (
-                      <Skeleton className="h-4 w-[150px]" />
+                      <Skeleton className="h-4 w-37.5" />
                     ) : (
                       <div className="">{saleDetails?.emailAddress}</div>
                     )}
@@ -133,7 +129,7 @@ const ConfirmationModal = () => {
                   <div className="flex justify-between items-center text-[16px] mb-3">
                     <div className="font-bold">Payment Gateway</div>
                     {loading ? (
-                      <Skeleton className="h-4 w-[120px]" />
+                      <Skeleton className="h-4 w-30" />
                     ) : (
                       <div className="">{saleDetails?.paymentDetails?.option?.name}</div>
                     )}
@@ -141,7 +137,7 @@ const ConfirmationModal = () => {
                   <div className="flex justify-between text-[16px] mb-3">
                     <div className="font-bold">Transaction Number</div>
                     {loading ? (
-                      <Skeleton className="h-4 w-[150px]" />
+                      <Skeleton className="h-4 w-37.5" />
                     ) : (
                       <div className="">{saleDetails?.paymentDetails?.referenceNumber}</div>
                     )}
@@ -149,7 +145,7 @@ const ConfirmationModal = () => {
                   <div className="flex justify-between text-[16px] mb-3">
                     <div className="font-bold">Payment Status</div>
                     {loading ? (
-                      <Skeleton className="h-4 w-[80px]" />
+                      <Skeleton className="h-4 w-20" />
                     ) : (
                       <div className="">{saleDetails?.paymentDetails?.status}</div>
                     )}

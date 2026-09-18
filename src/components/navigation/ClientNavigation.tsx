@@ -13,9 +13,9 @@ const ClientNavigation = async () => {
                         width={150}
                         className="ml-4
                             mt-4
-                            w-[110px]
-                            md:w-[120px]
-                            lg:w-[150px]
+                            w-27.5
+                            md:w-30
+                            lg:w-37.5
                             lg:mt-4"
                         priority
                         height={150}

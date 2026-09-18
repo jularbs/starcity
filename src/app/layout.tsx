@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sigmarOne.variable} ${montserrat.variable}`}>
       <body
-        className={`antialiased min-h-screen font-montserrat !pointer-events-auto`}
+        className={`antialiased min-h-screen font-montserrat pointer-events-auto!`}
       >
         <ProgressProvider>
           <ClientNavigation />

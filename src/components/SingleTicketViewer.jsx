@@ -35,11 +35,11 @@ const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
   };
 
   return (
-    <div className="max-w-[800px] mx-auto mt-[50px]">
-      <div className="absolute right-3 top-[70px]">
+    <div className="max-w-200 mx-auto mt-12.5">
+      <div className="absolute right-3 top-17.5">
         <Link href={`/accesspass?s=${salt}&r=${refid}`}>
-          <Button className="flex items-center gap-1 !pr-4" variant="outline">
-            <ChevronLeft className="w-[5px]" />
+          <Button className="flex items-center gap-1 pr-4!" variant="outline">
+            <ChevronLeft className="w-1.25" />
             <span className="text-xs font-bold">Back </span>
           </Button>
         </Link>
@@ -48,7 +48,7 @@ const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
         {/* <h1 className="mb-4 uppercase font-sigmar-one text-xl">Your Star City Access Pass</h1> */}
         <h3 className="font-bold text-lg">{`${singleTicket.ticketId?.name}`}</h3>
         <div className="text-[10px] text-neutral-500">{singleTicket.accessToken}</div>
-        <div className="text-red-500 text-[12px] leading-tight font-semibold mt-3 max-w-[400px] mx-auto">
+        <div className="text-red-500 text-[12px] leading-tight font-semibold mt-3 max-w-100 mx-auto">
           Warning: Only QR codes purchased at www.starcity.com.ph are valid. Do not buy from other sources.
         </div>
         <Image
@@ -65,7 +65,7 @@ const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
         <p className="text-xs mb-1 ">For mobile, press and hold QR code to download or take a screenshot</p>
         <Button
           onClick={downloadQRCode}
-          className="bg-sc-orange w-full max-w-[400px] font-bold text-black hover:text-white"
+          className="bg-sc-orange w-full max-w-100 font-bold text-black hover:text-white"
         >
           {loading.download && <LoaderCircle className="animate-spin" />}
           Download QR Code

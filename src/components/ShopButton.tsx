@@ -34,7 +34,7 @@ const ShopButton = ({ children }: { children: ReactNode }) => {
                 <DialogTrigger asChild>
                     {children}
                 </DialogTrigger>
-                <DialogContent className="p-0 max-h-[100vh]">
+                <DialogContent className="p-0 max-h-screen">
                     <DialogTitle className="hidden">E-ticket Consent Clause</DialogTitle>
                     <DialogHeader >
                         <DialogDescription asChild className="max-h-[75vh] overflow-y-scroll px-4 overscroll-y-none">
