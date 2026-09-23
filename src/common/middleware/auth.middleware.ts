@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../../config/index.js';
 import type { NextFunction, Response } from 'express';
 import type { AuthenticatedRequest } from '../types/request.types.js';
+import { revokedAccessTokenRepository } from '../../modules/auth/revokedAccessToken.repository.js';
 
 export const requireSignin = (
   req: AuthenticatedRequest,
@@ -32,6 +33,12 @@ export const requireSignin = (
     } else {
       //proceed
       if (typeof decoded !== 'string' && decoded) {
+        if (
+          decoded.jti &&
+          (await revokedAccessTokenRepository.isRevoked(decoded.jti))
+        )
+          return res.status(401).json({ error: 'Authentication revoked' });
+
         req.profile = decoded as jwt.JwtPayload & {
           department?: string;
           name?: string;

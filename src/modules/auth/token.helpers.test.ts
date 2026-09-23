@@ -12,6 +12,7 @@ describe('Token Helpers', () => {
       _id: '123e4567-e89b-12d3-a456-426614174000' as unknown as Types.ObjectId,
       department: 'admin',
       name: 'Admin User',
+      jti: 'test-token-id',
     };
 
     const token = signAccessToken(payload);

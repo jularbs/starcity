@@ -8,12 +8,15 @@ import {
   passwordStrengthValidation,
 } from './password.helpers.js';
 import {
+  generateAccessTokenId,
   generateRefreshToken,
   hashRefreshToken,
   signAccessToken,
+  verifyAccessToken,
 } from './token.helpers.js';
 import { config } from '../../config/index.js';
 import { refreshTokenRepository } from './refreshToken.repository.js';
+import { revokedAccessTokenRepository } from './revokedAccessToken.repository.js';
 import { userService } from '../user/user.service.js';
 import { AppError } from '../../common/errors/app-error.js';
 
@@ -124,6 +127,7 @@ export const signin = async (req: Request, res: Response) => {
     _id: user._id,
     department: user.department,
     name: user.name,
+    jti: generateAccessTokenId(),
   };
   const token = signAccessToken(payload);
 
@@ -207,6 +211,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     _id: user._id,
     department: user.department,
     name: user.name,
+    jti: generateAccessTokenId(),
   };
   const newAccessToken = signAccessToken(payload);
 
@@ -232,6 +237,23 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
 export const signout = async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const accessToken = verifyAccessToken(
+        authHeader.slice('Bearer '.length).trim(),
+      );
+      if (accessToken.jti && accessToken.exp) {
+        await revokedAccessTokenRepository.revoke(
+          accessToken.jti,
+          new Date(accessToken.exp * 1000),
+        );
+      }
+    } catch {
+      // Logout still clears the refresh token when the access token has expired.
+    }
+  }
 
   const hashedRefreshToken = hashRefreshToken(token);
   await refreshTokenRepository.removeRefreshTokenByToken(hashedRefreshToken);

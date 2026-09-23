@@ -7,6 +7,12 @@ export interface AccessTokenPayload {
   _id: Types.ObjectId;
   department: string;
   name: string;
+  jti: string;
+  exp?: number;
+}
+
+export function generateAccessTokenId(): string {
+  return crypto.randomUUID();
 }
 
 export function signAccessToken(payload: AccessTokenPayload): string {
