@@ -14,16 +14,19 @@ import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod/dist/zod.js"
 import { useForm } from "react-hook-form"
 import { getErrorMessage, getValidationErrorMessage } from "@/lib/errors"
-import { changePassword } from "@/actions/auth"
+import { changePassword, SignOut } from "@/actions/auth"
 import { LoaderCircle } from "lucide-react"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { AlertSuccess } from "@/components/AlertSuccess"
 import { AlertError } from "@/components/AlertError"
+import { removeCookie } from "typescript-cookie"
+import { useLocalStorage } from "usehooks-ts"
 
 export function ChangePasswordForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+    const [, , removeUser] = useLocalStorage("user", {})
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({
         success: "",
@@ -58,20 +61,22 @@ export function ChangePasswordForm({
 
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
         setLoading(true)
         try {
             await changePassword({ ...values });
-            setLoading(false);
-            setMessage({ error: "", success: "Change Password successful." })
-            form.reset();
-            setValidationErrors({});
+            try {
+                await SignOut();
+            } finally {
+                removeCookie("token", { path: "/" });
+                removeCookie("token", { path: "/auth" });
+                removeUser();
+                window.location.replace("/auth/login");
+            }
         } catch (err) {
             setLoading(false);
             setMessage({ success: "", error: getErrorMessage(err) })
             setValidationErrors(getValidationErrorMessage(err))
         };
-
     }
 
     return (

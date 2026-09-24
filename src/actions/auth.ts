@@ -47,7 +47,12 @@ export const SignUp = async ({
 };
 
 export const SignOut = async () => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signout`, { credentials: "include" });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signout`, {
+    headers: {
+      Authorization: `Bearer ${getCookie("token") ?? ""}`,
+    },
+    credentials: "include",
+  });
 
   if (!res.ok) {
     throw await res.json();
