@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
+import { AppError } from '../errors/app-error.js';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 3 * 1024 * 1024;
 const allowedMimeTypes = new Set([
-  'application/pdf',
   'image/avif',
   'image/gif',
   'image/jpeg',
@@ -27,7 +27,11 @@ export const upload = multer({
   fileFilter: (_request, file, callback) => {
     if (!allowedMimeTypes.has(file.mimetype)) {
       return callback(
-        new UploadValidationError(`Unsupported file type: ${file.mimetype}`),
+        new AppError({
+          message: `Unsupported file type: ${file.mimetype}`,
+          statusCode: 400,
+          code: 'INVALID_UPLOAD',
+        }),
       );
     }
 
@@ -40,7 +44,11 @@ const isPdf = (buffer: Buffer) => buffer.subarray(0, 5).toString() === '%PDF-';
 const validateFileContent = async (file: Express.Multer.File) => {
   if (file.mimetype === 'application/pdf') {
     if (!isPdf(file.buffer)) {
-      throw new UploadValidationError('Uploaded file is not a valid PDF');
+      throw new AppError({
+        message: 'Uploaded file is not a valid PDF',
+        statusCode: 400,
+        code: 'INVALID_UPLOAD',
+      });
     }
 
     return;
@@ -49,7 +57,11 @@ const validateFileContent = async (file: Express.Multer.File) => {
   try {
     await sharp(file.buffer).metadata();
   } catch {
-    throw new UploadValidationError('Uploaded file is not a valid image');
+    throw new AppError({
+      message: 'Uploaded file is not a valid image',
+      statusCode: 400,
+      code: 'INVALID_UPLOAD',
+    });
   }
 };
 
