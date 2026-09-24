@@ -21,9 +21,9 @@ import { changePasswordSchema } from './dto/changePassword.dto.js';
 import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 
 const changePasswordRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  limit: 3,
-  message: 'Too many attempts, please try again in 60 minutes.',
+  windowMs: 30 * 60 * 1000,
+  limit: 10,
+  message: 'Too many attempts, please try again in 30 minutes.',
 });
 
 router.delete(
