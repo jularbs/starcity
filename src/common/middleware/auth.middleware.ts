@@ -3,6 +3,8 @@ import { config } from '../../config/index.js';
 import type { NextFunction, Response } from 'express';
 import type { AuthenticatedRequest } from '../types/request.types.js';
 import { revokedAccessTokenRepository } from '../../modules/auth/revokedAccessToken.repository.js';
+import { hashRefreshToken } from '../../modules/auth/token.helpers.js';
+import { refreshTokenRepository } from '../../modules/auth/refreshToken.repository.js';
 
 export const requireSignin = (
   req: AuthenticatedRequest,
@@ -38,6 +40,21 @@ export const requireSignin = (
           (await revokedAccessTokenRepository.isRevoked(decoded.jti))
         )
           return res.status(401).json({ error: 'Authentication revoked' });
+
+        const refreshToken = req.cookies?.refreshToken;
+        const activeSession = refreshToken
+          ? await refreshTokenRepository.touchIfActive(
+              hashRefreshToken(refreshToken),
+              config.auth.idleTimeoutInMinutes * 60 * 1000,
+            )
+          : null;
+
+        if (!activeSession) {
+          return res.status(401).json({
+            error: 'Session idle timeout. Please sign in again.',
+            code: 'SESSION_IDLE_TIMEOUT',
+          });
+        }
 
         req.profile = decoded as jwt.JwtPayload & {
           department?: string;

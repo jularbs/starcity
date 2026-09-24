@@ -32,6 +32,7 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN_MINUTES: z.coerce.number().default(15),
   JWT_REFRESH_SECRET: z.string(),
   JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().default(7),
+  SESSION_IDLE_TIMEOUT_MINUTES: z.coerce.number().default(60),
   JWT_COOKIE_SECURE: z
     .enum(['true', 'false'])
     .transform((val) => val === 'true')

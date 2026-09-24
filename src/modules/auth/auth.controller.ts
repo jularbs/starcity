@@ -181,13 +181,15 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
   }
 
   const hashedRefreshToken = hashRefreshToken(token);
-  const storedToken =
-    await refreshTokenRepository.consumeByToken(hashedRefreshToken);
+  const storedToken = await refreshTokenRepository.consumeIfActive(
+    hashedRefreshToken,
+    config.auth.idleTimeoutInMinutes * 60 * 1000,
+  );
 
   if (!storedToken) {
     throw new AppError({
-      message: 'Invalid or expired refresh token.',
-      code: 'INVALID_REFRESH_TOKEN',
+      message: 'Session idle timeout or expired. Please sign in again.',
+      code: 'SESSION_IDLE_TIMEOUT',
       statusCode: 401,
     });
   }

@@ -15,6 +15,26 @@ const storeRefreshToken = async (
   return newRefreshToken;
 };
 
+const touchIfActive = async (token: string, idleTimeoutMs: number) => {
+  const activityCutoff = new Date(Date.now() - idleTimeoutMs);
+
+  return RefreshToken.findOneAndUpdate(
+    {
+      token,
+      expiresAt: { $gt: new Date() },
+      $or: [
+        { lastActivityAt: { $gt: activityCutoff } },
+        {
+          lastActivityAt: { $exists: false },
+          createdAt: { $gt: activityCutoff },
+        },
+      ],
+    },
+    { $set: { lastActivityAt: new Date() } },
+    { returnDocument: 'after' },
+  );
+};
+
 const removeRefreshTokenByToken = async (token: string) => {
   await RefreshToken.deleteMany({ token });
 };
@@ -30,9 +50,27 @@ const consumeByToken = async (token: string) => {
   });
 };
 
+const consumeIfActive = async (token: string, idleTimeoutMs: number) => {
+  const activityCutoff = new Date(Date.now() - idleTimeoutMs);
+
+  return RefreshToken.findOneAndDelete({
+    token,
+    expiresAt: { $gt: new Date() },
+    $or: [
+      { lastActivityAt: { $gt: activityCutoff } },
+      {
+        lastActivityAt: { $exists: false },
+        createdAt: { $gt: activityCutoff },
+      },
+    ],
+  });
+};
+
 export const refreshTokenRepository = {
   storeRefreshToken,
+  touchIfActive,
   removeRefreshTokenByToken,
   findByToken,
   consumeByToken,
+  consumeIfActive,
 };

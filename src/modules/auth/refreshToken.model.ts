@@ -17,6 +17,12 @@ const refreshTokenSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    lastActivityAt: {
+      type: Date,
+      required: true,
+      default: () => new Date(),
+      index: true,
+    },
   },
   { timestamps: true },
 );

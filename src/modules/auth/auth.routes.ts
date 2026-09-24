@@ -41,7 +41,7 @@ router.post(
   '/v1/refresh-token',
   createRateLimiter({
     windowMs: 15 * 60 * 1000,
-    limit: 15,
+    limit: 30,
     message: 'Too many attempts, please try again in 15 minutes.',
   }),
   validateRequest({ cookies: refreshTokenSchema }),

@@ -43,6 +43,7 @@ export const config = {
     jwtExpiresInMinutes: env.JWT_ACCESS_EXPIRES_IN_MINUTES,
     refreshSecret: env.JWT_REFRESH_SECRET,
     refreshExpiresInDays: env.JWT_REFRESH_EXPIRES_IN_DAYS,
+    idleTimeoutInMinutes: env.SESSION_IDLE_TIMEOUT_MINUTES,
     cookieSecure: env.JWT_COOKIE_SECURE,
   },
   aws: {
