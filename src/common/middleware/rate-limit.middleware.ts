@@ -5,12 +5,14 @@ export function createRateLimiter({
   windowMs,
   limit,
   message = 'Too many requests. Please try again later.',
+  skipSuccessfulRequests = false,
 }) {
   return rateLimit({
     windowMs,
     limit,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
+    skipSuccessfulRequests,
     message: {
       error: { code: 'RATE_LIMIT_EXCEEDED', message },
     },

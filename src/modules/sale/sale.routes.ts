@@ -37,8 +37,9 @@ router.get(
   '/v1/sale/access-pass',
   createRateLimiter({
     windowMs: 15 * 60 * 1000,
-    limit: 25,
+    limit: 10,
     message: 'Too many attempts, please try again in 15 minutes.',
+    skipSuccessfulRequests: true,
   }),
   validateRequest({ query: readSaltRefidSchema }),
   readBySaltRefID,

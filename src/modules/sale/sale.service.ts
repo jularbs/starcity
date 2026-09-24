@@ -86,22 +86,28 @@ const getByRefIdWithDetails = async (refId: string) => {
 const getByRefIdWithSalt = async (refId: string, salt: string) => {
   const sale = await saleRepository.findByRefId(refId);
 
-  if (!sale) {
-    throw new AppError({
-      message: 'Sale transaction not found',
-      statusCode: 404,
-      code: 'SALE_NOT_FOUND',
-    });
+  // Same response for "not found" and "wrong salt" so refIds can't be enumerated.
+  const accessDeniedError = new AppError({
+    message: 'Sale transaction not found',
+    statusCode: 404,
+    code: 'SALE_NOT_FOUND',
+  });
+
+  if (!sale || !isSaltMatch(sale.salt, salt)) {
+    throw accessDeniedError;
   }
 
-  if (sale.salt !== salt) {
-    throw new AppError({
-      message: 'Forbidden Access',
-      statusCode: 403,
-      code: 'FORBIDDEN_ACCESS',
-    });
-  }
   return sale;
+};
+
+const isSaltMatch = (expectedSalt: string, providedSalt: string) => {
+  const expected = Buffer.from(expectedSalt);
+  const provided = Buffer.from(providedSalt);
+
+  return (
+    expected.length === provided.length &&
+    crypto.timingSafeEqual(expected, provided)
+  );
 };
 
 const list = async (params: ListParamsInput) => {
