@@ -83,7 +83,6 @@ const PendingUserForm = ({ id = "", open, onOpenChange }:
             });
 
         }).catch(err => {
-            console.log("Error: ", err)
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {

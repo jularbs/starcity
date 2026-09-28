@@ -22,7 +22,6 @@ export function AuthProvider({
                 if (active) setAuthenticated(true)
             }).catch((err) => {
                 if (!active) return;
-                console.log(err)
                 toast.error("Authentication Error!", {
                     style: {
                         background: "rgba(220, 46, 46, 1)",

@@ -78,7 +78,6 @@ const UpdateUserComponent = ({ id = "", open, onOpenChange }:
                 duration: 5000
             });
         } catch (err) {
-            console.log("Error: ", err)
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {

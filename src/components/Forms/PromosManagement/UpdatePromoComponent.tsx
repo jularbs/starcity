@@ -63,7 +63,6 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
             </>
         }
         if (paymentOptions) {
-            //TODOS: Declare Types
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return paymentOptions.map((item: any, index: Key) => {
                 return <FormField
@@ -176,7 +175,6 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
             mutate({ url: "v1/promo" })
 
         } catch (err) {
-            console.log("Error: ", err)
             setLoading(false);
             toast.error("Invalid Request!", {
                 style: {

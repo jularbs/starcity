@@ -90,7 +90,6 @@ export function PromoListComponent() {
                 description: getErrorMessage(err),
                 duration: 5000
             });
-            console.log(err)
         }
 
     }

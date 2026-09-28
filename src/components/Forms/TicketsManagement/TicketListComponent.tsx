@@ -59,7 +59,6 @@ const TicketListComponent = () => {
                 description: getErrorMessage(e),
                 duration: 5000
             });
-            console.log(e)
         }
     }
 
