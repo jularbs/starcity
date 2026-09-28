@@ -1,31 +1,11 @@
 "use client"
 
-import {
-  ChevronRight,
-  Ticket,
-  CreditCard,
-  ShoppingCart,
-  StickyNote,
-  Rocket,
-  ImagesIcon,
-  Settings,
-  Users,
-  Activity,
-  Home,
-  Gem,
-} from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -35,10 +15,19 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import Link from "next/link"
+import { useLocalStorage } from "usehooks-ts"
 import NavigationFooter from "./NavigationFooter"
+import { getVisibleNavigation } from "@/lib/routes"
 
 export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user] = useLocalStorage("user", { department: "" })
+  const navigationGroups = getVisibleNavigation(user.department)
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -58,242 +47,65 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Link href="/dashboard">
-                <SidebarMenuButton tooltip="Dashboard">
-                  <Home />
-                  <span>Dashboard</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <a href={process.env.NEXT_PUBLIC_WEB_DOMAIN} target="_blank">
-                <SidebarMenuButton tooltip="Homepage">
-                  <Home />
-                  <span>Ecommerce Homepage</span>
-                </SidebarMenuButton>
-              </a>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+        {navigationGroups.map((group, groupIndex) => (
+          <SidebarGroup key={group.label ?? `group-${groupIndex}`}>
+            {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+            <SidebarMenu>
+              {group.items.map((item) => {
+                const Icon = item.icon
 
-        {/* Ecommerce Group */}
-        <SidebarGroup>
-          <SidebarGroupLabel>E-Commerce</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Link href="/dashboard/tickets-management">
-                <SidebarMenuButton tooltip="Tickets Management">
-                  <Ticket />
-                  <span>Tickets Management</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/dashboard/payment-gateway">
-                <SidebarMenuButton tooltip="Payment Gateway">
-                  <CreditCard />
-                  <span>Payment Gateway</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/dashboard/sales-management">
-                <SidebarMenuButton tooltip="Sales Management">
-                  <ShoppingCart />
-                  <span>Sales Management</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/dashboard/promos-management">
-                <SidebarMenuButton tooltip="Promos Management">
-                  <Gem />
-                  <span>Promos Management</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        {/* Content Management Group */}
-        <SidebarGroup>
-          <SidebarGroupLabel>E-Commerce</SidebarGroupLabel>
-          <SidebarMenu>
-            {/* Collapsible Menu */}
-            <Collapsible
-              asChild
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip="Posts Management">
-                    <StickyNote />
-                    <span>Posts Management</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/post-management/create-post`}>
-                          <span>Create New Post</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/post-management`}>
-                          <span>View Posts</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-            <Collapsible
-              asChild
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip="Pages Management">
-                    <StickyNote />
-                    <span>Pages Management</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/park_regulations`}>
-                          <span>Park Regulations</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/promos`}>
-                          <span>Promos</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/park_directions`}>
-                          <span>Park Directions</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/faqs`}>
-                          <span>FAQs</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/privacy_policy`}>
-                          <span>Privacy Policy</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/terms_and_conditions`}>
-                          <span>Terms and Conditions</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/eticket_consent_clause`}>
-                          <span>Pre-purchase Message</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/page-management/tickets_footer`}>
-                          <span>Tickets Footer</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-            <Collapsible
-              asChild
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton tooltip="Rides Management">
-                    <Rocket />
-                    <span>Rides Management</span>
-                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild>
-                        <Link href={`/dashboard/rides-management/rides`}>
-                          <span>Manage Rides</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
+                if (item.children?.length) {
+                  return (
+                    <Collapsible key={item.link} asChild className="group/collapsible">
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton tooltip={item.title}>
+                            <Icon />
+                            <span>{item.title}</span>
+                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.children.map((child) => (
+                              <SidebarMenuSubItem key={child.link}>
+                                <SidebarMenuSubButton asChild>
+                                  <Link href={child.link}>
+                                    <span>{child.title}</span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  )
+                }
 
-            <SidebarMenuItem>
-              <Link href="/dashboard/image-slider-management">
-                <SidebarMenuButton tooltip="Image Slider">
-                  <ImagesIcon />
-                  <span>Image Slider</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        {/* Site Management Group */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Site Settings</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Link href="/dashboard/settings">
-                <SidebarMenuButton tooltip="Manage Settings">
-                  <Settings />
-                  <span>Manage Settings</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/dashboard/user-management">
-                <SidebarMenuButton tooltip="User Management">
-                  <Users />
-                  <span>User Management</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <Link href="/dashboard/activity-monitor">
-                <SidebarMenuButton tooltip="Activity Monitor">
-                  <Activity />
-                  <span>Activity Monitor</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+                return (
+                  <SidebarMenuItem key={item.link}>
+                    {item.external ? (
+                      <a href={item.link} target="_blank" rel="noopener noreferrer">
+                        <SidebarMenuButton tooltip={item.title}>
+                          <Icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </a>
+                    ) : (
+                      <Link href={item.link}>
+                        <SidebarMenuButton tooltip={item.title}>
+                          <Icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </Link>
+                    )}
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <NavigationFooter />
       <SidebarRail />
