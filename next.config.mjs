@@ -70,6 +70,10 @@ const nextConfig = {
             value: "strict-origin-when-cross-origin",
           },
           { key: "Access-Control-Allow-Headers", value: "market, request-id" },
+          {
+            key: "X-Permitted-Cross-Domain-Policies",
+            value: "none",
+          },
         ],
       },
     ];
