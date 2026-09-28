@@ -146,3 +146,37 @@ export const changePassword = async (data: Record<string, unknown>) => {
 
   return res.json();
 };
+
+export const forgotPassword = async ({ email }: { email: string }) => {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/forgot-password`, {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    throw await res.json();
+  }
+
+  return res.json();
+};
+
+export const resetPassword = async (data: { token: string; newPassword: string; confirmPassword: string }) => {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/reset-password`, {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw await res.json();
+  }
+
+  return res.json();
+};
