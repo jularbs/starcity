@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.12.0",
   "engines": {
-    "node": "22.x"
+    "node": "^24.15.0"
   },
   "scripts": {
     "dev": "turbo run dev",
@@ -20,7 +20,8 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "api:docker:up": "pnpm --filter api docker:up",
-    "api:docker:down": "pnpm --filter api docker:down"
+    "api:docker:down": "pnpm --filter api docker:down",
+    "clean": "pnpm dlx rimraf **/node_modules .turbo pnpm-lock.yaml && pnpm store prune"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,json,md,yml,yaml}": [
