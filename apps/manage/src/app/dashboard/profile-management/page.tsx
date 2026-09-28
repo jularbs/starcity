@@ -1,4 +1,4 @@
-import { ChangePasswordForm } from "@/components/Forms/AuthForms/ChangePasswordForm";
+import { ChangePasswordForm } from '@/components/Forms/AuthForms/ChangePasswordForm';
 
 export default function Page() {
   return (
@@ -9,6 +9,5 @@ export default function Page() {
         </div>
       </div>
     </div>
-
-  )
+  );
 }

@@ -1,5 +1,5 @@
 //TODOS: Convert form to React Hook Form - ZOD
-"use client";
+'use client';
 import {
   Dialog,
   DialogContent,
@@ -7,33 +7,43 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "./ui/button";
-import useSWR from "swr";
-import { LoaderCircle, Minus, Plus, X } from "lucide-react";
-import { getOptionByName } from "@/actions/option";
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { applyPromoCode } from "@/actions/promo";
+} from '@/components/ui/dialog';
+import { Button } from './ui/button';
+import useSWR from 'swr';
+import { LoaderCircle, Minus, Plus, X } from 'lucide-react';
+import { getOptionByName } from '@/actions/option';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { applyPromoCode } from '@/actions/promo';
 
 //Date FNS
-import add from "date-fns/add";
-import { toZonedTime } from "date-fns-tz";
-import { format } from "date-fns";
-import getDay from "date-fns/getDay";
-import nextThursday from "date-fns/nextThursday";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import { fetcher } from "@/actions/fetcher";
-import { createCheckout, createDragonPayCheckout, requestPaymayaCheckout } from "@/actions/sale";
+import add from 'date-fns/add';
+import { toZonedTime } from 'date-fns-tz';
+import { format } from 'date-fns';
+import getDay from 'date-fns/getDay';
+import nextThursday from 'date-fns/nextThursday';
+import { Label } from './ui/label';
+import { Input } from './ui/input';
+import { fetcher } from '@/actions/fetcher';
+import {
+  createCheckout,
+  createDragonPayCheckout,
+  requestPaymayaCheckout,
+} from '@/actions/sale';
 
-import { sanitizeHtml } from "@/lib/sanitize";
+import { sanitizeHtml } from '@/lib/sanitize';
 
 //Forms
 const TicketPortal = ({ open, onOpenChange }) => {
-  const { data: paymentOptionsResponse } = useSWR({ url: "v1/payment-option" }, fetcher);
-  const { data: ticketDataResponse } = useSWR({ url: "v1/ticket" }, fetcher);
-  const { data: ticketFooterResponse } = useSWR({ name: "TICKETS_FOOTER" }, getOptionByName);
+  const { data: paymentOptionsResponse } = useSWR(
+    { url: 'v1/payment-option' },
+    fetcher,
+  );
+  const { data: ticketDataResponse } = useSWR({ url: 'v1/ticket' }, fetcher);
+  const { data: ticketFooterResponse } = useSWR(
+    { name: 'TICKETS_FOOTER' },
+    getOptionByName,
+  );
 
   const paymentOptions = paymentOptionsResponse?.data || [];
   const ticketData = ticketDataResponse?.data || [];
@@ -45,34 +55,34 @@ const TicketPortal = ({ open, onOpenChange }) => {
   });
 
   const [message, setMessage] = useState({
-    error: "",
-    success: "",
+    error: '',
+    success: '',
   });
 
   const [validation, setValidation] = useState({
-    cartItems: "",
-    firstName: "",
-    lastName: "",
-    contactNumber: "",
-    emailAddress: "",
-    promoCode: "",
+    cartItems: '',
+    firstName: '',
+    lastName: '',
+    contactNumber: '',
+    emailAddress: '',
+    promoCode: '',
   });
 
   const [personalDetails, setPersonalDetails] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    confirmEmail: "",
-    contactNumber: "",
+    firstName: '',
+    lastName: '',
+    email: '',
+    confirmEmail: '',
+    contactNumber: '',
   });
 
-  const [cartItems, setCartItems] = useState("");
+  const [cartItems, setCartItems] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
   const [availablePaymentOptions, setAvailablePaymentOptions] = useState([]);
 
   //Promo Code
-  const [promoCode, setPromoCode] = useState("");
-  const [appliedCode, setAppliedCode] = useState("");
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedCode, setAppliedCode] = useState('');
   const [discount, setDiscount] = useState(0);
 
   //Effects
@@ -93,7 +103,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
   }, [ticketData]);
 
   useEffect(() => {
-    if (paymentOptions && paymentOptions.length > 0) setAvailablePaymentOptions(paymentOptions.map((item) => item._id));
+    if (paymentOptions && paymentOptions.length > 0)
+      setAvailablePaymentOptions(paymentOptions.map((item) => item._id));
   }, [paymentOptions]);
 
   useEffect(() => {
@@ -112,7 +123,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
     return cartItems.map((item, index) => {
       if (item.qty > 0)
         return (
-          <div className="flex justify-between text-base text-black" key={index}>
+          <div
+            className="flex justify-between text-base text-black"
+            key={index}
+          >
             <div>
               {item.qty} x {item.name}
             </div>
@@ -136,27 +150,32 @@ const TicketPortal = ({ open, onOpenChange }) => {
         />
         <div className="p-4 text-black">
           {showTickets()}
-          {cartItems && cartItems.filter((item) => item.status == true).length > 0 && (
-            <>
-              <div className="text-right">
-                <span className="total">
-                  <strong>Total: </strong> ₱{computeTotal()}
-                </span>
-              </div>
-              <div className="mt-4 text-xs text-neutral-500">
-                *Tickets are valid until <strong>{computeExpiry()}</strong>
-              </div>
-              {ticketFooterData && (
-                <div
-                  className="mt-4 text-xs text-neutral-500"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(ticketFooterData.value) }}
-                />
-              )}
-              {validation.cartItems && (
-                <div className="text-xs font-medium text-right text-red-600">{validation.cartItems}</div>
-              )}
-            </>
-          )}
+          {cartItems &&
+            cartItems.filter((item) => item.status == true).length > 0 && (
+              <>
+                <div className="text-right">
+                  <span className="total">
+                    <strong>Total: </strong> ₱{computeTotal()}
+                  </span>
+                </div>
+                <div className="mt-4 text-xs text-neutral-500">
+                  *Tickets are valid until <strong>{computeExpiry()}</strong>
+                </div>
+                {ticketFooterData && (
+                  <div
+                    className="mt-4 text-xs text-neutral-500"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(ticketFooterData.value),
+                    }}
+                  />
+                )}
+                {validation.cartItems && (
+                  <div className="text-xs font-medium text-right text-red-600">
+                    {validation.cartItems}
+                  </div>
+                )}
+              </>
+            )}
         </div>
       </div>
     );
@@ -166,91 +185,119 @@ const TicketPortal = ({ open, onOpenChange }) => {
     return (
       <div>
         <div className="p-4 text-black">
-          <div className="mb-5 text-2xl text-center font-sigmar-one">Buy Tickets</div>
+          <div className="mb-5 text-2xl text-center font-sigmar-one">
+            Buy Tickets
+          </div>
           {/* form */}
           <div>
             <div className="mb-3">
-              <Label htmlFor="firstName" className="mb-1 text-xs font-bold text-neutral-700">
+              <Label
+                htmlFor="firstName"
+                className="mb-1 text-xs font-bold text-neutral-700"
+              >
                 First Name
                 {validation.firstName && (
-                  <span className="text-xs font-medium text-right text-red-600">{validation.firstName}</span>
+                  <span className="text-xs font-medium text-right text-red-600">
+                    {validation.firstName}
+                  </span>
                 )}
               </Label>
               <Input
                 type="text"
                 id="firstName"
                 placeholder="First Name"
-                onChange={handleDetails("firstName")}
-                className={`${validation.firstName ? "border-red-500" : ""}`}
+                onChange={handleDetails('firstName')}
+                className={`${validation.firstName ? 'border-red-500' : ''}`}
                 value={personalDetails.firstName}
               />
             </div>
             <div className="mb-3">
-              <Label htmlFor="lastName" className="mb-1 text-xs font-bold text-neutral-700">
+              <Label
+                htmlFor="lastName"
+                className="mb-1 text-xs font-bold text-neutral-700"
+              >
                 Last Name
                 {validation.lastName && (
-                  <span className="text-xs font-medium text-right text-red-600">{validation.lastName}</span>
+                  <span className="text-xs font-medium text-right text-red-600">
+                    {validation.lastName}
+                  </span>
                 )}
               </Label>
               <Input
                 type="text"
                 id="lastName"
                 placeholder="Last Name"
-                onChange={handleDetails("lastName")}
-                className={`${validation.lastName ? "border-red-500" : ""}`}
+                onChange={handleDetails('lastName')}
+                className={`${validation.lastName ? 'border-red-500' : ''}`}
                 value={personalDetails.lastName}
               />
             </div>
             <div className="mb-3">
-              <Label htmlFor="contactNumber" className="mb-1 text-xs font-bold text-neutral-700">
+              <Label
+                htmlFor="contactNumber"
+                className="mb-1 text-xs font-bold text-neutral-700"
+              >
                 Contact Number
                 {validation.contactNumber && (
-                  <span className="text-xs font-medium text-right text-red-600">{validation.contactNumber}</span>
+                  <span className="text-xs font-medium text-right text-red-600">
+                    {validation.contactNumber}
+                  </span>
                 )}
               </Label>
               <Input
                 type="text"
                 id="contactNumber"
                 placeholder="Contact Number"
-                onChange={handleDetails("contactNumber")}
-                className={`${validation.contactNumber ? "border-red-500" : ""}`}
+                onChange={handleDetails('contactNumber')}
+                className={`${validation.contactNumber ? 'border-red-500' : ''}`}
                 value={personalDetails.contactNumber}
               />
             </div>
             <div className="mb-3">
-              <Label htmlFor="email" className="mb-1 text-xs font-bold text-neutral-700">
+              <Label
+                htmlFor="email"
+                className="mb-1 text-xs font-bold text-neutral-700"
+              >
                 Email Address
                 {validation.emailAddress && (
-                  <span className="text-xs font-medium text-right text-red-600">{validation.emailAddress}</span>
+                  <span className="text-xs font-medium text-right text-red-600">
+                    {validation.emailAddress}
+                  </span>
                 )}
               </Label>
               <Input
                 type="text"
                 id="email"
                 placeholder="Email Address"
-                onChange={handleDetails("email")}
-                className={`${validation.emailAddress ? "border-red-500" : ""}`}
+                onChange={handleDetails('email')}
+                className={`${validation.emailAddress ? 'border-red-500' : ''}`}
                 value={personalDetails.email}
               />
             </div>
             <div className="mb-3">
-              <Label htmlFor="confirmEmail" className="mb-1 text-xs font-bold text-neutral-700">
+              <Label
+                htmlFor="confirmEmail"
+                className="mb-1 text-xs font-bold text-neutral-700"
+              >
                 Confirm Email Address
                 {validation.confirmEmail && (
-                  <span className="text-xs font-medium text-right text-red-600">{validation.confirmEmail}</span>
+                  <span className="text-xs font-medium text-right text-red-600">
+                    {validation.confirmEmail}
+                  </span>
                 )}
               </Label>
               <Input
                 type="text"
                 id="confirmEmail"
                 placeholder="Confirm Email Address"
-                onChange={handleDetails("confirmEmail")}
-                className={`${validation.confirmEmail ? "border-red-500" : ""}`}
+                onChange={handleDetails('confirmEmail')}
+                className={`${validation.confirmEmail ? 'border-red-500' : ''}`}
                 autoComplete="chrome-off"
                 value={personalDetails.confirmEmail}
               />
               <Label className="pl-2 mt-1 text-xs font-light">
-                Please note that QR link will be sent on your provided email address
+                Please note that QR link will be sent on your provided email
+                address
               </Label>
             </div>
           </div>
@@ -262,16 +309,24 @@ const TicketPortal = ({ open, onOpenChange }) => {
   const showStep3 = () => {
     return (
       <div className="p-4">
-        <div className="mb-1 text-2xl text-center text-black font-sigmar-one">Buy Tickets</div>
+        <div className="mb-1 text-2xl text-center text-black font-sigmar-one">
+          Buy Tickets
+        </div>
         <div>
-          <div className="mb-4 text-lg font-bold text-center text-black">Cart Summary</div>
+          <div className="mb-4 text-lg font-bold text-center text-black">
+            Cart Summary
+          </div>
           <div className="my-3">{showCartSummary()}</div>
           <div className="w-40 h-px bg-black my-2 ml-auto"></div>
 
           {discount > 0 && (
             <>
-              <div className="text-sm text-right text-black">Total: ₱{computeTotal().toFixed(2)}</div>
-              <div className="text-sm text-right text-red-500">Promo Discount: - ₱{discount.toFixed(2)}</div>
+              <div className="text-sm text-right text-black">
+                Total: ₱{computeTotal().toFixed(2)}
+              </div>
+              <div className="text-sm text-right text-red-500">
+                Promo Discount: - ₱{discount.toFixed(2)}
+              </div>
             </>
           )}
           <div className="my-2 text-lg font-bold text-right text-black">
@@ -280,40 +335,75 @@ const TicketPortal = ({ open, onOpenChange }) => {
         </div>
         {showPromoCodeForm()}
         <div className="m-3 mx-auto text-center recatpcha-wrapper">
-          {message.error && <div className="px-2 mb-2 text-xs text-red-600">{message.error}</div>}
+          {message.error && (
+            <div className="px-2 mb-2 text-xs text-red-600">
+              {message.error}
+            </div>
+          )}
 
-          {message.success && <div className="px-2 mb-2 text-xs text-black">{message.success}</div>}
+          {message.success && (
+            <div className="px-2 mb-2 text-xs text-black">
+              {message.success}
+            </div>
+          )}
         </div>
         <div className="mt-4">
           {/* Paymaya */}
-          {paymentOptions.some((po) => po.slug == "paymaya" && availablePaymentOptions.includes(po._id)) && (
-            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("paymaya")}>
+          {paymentOptions.some(
+            (po) =>
+              po.slug == 'paymaya' && availablePaymentOptions.includes(po._id),
+          ) && (
+            <Button
+              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
+              onClick={handleCheckout('paymaya')}
+            >
               Pay with Paymaya, Visa, Mastercard
-              {loading["paymaya"] && <LoaderCircle className="animate-spin" />}
+              {loading['paymaya'] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
 
           {/* Dragonpay */}
-          {paymentOptions.some((po) => po.slug == "dragonpay" && availablePaymentOptions.includes(po._id)) && (
-            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("dragonpay")}>
+          {paymentOptions.some(
+            (po) =>
+              po.slug == 'dragonpay' &&
+              availablePaymentOptions.includes(po._id),
+          ) && (
+            <Button
+              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
+              onClick={handleCheckout('dragonpay')}
+            >
               Pay with Dragonpay
-              {loading["dragonpay"] && <LoaderCircle className="animate-spin" />}
+              {loading['dragonpay'] && (
+                <LoaderCircle className="animate-spin" />
+              )}
             </Button>
           )}
 
           {/* Gcash */}
-          {paymentOptions.some((po) => po.slug == "gcash" && availablePaymentOptions.includes(po._id)) && (
-            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("paymaya")}>
+          {paymentOptions.some(
+            (po) =>
+              po.slug == 'gcash' && availablePaymentOptions.includes(po._id),
+          ) && (
+            <Button
+              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
+              onClick={handleCheckout('paymaya')}
+            >
               Pay with Gcash
-              {loading["gcash"] && <LoaderCircle className="animate-spin" />}
+              {loading['gcash'] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
 
           {/* BPI */}
-          {paymentOptions.some((po) => po.slug == "bpi" && availablePaymentOptions.includes(po._id)) && (
-            <Button className={`w-full mb-2 bg-sc-orange font-bold py-6`} onClick={handleCheckout("bpi")}>
+          {paymentOptions.some(
+            (po) =>
+              po.slug == 'bpi' && availablePaymentOptions.includes(po._id),
+          ) && (
+            <Button
+              className={`w-full mb-2 bg-sc-orange font-bold py-6`}
+              onClick={handleCheckout('bpi')}
+            >
               Pay with BPI Checkout
-              {loading["bpi"] && <LoaderCircle className="animate-spin" />}
+              {loading['bpi'] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
         </div>
@@ -322,13 +412,18 @@ const TicketPortal = ({ open, onOpenChange }) => {
   };
 
   const showTickets = () => {
-    if (cartItems && cartItems.filter((item) => item.status == true).length > 0) {
+    if (
+      cartItems &&
+      cartItems.filter((item) => item.status == true).length > 0
+    ) {
       return cartItems.map((ticket, index) => {
         if (ticket.status)
           return (
             <div className="mb-3" key={index}>
               <div className="mb-1 text-2xl font-sigmar-one">{ticket.name}</div>
-              <div className="mb-3 text-sm font-light">{ticket.description}</div>
+              <div className="mb-3 text-sm font-light">
+                {ticket.description}
+              </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Button
@@ -338,7 +433,9 @@ const TicketPortal = ({ open, onOpenChange }) => {
                     <Minus />
                   </Button>
 
-                  <div className="mx-3 text-xl text-center w-7.5">{ticket.qty}</div>
+                  <div className="mx-3 text-xl text-center w-7.5">
+                    {ticket.qty}
+                  </div>
                   <Button
                     className="w-4 h-4 bg-white shadow-none text-black m-2 hover:text-white cursor-pointer"
                     onClick={() => handleAddItem(ticket)}
@@ -397,9 +494,13 @@ const TicketPortal = ({ open, onOpenChange }) => {
       <div className="text-left">
         <Label className="mb-1 ml-1 font-bold text-black">
           Promo Code
-          {validation.promoCode && <span className="text-xs font-light text-red-600">{validation.promoCode}</span>}
+          {validation.promoCode && (
+            <span className="text-xs font-light text-red-600">
+              {validation.promoCode}
+            </span>
+          )}
         </Label>
-        {appliedCode == "" ? (
+        {appliedCode == '' ? (
           <div className="flex items-center w-full space-x-2">
             <Input
               type="text"
@@ -415,7 +516,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center ml-2 text-black" onClick={handleRemovePromoCode}>
+          <div
+            className="flex items-center ml-2 text-black"
+            onClick={handleRemovePromoCode}
+          >
             <X className="w-4.5 mr-1" />
             <span className="text-sm uppercase">{appliedCode}</span>
           </div>
@@ -426,10 +530,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
 
   const handleRemovePromoCode = () => {
     setDiscount(0);
-    setAppliedCode("");
-    setPromoCode("");
+    setAppliedCode('');
+    setPromoCode('');
     setAvailablePaymentOptions(paymentOptions.map((item) => item._id));
-    setValidation({ ...validation, promoCode: "" });
+    setValidation({ ...validation, promoCode: '' });
   };
 
   const handleApplyPromoCode = async () => {
@@ -437,9 +541,9 @@ const TicketPortal = ({ open, onOpenChange }) => {
     setLoading({ ...loading, promoCode: true });
 
     //if valid
-    if (promoCode !== "") {
+    if (promoCode !== '') {
       try {
-        setValidation({ ...validation, promoCode: "" });
+        setValidation({ ...validation, promoCode: '' });
         const { data } = await applyPromoCode({
           code: promoCode,
           transactionAmount: computeTotal(),
@@ -459,7 +563,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
     } else {
       setValidation({
         ...validation,
-        promoCode: "Promo code invalid or expired",
+        promoCode: 'Promo code invalid or expired',
       });
       setLoading({ ...loading, promoCode: false });
     }
@@ -470,8 +574,8 @@ const TicketPortal = ({ open, onOpenChange }) => {
     setLoading({ ...loading, [paymentOption]: true });
     setMessage({
       ...message,
-      success: "",
-      error: "",
+      success: '',
+      error: '',
     });
     //initiate cart items
     const items = cartItems
@@ -496,20 +600,20 @@ const TicketPortal = ({ open, onOpenChange }) => {
         const data = response.data;
         setMessage({
           ...message,
-          success: "Please wait. You will be redirected to payment page.",
-          error: "",
+          success: 'Please wait. You will be redirected to payment page.',
+          error: '',
         });
         setLoading({ ...loading, [paymentOption]: false });
 
         //forward checkout details to payment channel
 
         //BPI Payment
-        if (paymentOption == "bpi") {
+        if (paymentOption == 'bpi') {
           window.location.href = `${process.env.NEXT_PUBLIC_BPI_CHECKOUT_URL}/${data.refId}?merchantId=${process.env.NEXT_PUBLIC_BPI_CLIENT_ID}&merchantName=Star City&amount=${data.orderTotal}&remarks=Payment to Star City`;
         }
 
         //Dragonpya Payment
-        if (paymentOption == "dragonpay") {
+        if (paymentOption == 'dragonpay') {
           const params = {
             txnId: data.refId,
             amount: data.orderTotal,
@@ -521,7 +625,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
         }
 
         //Paymaya Payment
-        if (paymentOption == "paymaya") {
+        if (paymentOption == 'paymaya') {
           const paymayaCheckoutPayload = {
             customerFirstName: personalDetails.firstName,
             customerLastName: personalDetails.lastName,
@@ -529,21 +633,25 @@ const TicketPortal = ({ open, onOpenChange }) => {
           };
 
           try {
-            const paymayaResponse = await requestPaymayaCheckout(paymayaCheckoutPayload);
+            const paymayaResponse = await requestPaymayaCheckout(
+              paymayaCheckoutPayload,
+            );
             if (paymayaResponse && paymayaResponse.data.redirectUrl) {
               window.location.href = paymayaResponse.data.redirectUrl;
             } else {
               setMessage({
                 ...message,
-                success: "",
-                error: "Paymaya redirect URL not available. Please try a different payment method.",
+                success: '',
+                error:
+                  'Paymaya redirect URL not available. Please try a different payment method.',
               });
             }
           } catch (error) {
             setMessage({
               ...message,
-              success: "",
-              error: "Paymaya request checkout occured. Please try a different payment method.",
+              success: '',
+              error:
+                'Paymaya request checkout occured. Please try a different payment method.',
             });
           }
         }
@@ -553,8 +661,10 @@ const TicketPortal = ({ open, onOpenChange }) => {
         if (error.error)
           setMessage({
             ...message,
-            success: "",
-            error: error.error.message || "An unexpected error occurred, please try again later.",
+            success: '',
+            error:
+              error.error.message ||
+              'An unexpected error occurred, please try again later.',
           });
       });
   };
@@ -579,7 +689,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
       add(new Date(), {
         months: 1,
       }),
-      "Asia/Manila",
+      'Asia/Manila',
     );
     const dayValue = getDay(expiryDate);
     const inAdjustDays = adjustDays.indexOf(dayValue);
@@ -587,9 +697,9 @@ const TicketPortal = ({ open, onOpenChange }) => {
     let expiry = null;
 
     if (shouldAdjust) {
-      expiry = format(nextThursday(expiryDate), "MMMM dd, yyyy");
+      expiry = format(nextThursday(expiryDate), 'MMMM dd, yyyy');
     } else {
-      expiry = format(expiryDate, "MMMM dd, yyyy");
+      expiry = format(expiryDate, 'MMMM dd, yyyy');
     }
 
     return expiry;
@@ -605,13 +715,13 @@ const TicketPortal = ({ open, onOpenChange }) => {
           if (cartItems.filter((ticket) => ticket.qty > 0).length > 0) {
             setValidation({
               ...validation,
-              cartItems: "",
+              cartItems: '',
             });
             setCurrentStep(currentStep + 1);
           } else {
             setValidation({
               ...validation,
-              cartItems: "Tickets to buy should be at least 1",
+              cartItems: 'Tickets to buy should be at least 1',
             });
           }
         }
@@ -619,46 +729,54 @@ const TicketPortal = ({ open, onOpenChange }) => {
 
       if (currentStep == 2) {
         if (
-          personalDetails.firstName !== "" &&
-          personalDetails.lastName !== "" &&
-          personalDetails.confirmEmail !== "" &&
-          personalDetails.contactNumber !== "" &&
+          personalDetails.firstName !== '' &&
+          personalDetails.lastName !== '' &&
+          personalDetails.confirmEmail !== '' &&
+          personalDetails.contactNumber !== '' &&
           validateEmail(personalDetails.email) &&
           validateMobileNumber(personalDetails.contactNumber) &&
-          validateEmailConfirmation(personalDetails.confirmEmail, personalDetails.email)
+          validateEmailConfirmation(
+            personalDetails.confirmEmail,
+            personalDetails.email,
+          )
         ) {
           setCurrentStep(currentStep + 1);
           setValidation({
             ...validation,
-            firstName: "",
-            lastName: "",
-            contactNumber: "",
-            emailAddress: "",
-            confirmEmail: "",
+            firstName: '',
+            lastName: '',
+            contactNumber: '',
+            emailAddress: '',
+            confirmEmail: '',
           });
         } else {
           setValidation({
             ...validation,
-            firstName: personalDetails.firstName == "" ? "First Name is required" : "",
-            lastName: personalDetails.lastName == "" ? "Last Name is required" : "",
+            firstName:
+              personalDetails.firstName == '' ? 'First Name is required' : '',
+            lastName:
+              personalDetails.lastName == '' ? 'Last Name is required' : '',
             emailAddress:
-              personalDetails.email == ""
-                ? "Email Address is required"
+              personalDetails.email == ''
+                ? 'Email Address is required'
                 : validateEmail(personalDetails.email)
-                  ? ""
-                  : "Please enter a valid email address.",
+                  ? ''
+                  : 'Please enter a valid email address.',
             contactNumber:
-              personalDetails.contactNumber == ""
-                ? "Contact Number is required"
+              personalDetails.contactNumber == ''
+                ? 'Contact Number is required'
                 : validateMobileNumber(personalDetails.contactNumber)
-                  ? ""
-                  : "Please enter a valid Philippine mobile number. Start with 09 or +63.",
+                  ? ''
+                  : 'Please enter a valid Philippine mobile number. Start with 09 or +63.',
             confirmEmail:
-              personalDetails.confirmEmail == ""
-                ? "Confirm Email Address is required"
-                : validateEmailConfirmation(personalDetails.confirmEmail, personalDetails.email)
-                  ? ""
-                  : "Email confirmation is incorrect.",
+              personalDetails.confirmEmail == ''
+                ? 'Confirm Email Address is required'
+                : validateEmailConfirmation(
+                      personalDetails.confirmEmail,
+                      personalDetails.email,
+                    )
+                  ? ''
+                  : 'Email confirmation is incorrect.',
           });
         }
       }
@@ -712,7 +830,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
         {currentStep !== 3 && (
           <DialogFooter className="p-2">
             <Button variant="outline" onClick={handleStepDown}>
-              {currentStep === 1 ? "Cancel" : "Back"}
+              {currentStep === 1 ? 'Cancel' : 'Back'}
             </Button>
             <Button onClick={handleStepUp}>Next</Button>
           </DialogFooter>

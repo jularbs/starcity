@@ -1,6 +1,5 @@
-import { NewPromoForm } from "@/components/Forms/PromosManagement/NewPromoForm";
-import { PromoListComponent } from "@/components/Forms/PromosManagement/PromoListComponent";
-
+import { NewPromoForm } from '@/components/Forms/PromosManagement/NewPromoForm';
+import { PromoListComponent } from '@/components/Forms/PromosManagement/PromoListComponent';
 
 export default function Page() {
   return (
@@ -16,6 +15,5 @@ export default function Page() {
         </div>
       </div>
     </div>
-
-  )
+  );
 }

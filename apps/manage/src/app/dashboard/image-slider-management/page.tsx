@@ -1,6 +1,5 @@
-
-import { NewImageSliderForm } from "@/components/Forms/ImageSliderManagement/NewImageSliderForm";
-import ImageSliderListComponent from "@/components/Forms/ImageSliderManagement/ImageSliderListComponent";
+import { NewImageSliderForm } from '@/components/Forms/ImageSliderManagement/NewImageSliderForm';
+import ImageSliderListComponent from '@/components/Forms/ImageSliderManagement/ImageSliderListComponent';
 
 export default function Page() {
   return (
@@ -18,6 +17,5 @@ export default function Page() {
         </div>
       </div>
     </div>
-
-  )
+  );
 }

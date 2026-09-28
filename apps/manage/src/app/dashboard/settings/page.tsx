@@ -1,4 +1,4 @@
-import { SocialMediaForm } from "@/components/Forms/SettingsManagement/SocialMediaForm";
+import { SocialMediaForm } from '@/components/Forms/SettingsManagement/SocialMediaForm';
 
 export default function Page() {
   return (
@@ -7,9 +7,8 @@ export default function Page() {
         <div className="w-full lg:w-1/2">
           <SocialMediaForm />
         </div>
-        <div className="w-full lg:w-1/2">
-        </div>
+        <div className="w-full lg:w-1/2"></div>
       </div>
     </div>
-  )
+  );
 }

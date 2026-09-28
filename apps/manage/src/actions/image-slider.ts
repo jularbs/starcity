@@ -1,9 +1,12 @@
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch } from '@/lib/api-client';
 
 export const removeImageSlider = async (id: string) => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/${id}`, {
-    method: "DELETE",
-  });
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/${id}`,
+    {
+      method: 'DELETE',
+    },
+  );
 
   if (!res.ok) {
     throw await res.json();
@@ -13,10 +16,13 @@ export const removeImageSlider = async (id: string) => {
 };
 
 export const addImageSlider = async (data: FormData) => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider`, {
-    method: "POST",
-    body: data,
-  });
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider`,
+    {
+      method: 'POST',
+      body: data,
+    },
+  );
 
   if (!res.ok) {
     throw await res.json();
@@ -26,10 +32,13 @@ export const addImageSlider = async (data: FormData) => {
 };
 
 export const updateImageSlider = async (id: string, data: FormData) => {
-  const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/${id}`, {
-    method: "PATCH",
-    body: data,
-  });
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/image-slider/${id}`,
+    {
+      method: 'PATCH',
+      body: data,
+    },
+  );
 
   if (!res.ok) {
     throw await res.json();

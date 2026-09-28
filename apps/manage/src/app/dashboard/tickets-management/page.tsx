@@ -1,5 +1,5 @@
-import { NewTicketForm } from "@/components/Forms/TicketsManagement/NewTicketForm";
-import TicketListComponent from "@/components/Forms/TicketsManagement/TicketListComponent";
+import { NewTicketForm } from '@/components/Forms/TicketsManagement/NewTicketForm';
+import TicketListComponent from '@/components/Forms/TicketsManagement/TicketListComponent';
 
 export default function Page() {
   return (
@@ -15,6 +15,5 @@ export default function Page() {
         </div>
       </div>
     </div>
-
-  )
+  );
 }

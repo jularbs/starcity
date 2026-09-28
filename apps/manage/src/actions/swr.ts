@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch } from '@/lib/api-client';
 
 export const fetcher = async ({
   url,
@@ -14,7 +14,7 @@ export const fetcher = async ({
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== "") searchParams.append(key, value);
+      if (value !== '') searchParams.append(key, value);
     });
     baseURL.search = searchParams.toString();
   }

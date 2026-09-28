@@ -3,76 +3,76 @@ const nextConfig = {
   poweredByHeader: false,
   headers: () => {
     const defaultArr = ["'self'"];
-    const fontArr = ["'self'", "https:", "data:"];
-    const styleArr = ["'self'", "'unsafe-inline'", "https:"];
-    const scriptArr = ["'self'", "'unsafe-inline'", "https:", "'unsafe-eval'"];
+    const fontArr = ["'self'", 'https:', 'data:'];
+    const styleArr = ["'self'", "'unsafe-inline'", 'https:'];
+    const scriptArr = ["'self'", "'unsafe-inline'", 'https:', "'unsafe-eval'"];
 
-    const connectArr = ["'self'", "https:"];
+    const connectArr = ["'self'", 'https:'];
 
-    const imgArr = ["'self'", "data:", "blob:", "https:"];
+    const imgArr = ["'self'", 'data:', 'blob:', 'https:'];
 
-    const frameArr = ["'self'", "https:"];
+    const frameArr = ["'self'", 'https:'];
     const frameAncestorsArr = ["'self'"];
-    const mediaArr = ["'self'", "blob:", "https:"];
+    const mediaArr = ["'self'", 'blob:', 'https:'];
 
     const objectArr = ["'self'"];
 
-    if (process.env.NEXT_PUBLIC_ENV == "development") {
+    if (process.env.NEXT_PUBLIC_ENV == 'development') {
       scriptArr.push("'unsafe-eval'");
-      connectArr.push("http:");
-      styleArr.push("http:");
-      scriptArr.push("http:");
-      fontArr.push("http:");
-      imgArr.push("http:");
-      frameArr.push("http:");
-      frameAncestorsArr.push("http:");
-      mediaArr.push("http:");
+      connectArr.push('http:');
+      styleArr.push('http:');
+      scriptArr.push('http:');
+      fontArr.push('http:');
+      imgArr.push('http:');
+      frameArr.push('http:');
+      frameAncestorsArr.push('http:');
+      mediaArr.push('http:');
     }
 
     return [
       {
-        source: "/:path*{/}?",
+        source: '/:path*{/}?',
         headers: [
           {
-            key: "Strict-Transport-Security",
-            value: "max-age=31536000; includeSubDomains",
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
           },
           {
-            key: "Content-Security-Policy",
+            key: 'Content-Security-Policy',
             value:
               // `upgrade-insecure-requests;` +
-              `default-src ${defaultArr.join(" ")};` +
-              `font-src ${fontArr.join(" ")};` +
-              `style-src ${styleArr.join(" ")};` +
-              `script-src ${scriptArr.join(" ")};` +
-              `connect-src ${connectArr.join(" ")};` +
-              `img-src ${imgArr.join(" ")};` +
-              `frame-src ${frameArr.join(" ")};` +
-              `frame-ancestors ${frameAncestorsArr.join(" ")};` +
-              `media-src ${mediaArr.join(" ")};` +
-              `object-src ${objectArr.join(" ")};`,
+              `default-src ${defaultArr.join(' ')};` +
+              `font-src ${fontArr.join(' ')};` +
+              `style-src ${styleArr.join(' ')};` +
+              `script-src ${scriptArr.join(' ')};` +
+              `connect-src ${connectArr.join(' ')};` +
+              `img-src ${imgArr.join(' ')};` +
+              `frame-src ${frameArr.join(' ')};` +
+              `frame-ancestors ${frameAncestorsArr.join(' ')};` +
+              `media-src ${mediaArr.join(' ')};` +
+              `object-src ${objectArr.join(' ')};`,
           },
           {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(self)",
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self)',
           },
 
           {
-            key: "X-Frame-Options",
-            value: "sameorigin",
+            key: 'X-Frame-Options',
+            value: 'sameorigin',
           },
           {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
           {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
           },
-          { key: "Access-Control-Allow-Headers", value: "market, request-id" },
+          { key: 'Access-Control-Allow-Headers', value: 'market, request-id' },
           {
-            key: "X-Permitted-Cross-Domain-Policies",
-            value: "none",
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none',
           },
         ],
       },
@@ -82,14 +82,14 @@ const nextConfig = {
     unoptimized: true,
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "**",
-        pathname: "**",
+        protocol: 'https',
+        hostname: '**',
+        pathname: '**',
       },
       {
-        protocol: "http",
-        hostname: "**",
-        pathname: "**",
+        protocol: 'http',
+        hostname: '**',
+        pathname: '**',
       },
     ],
   },
@@ -110,7 +110,7 @@ const nextConfig = {
         basePath: false,
         permanent: true,
       },
-    ]
+    ];
   },
 };
 

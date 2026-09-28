@@ -1,6 +1,6 @@
-"use client";
-import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
-import { ReactNode, Suspense } from "react";
+'use client';
+import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
+import { ReactNode, Suspense } from 'react';
 
 const ProgressProvider = ({ children }: { children: ReactNode }) => {
   return (

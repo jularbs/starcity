@@ -1,9 +1,9 @@
-"use client";
-import styles from "./styles.module.css";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { getImageSource } from "@/lib/utils";
-import Image from "next/image";
+'use client';
+import styles from './styles.module.css';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { getImageSource } from '@/lib/utils';
+import Image from 'next/image';
 const RidesAccordion = ({ className, rides, title }) => {
   const [active, setActive] = useState(0);
   const [display, setDisplay] = useState([]);
@@ -17,7 +17,7 @@ const RidesAccordion = ({ className, rides, title }) => {
       return (
         <div
           className={`${styles.rideDetails} ${
-            index === active ? styles.active : ""
+            index === active ? styles.active : ''
           }`}
           key={index}
           onClick={() => {

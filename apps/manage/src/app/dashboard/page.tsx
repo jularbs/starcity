@@ -1,6 +1,6 @@
-import PaymentOptionListComponent from "@/components/Forms/PaymentOptionManagement/PaymentOptionListComponent";
-import SalesSummaryComponent from "@/components/Forms/SaleManagement/SalesSummaryComponent";
-import TicketListComponent from "@/components/Forms/TicketsManagement/TicketListComponent";
+import PaymentOptionListComponent from '@/components/Forms/PaymentOptionManagement/PaymentOptionListComponent';
+import SalesSummaryComponent from '@/components/Forms/SaleManagement/SalesSummaryComponent';
+import TicketListComponent from '@/components/Forms/TicketsManagement/TicketListComponent';
 
 export default function Page() {
   return (
@@ -9,8 +9,10 @@ export default function Page() {
       <SalesSummaryComponent />
       <h2 className="text-xl font-extrabold uppercase">Tickets</h2>
       <TicketListComponent />
-      <h2 className="text-xl font-extrabold uppercase">Accepted Payment Methods</h2>
+      <h2 className="text-xl font-extrabold uppercase">
+        Accepted Payment Methods
+      </h2>
       <PaymentOptionListComponent />
     </div>
-  )
+  );
 }

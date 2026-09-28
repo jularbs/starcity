@@ -1,6 +1,5 @@
-
-import PendingListComponent from "@/components/Forms/UserManagement/PendingListComponent";
-import UserListComponent from "@/components/Forms/UserManagement/UserListComponent";
+import PendingListComponent from '@/components/Forms/UserManagement/PendingListComponent';
+import UserListComponent from '@/components/Forms/UserManagement/UserListComponent';
 
 export default function Page() {
   return (
@@ -9,7 +8,6 @@ export default function Page() {
         <PendingListComponent />
         <UserListComponent />
       </div>
-    </div >
-
-  )
+    </div>
+  );
 }

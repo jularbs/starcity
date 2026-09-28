@@ -1,4 +1,4 @@
-import PaymentOptionListComponent from "@/components/Forms/PaymentOptionManagement/PaymentOptionListComponent";
+import PaymentOptionListComponent from '@/components/Forms/PaymentOptionManagement/PaymentOptionListComponent';
 
 export default function Page() {
   return (
@@ -7,5 +7,5 @@ export default function Page() {
         <PaymentOptionListComponent />
       </div>
     </div>
-  )
+  );
 }

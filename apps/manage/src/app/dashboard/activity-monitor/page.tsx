@@ -1,5 +1,5 @@
-import ActivityMonitorComponent from "@/components/Forms/ActivityMonitor/ActivityMonitorComponent";
-import UnderConstrution from "@/components/UnderConstruction";
+import ActivityMonitorComponent from '@/components/Forms/ActivityMonitor/ActivityMonitorComponent';
+import UnderConstrution from '@/components/UnderConstruction';
 
 export default function Page() {
   return (
@@ -10,6 +10,5 @@ export default function Page() {
         </UnderConstrution>
       </div>
     </div>
-
-  )
+  );
 }

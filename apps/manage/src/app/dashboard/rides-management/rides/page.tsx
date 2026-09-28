@@ -1,6 +1,5 @@
-
-import { NewRideForm } from "@/components/Forms/RidesManagement/NewRideForm";
-import RideListComponent from "@/components/Forms/RidesManagement/RideListComponent";
+import { NewRideForm } from '@/components/Forms/RidesManagement/NewRideForm';
+import RideListComponent from '@/components/Forms/RidesManagement/RideListComponent';
 
 export default function Page() {
   return (
@@ -16,6 +15,5 @@ export default function Page() {
         </div>
       </div>
     </div>
-
-  )
+  );
 }

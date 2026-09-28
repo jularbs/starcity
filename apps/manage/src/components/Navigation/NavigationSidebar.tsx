@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import { ChevronRight } from "lucide-react"
+import { ChevronRight } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -14,20 +14,22 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import Link from "next/link"
-import { useLocalStorage } from "usehooks-ts"
-import NavigationFooter from "./NavigationFooter"
-import { getVisibleNavigation } from "@/lib/routes"
+} from '@/components/ui/collapsible';
+import Link from 'next/link';
+import { useLocalStorage } from 'usehooks-ts';
+import NavigationFooter from './NavigationFooter';
+import { getVisibleNavigation } from '@/lib/routes';
 
-export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [user] = useLocalStorage("user", { department: "" })
-  const navigationGroups = getVisibleNavigation(user.department)
+export function NavigationSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const [user] = useLocalStorage('user', { department: '' });
+  const navigationGroups = getVisibleNavigation(user.department);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -49,14 +51,20 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
       <SidebarContent>
         {navigationGroups.map((group, groupIndex) => (
           <SidebarGroup key={group.label ?? `group-${groupIndex}`}>
-            {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+            {group.label && (
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            )}
             <SidebarMenu>
               {group.items.map((item) => {
-                const Icon = item.icon
+                const Icon = item.icon;
 
                 if (item.children?.length) {
                   return (
-                    <Collapsible key={item.link} asChild className="group/collapsible">
+                    <Collapsible
+                      key={item.link}
+                      asChild
+                      className="group/collapsible"
+                    >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton tooltip={item.title}>
@@ -80,13 +88,17 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
                         </CollapsibleContent>
                       </SidebarMenuItem>
                     </Collapsible>
-                  )
+                  );
                 }
 
                 return (
                   <SidebarMenuItem key={item.link}>
                     {item.external ? (
-                      <a href={item.link} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <SidebarMenuButton tooltip={item.title}>
                           <Icon />
                           <span>{item.title}</span>
@@ -101,7 +113,7 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
                       </Link>
                     )}
                   </SidebarMenuItem>
-                )
+                );
               })}
             </SidebarMenu>
           </SidebarGroup>
@@ -110,5 +122,5 @@ export function NavigationSidebar({ ...props }: React.ComponentProps<typeof Side
       <NavigationFooter />
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 // TODOS: show Prev or Next Button
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-} from "@/components/ui/carousel";
-import Image from "next/image";
-import Autoplay from "embla-carousel-autoplay";
-import { getImageSource } from "@/lib/utils";
+} from '@/components/ui/carousel';
+import Image from 'next/image';
+import Autoplay from 'embla-carousel-autoplay';
+import { getImageSource } from '@/lib/utils';
 
 const ImageSlider = ({ data }) => {
   const showImageSlider = () => {

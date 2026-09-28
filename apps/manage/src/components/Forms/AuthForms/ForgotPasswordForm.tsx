@@ -1,15 +1,15 @@
-"use client"
+'use client';
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 //FORMS
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { useState } from "react"
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import {
   Form,
   FormControl,
@@ -17,50 +17,50 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { LoaderCircle } from "lucide-react"
+} from '@/components/ui/form';
+import { LoaderCircle } from 'lucide-react';
 
-import { forgotPassword } from "@/actions/auth"
-import { AlertError } from "@/components/AlertError"
-import { AlertSuccess } from "@/components/AlertSuccess"
-import { getErrorMessage } from "@/lib/errors"
+import { forgotPassword } from '@/actions/auth';
+import { AlertError } from '@/components/AlertError';
+import { AlertSuccess } from '@/components/AlertSuccess';
+import { getErrorMessage } from '@/lib/errors';
 
 export function ForgotPasswordForm({
   className,
   ...props
-}: React.ComponentProps<"div">) {
-  const [loading, setLoading] = useState(false)
+}: React.ComponentProps<'div'>) {
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({
-    success: "",
-    error: ""
-  })
+    success: '',
+    error: '',
+  });
 
   const formSchema = z.object({
-    email: z.email({ message: "Invalid email address" }),
-  })
+    email: z.email({ message: 'Invalid email address' }),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      email: '',
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setLoading(true)
+    setLoading(true);
     try {
-      const { data } = await forgotPassword(values)
-      setLoading(false)
-      setMessage({ error: "", success: data.message })
-      form.reset()
+      const { data } = await forgotPassword(values);
+      setLoading(false);
+      setMessage({ error: '', success: data.message });
+      form.reset();
     } catch (err) {
-      setLoading(false)
-      setMessage({ success: "", error: getErrorMessage(err) })
+      setLoading(false);
+      setMessage({ success: '', error: getErrorMessage(err) });
     }
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="p-0 overflow-hidden">
         <CardContent className="grid p-0">
           <Form {...form}>
@@ -72,8 +72,15 @@ export function ForgotPasswordForm({
                     Please enter your email to start retreiving your account
                   </p>
                 </div>
-                {message.error && <AlertError title="Request Invalid" message={message.error} />}
-                {message.success && <AlertSuccess title="Check your email" message={message.success} />}
+                {message.error && (
+                  <AlertError title="Request Invalid" message={message.error} />
+                )}
+                {message.success && (
+                  <AlertSuccess
+                    title="Check your email"
+                    message={message.success}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="email"
@@ -99,8 +106,11 @@ export function ForgotPasswordForm({
                   {loading && <LoaderCircle className="animate-spin" />}
                 </Button>
                 <div className="text-sm text-center">
-                  Would like to register instead?{" "}
-                  <a href="/auth/register" className="underline underline-offset-4">
+                  Would like to register instead?{' '}
+                  <a
+                    href="/auth/register"
+                    className="underline underline-offset-4"
+                  >
                     Sign up
                   </a>
                 </div>
@@ -110,6 +120,5 @@ export function ForgotPasswordForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

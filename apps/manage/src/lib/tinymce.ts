@@ -1,21 +1,21 @@
-import { uploadFromEditor } from "@/actions/media";
-import { getImageSource } from "./utils";
-import { toast } from "sonner";
-import { getErrorMessage } from "./errors";
-import { InitOptions } from "@tinymce/tinymce-react/lib/cjs/main/ts/components/Editor";
+import { uploadFromEditor } from '@/actions/media';
+import { getImageSource } from './utils';
+import { toast } from 'sonner';
+import { getErrorMessage } from './errors';
+import { InitOptions } from '@tinymce/tinymce-react/lib/cjs/main/ts/components/Editor';
 
 export const modules: InitOptions = {
   onboarding: false,
   branding: false,
   promotion: false,
   height: 800,
-  plugins: "link image code table lists advlist media",
-  default_link_target: "_blank",
+  plugins: 'link image code table lists advlist media',
+  default_link_target: '_blank',
   image_advtab: true,
   toolbar:
-    "styleselect |fontsizeselect|forecolor backcolor bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | table",
-  file_picker_types: "image",
-  images_file_types: "jpg,jpeg,webp,avif",
+    'styleselect |fontsizeselect|forecolor backcolor bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | table',
+  file_picker_types: 'image',
+  images_file_types: 'jpg,jpeg,webp,avif',
   file_picker_callback: (cb, value, meta) => {
     filepickerCallback(cb, value, meta);
   },
@@ -23,9 +23,9 @@ export const modules: InitOptions = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
 const filepickerCallback = (callback: any, _value: any, _meta: any) => {
-  const input = document.createElement("input");
-  input.setAttribute("type", "file");
-  input.setAttribute("accept", "image/*");
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
 
   input.onchange = function (e) {
     const target = e.target as HTMLInputElement;
@@ -34,37 +34,37 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
       const reader = new FileReader();
 
       reader.onload = function () {
-        const id = "attachment-" + new Date().getTime();
+        const id = 'attachment-' + new Date().getTime();
         const formData = new FormData();
-        formData.append("image", file, id);
-        toast("File uploading..", {
+        formData.append('image', file, id);
+        toast('File uploading..', {
           style: {
-            background: "rgb(61, 97, 255)",
-            color: "white",
+            background: 'rgb(61, 97, 255)',
+            color: 'white',
           },
-          description: "Please wait for file to be uploaded.",
+          description: 'Please wait for file to be uploaded.',
           duration: 5000,
         });
 
         uploadFromEditor({ data: formData })
           .then((imageInfo) => {
-            toast.success("Success!", {
+            toast.success('Success!', {
               style: {
-                background: "rgb(56, 142, 60)",
-                color: "white",
-                border: "none",
+                background: 'rgb(56, 142, 60)',
+                color: 'white',
+                border: 'none',
               },
-              description: "File uploaded successfully.",
+              description: 'File uploaded successfully.',
               duration: 5000,
             });
             callback(getImageSource(imageInfo), { title: file.name });
           })
           .catch((err) => {
-            toast.error("Upload failed", {
+            toast.error('Upload failed', {
               style: {
-                background: "rgba(220, 46, 46, 1)",
-                color: "white",
-                border: "none",
+                background: 'rgba(220, 46, 46, 1)',
+                color: 'white',
+                border: 'none',
               },
               description: getErrorMessage(err),
               duration: 5000,
@@ -73,13 +73,13 @@ const filepickerCallback = (callback: any, _value: any, _meta: any) => {
       };
       reader.readAsDataURL(file);
     } else {
-      toast.error("No file selected", {
+      toast.error('No file selected', {
         style: {
-          background: "rgba(220, 46, 46, 1)",
-          color: "white",
-          border: "none",
+          background: 'rgba(220, 46, 46, 1)',
+          color: 'white',
+          border: 'none',
         },
-        description: "Invalid file input",
+        description: 'Invalid file input',
         duration: 5000,
       });
     }

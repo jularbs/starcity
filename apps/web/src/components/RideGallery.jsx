@@ -1,6 +1,6 @@
-"use client";
-import { useState } from "react";
-import RideCard from "./RideCard";
+'use client';
+import { useState } from 'react';
+import RideCard from './RideCard';
 
 const RideGallery = ({ rides, rideCategories }) => {
   const [chosenCategory, setChosenCategory] = useState();
@@ -18,7 +18,7 @@ const RideGallery = ({ rides, rideCategories }) => {
         <div
           className={`whitespace-nowrap rounded-3xl px-3 py-1 mx-1 text-white font-bold text-md cursor-pointer
             ${
-              chosenCategory == category._id ? "bg-sc-orange" : "bg-neutral-400"
+              chosenCategory == category._id ? 'bg-sc-orange' : 'bg-neutral-400'
             }
             `}
           onClick={() => {
@@ -37,7 +37,7 @@ const RideGallery = ({ rides, rideCategories }) => {
       <div className="flex justify-center [@media(max-width:1000px)]:justify-start p-4 overflow-x-scroll ">
         <div
           className={`whitespace-nowrap rounded-3xl px-3 py-1 mx-1 text-white font-bold text-md cursor-pointer
-            ${chosenCategory == null ? "bg-sc-orange" : "bg-neutral-400"}`}
+            ${chosenCategory == null ? 'bg-sc-orange' : 'bg-neutral-400'}`}
           onClick={() => {
             setChosenCategory(null);
           }}
