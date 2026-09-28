@@ -33,12 +33,14 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string(),
   JWT_REFRESH_EXPIRES_IN_DAYS: z.coerce.number().default(7),
   SESSION_IDLE_TIMEOUT_MINUTES: z.coerce.number().default(60),
+  PASSWORD_RESET_EXPIRES_IN_MINUTES: z.coerce.number().default(30),
   JWT_COOKIE_SECURE: z
     .enum(['true', 'false'])
     .transform((val) => val === 'true')
     .default(true),
   DOMAIN: z.url(),
   WEBSITE_URL: z.url(),
+  MANAGE_URL: z.url(),
   AWS_S3_PUBLICKEY: z.string(),
   AWS_S3_SECRETKEY: z.string(),
   AWS_S3_REGION: z.string(),

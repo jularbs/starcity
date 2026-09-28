@@ -7,6 +7,7 @@ export const config = {
     port: env.PORT,
     apiUrl: env.DOMAIN,
     websiteUrl: env.WEBSITE_URL,
+    manageUrl: env.MANAGE_URL,
     dataRetentionDays: env.DATA_RETENTION_DAYS,
     reportsRecipient: env.REPORTS_RECIPIENT,
     isDevelopment: env.NODE_ENV === 'development',
@@ -44,6 +45,7 @@ export const config = {
     refreshSecret: env.JWT_REFRESH_SECRET,
     refreshExpiresInDays: env.JWT_REFRESH_EXPIRES_IN_DAYS,
     idleTimeoutInMinutes: env.SESSION_IDLE_TIMEOUT_MINUTES,
+    passwordResetExpiresInMinutes: env.PASSWORD_RESET_EXPIRES_IN_MINUTES,
     cookieSecure: env.JWT_COOKIE_SECURE,
   },
   aws: {

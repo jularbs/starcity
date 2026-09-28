@@ -39,6 +39,10 @@ const removeRefreshTokenByToken = async (token: string) => {
   await RefreshToken.deleteMany({ token });
 };
 
+const removeAllForUser = async (userId: Types.ObjectId) => {
+  await RefreshToken.deleteMany({ userId });
+};
+
 const findByToken = async (token: string) => {
   return RefreshToken.findOne({ token });
 };
@@ -70,6 +74,7 @@ export const refreshTokenRepository = {
   storeRefreshToken,
   touchIfActive,
   removeRefreshTokenByToken,
+  removeAllForUser,
   findByToken,
   consumeByToken,
   consumeIfActive,

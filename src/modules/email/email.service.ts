@@ -84,4 +84,34 @@ export const emailService = {
       });
     }
   },
+
+  sendPasswordResetEmail: async (
+    user: { name: string; email: string },
+    rawToken: string,
+  ) => {
+    const resetUrl = `${config.app.manageUrl}/auth/reset-password?token=${encodeURIComponent(rawToken)}`;
+
+    const html = await buildHtmlFromTemplate('passwordReset', {
+      name: user.name,
+      resetUrl,
+      expiresInMinutes: config.auth.passwordResetExpiresInMinutes,
+    });
+
+    const emailInput: EmailInput = {
+      from: config.email.address,
+      to: user.email,
+      subject: 'Reset your Star City Manage password',
+      html,
+    };
+
+    try {
+      await sendMail(emailInput);
+    } catch (e) {
+      console.log('Error sending password reset email: ', e);
+      await emailQueueService.enqueue({
+        ...emailInput,
+        type: 'password-reset',
+      });
+    }
+  },
 };

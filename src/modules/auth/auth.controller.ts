@@ -10,14 +10,19 @@ import {
 import {
   generateAccessTokenId,
   generateRefreshToken,
+  generatePasswordResetToken,
   hashRefreshToken,
+  hashPasswordResetToken,
+  getPasswordResetExpirationDate,
   signAccessToken,
   verifyAccessToken,
 } from './token.helpers.js';
 import { config } from '../../config/index.js';
 import { refreshTokenRepository } from './refreshToken.repository.js';
+import { passwordResetTokenRepository } from './passwordResetToken.repository.js';
 import { revokedAccessTokenRepository } from './revokedAccessToken.repository.js';
 import { userService } from '../user/user.service.js';
+import { emailService } from '../email/email.service.js';
 import { AppError } from '../../common/errors/app-error.js';
 
 export const signup = async (req: Request, res: Response) => {
@@ -263,4 +268,102 @@ export const signout = async (req: Request, res: Response) => {
 
 export const validateToken = (_req: Request, res: Response) => {
   return res.status(204).json(createSuccessResponse({}));
+};
+
+const GENERIC_FORGOT_PASSWORD_MESSAGE =
+  'If an account with that email exists, password reset instructions have been sent.';
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const user = await userService.getByEmail(email);
+
+  if (user && user.status) {
+    const rawToken = generatePasswordResetToken();
+    const hashedToken = hashPasswordResetToken(rawToken);
+
+    // Invalidate any previously issued links before storing the new one.
+    await passwordResetTokenRepository.removeAllForUser(user._id);
+    await passwordResetTokenRepository.storeToken(
+      user._id,
+      hashedToken,
+      getPasswordResetExpirationDate(),
+    );
+
+    await emailService.sendPasswordResetEmail(user, rawToken);
+  }
+
+  // Same response whether or not the email exists, to avoid account enumeration.
+  res
+    .status(200)
+    .json(createSuccessResponse({ message: GENERIC_FORGOT_PASSWORD_MESSAGE }));
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+
+  const hashedToken = hashPasswordResetToken(token);
+  const resetToken =
+    await passwordResetTokenRepository.consumeByToken(hashedToken);
+
+  if (!resetToken) {
+    throw new AppError({
+      message: 'Invalid or expired password reset link.',
+      code: 'INVALID_RESET_TOKEN',
+      statusCode: 400,
+    });
+  }
+
+  const user = await userService.getById(resetToken.userId);
+  if (!user || !user.status) {
+    throw new AppError({
+      message: 'Invalid or expired password reset link.',
+      code: 'INVALID_RESET_TOKEN',
+      statusCode: 400,
+    });
+  }
+
+  const strength = await passwordStrengthValidation(newPassword, [
+    user.name,
+    user.email,
+  ]);
+
+  if (strength.score < 3) {
+    throw new AppError({
+      message:
+        strength.feedback.warning +
+          ' ' +
+          strength.feedback.suggestions.join(' ') ||
+        'Password does not meet the required strength. Please enter another password',
+      code: 'PASSWORD_POLICY',
+      statusCode: 400,
+    });
+  }
+
+  const salt = generateSalt();
+  const hashed_password = encryptPassword({ password: newPassword, salt });
+
+  await userService.updateById(user._id, {
+    hashed_password,
+    salt,
+    mistakes: 0,
+  });
+
+  // Password changed: revoke every active session and any other pending reset links.
+  await refreshTokenRepository.removeAllForUser(user._id);
+  await passwordResetTokenRepository.removeAllForUser(user._id);
+
+  auditTrailService.create({
+    userId: user._id,
+    action: 'Reset password via email link',
+    request: req,
+    payload: {},
+  });
+
+  res.status(200).json(
+    createSuccessResponse({
+      message:
+        'Password reset successful. Please sign in with your new password.',
+    }),
+  );
 };
