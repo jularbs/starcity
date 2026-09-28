@@ -20,9 +20,15 @@ import {
 } from '../../common/middleware/multer.middleware.js';
 import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
 import { UploadedImageFileSchema } from '../../common/schemas/uploadedImageFile.schema.js';
+import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 
 router.post(
   '/v1/post',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE, CONTENT_MANAGER_ROLE),
   upload.single('image'),
@@ -36,6 +42,11 @@ router.post(
 
 router.patch(
   '/v1/post/:id',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE, CONTENT_MANAGER_ROLE),
   upload.single('image'),

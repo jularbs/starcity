@@ -60,6 +60,11 @@ router.patch(
 
 router.patch(
   '/v1/user/unblock/:id',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE),
   validateRequest({ params: userIdParamsSchema }),
@@ -68,6 +73,11 @@ router.patch(
 
 router.patch(
   '/v1/user/:id',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE),
   validateRequest({ params: userIdParamsSchema, body: updateUserSchema }),

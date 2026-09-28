@@ -16,9 +16,15 @@ import {
   CONTENT_MANAGER_ROLE,
   ECOMMERCE_MANAGER_ROLE,
 } from '../auth/auth.constants.js';
+import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 
 router.post(
   '/v1/option',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, CONTENT_MANAGER_ROLE, ECOMMERCE_MANAGER_ROLE),
   validateRequest({ body: manageOptionSchema }),

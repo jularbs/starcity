@@ -18,9 +18,15 @@ import {
 } from '../../common/middleware/auth.middleware.js';
 import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from '../auth/auth.constants.js';
 import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
+import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 
 router.post(
   '/v1/payment-option',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   validateRequest({ body: createPaymentOptionSchema }),
@@ -29,6 +35,11 @@ router.post(
 
 router.patch(
   '/v1/payment-option/:id',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   validateRequest({

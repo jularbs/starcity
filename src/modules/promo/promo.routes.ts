@@ -18,9 +18,15 @@ import {
   authzMiddleware,
 } from '../../common/middleware/auth.middleware.js';
 import { ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE } from '../auth/auth.constants.js';
+import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 
 router.post(
   '/v1/promo',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   validateRequest({ body: createPromoSchema }),
@@ -29,6 +35,11 @@ router.post(
 
 router.patch(
   '/v1/promo/:id',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
   validateRequest({ params: promoIdParamsSchema, body: updatePromoSchema }),
@@ -37,6 +48,11 @@ router.patch(
 
 router.get(
   '/v1/promo/apply',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 15,
+    message: 'Too many attempts, please try again in 15 minutes.',
+  }),
   validateRequest({ query: applyPromoSchema }),
   apply,
 );
