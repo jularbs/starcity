@@ -1,0 +1,68 @@
+.accordionContainer {
+  margin-bottom: 15px;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  border-radius: 15px;
+
+  .title {
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 15px 0;
+    background-color: white;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+
+  .control {
+    padding: 10px 10px;
+    color: rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+    flex-direction: row-reverse;
+    font-size: 0.7rem;
+    background-color: white;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+
+    &::before {
+      content: ">";
+      margin-left: 5px;
+    }
+  }
+
+  .rideDetails {
+    color: white;
+    position: relative;
+
+    &.active {
+      .spacer {
+        height: 200px;
+        transition: height 0.3s ease;
+      }
+
+      .details {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+    .spacer {
+      height: 0;
+      transition: height 0.3s ease;
+    }
+    .details {
+      position: relative;
+      padding: 10px 15px;
+      background-color: rgba(0, 0, 0, 0.66);
+      .name {
+        text-shadow: rgba(0, 0, 0, 0.7);
+        font-weight: 700;
+      }
+
+      .hReqs {
+        font-weight: 300;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
