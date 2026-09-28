@@ -124,9 +124,8 @@ export const signin = async (req: Request, res: Response) => {
 
   //generate JWT
   const payload = {
-    _id: user._id,
-    department: user.department,
-    name: user.name,
+    sub: user._id,
+    roles: user.department,
     jti: generateAccessTokenId(),
   };
   const token = signAccessToken(payload);
@@ -151,7 +150,7 @@ export const signin = async (req: Request, res: Response) => {
   });
 
   auditTrailService.create({
-    user: user.name,
+    userId: user._id,
     action: 'Logged in to system',
     request: req,
     payload: { email: email },
@@ -210,9 +209,8 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
   );
 
   const payload = {
-    _id: user._id,
-    department: user.department,
-    name: user.name,
+    sub: user._id,
+    roles: user.department,
     jti: generateAccessTokenId(),
   };
   const newAccessToken = signAccessToken(payload);

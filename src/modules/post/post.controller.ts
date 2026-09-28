@@ -23,7 +23,7 @@ export const create = async (req: AuthenticatedRequest, res: Response) => {
   );
 
   const result = await postService.create({
-    authorId: req.profile?._id,
+    authorId: req.profile?.sub as unknown as Types.ObjectId,
     title,
     slug,
     content,

@@ -4,9 +4,8 @@ import { config } from '../../config/index.js';
 import { Types } from 'mongoose';
 
 export interface AccessTokenPayload {
-  _id: Types.ObjectId;
-  department: string;
-  name: string;
+  sub: Types.ObjectId;
+  roles: string;
   jti: string;
   exp?: number;
 }

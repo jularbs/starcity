@@ -105,7 +105,7 @@ export const changePassword = async (
 ) => {
   const { currentPassword, newPassword } = req.body;
 
-  const _id = req.profile?._id;
+  const _id = req.profile?.sub;
   const user = await userService.getById(_id as unknown as Types.ObjectId);
 
   if (!user) {
@@ -153,7 +153,7 @@ export const changePassword = async (
     salt,
   });
   auditTrailService.create({
-    user: user.name,
+    userId: user._id,
     action: 'Changed Password',
     request: req,
     payload: {},
@@ -178,7 +178,7 @@ export const unblockUser = async (req: Request, res: Response) => {
   });
 
   auditTrailService.create({
-    user: user.name,
+    userId: user._id,
     action: 'Unblocked User',
     request: req,
     payload: {},

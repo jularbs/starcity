@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 const auditTrailSchema = new mongoose.Schema(
   {
-    userName: { type: String },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    systemActor: { type: String },
     action: { type: String, required: true },
     payload: { type: Object },
     ipAddress: { type: String },

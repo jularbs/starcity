@@ -43,7 +43,7 @@ export const cronSyncAP = async () => {
       } catch (error) {
         console.log('error in syncing access pass: ', error);
         auditTrailService.create({
-          user: 'Cron Job',
+          systemActor: 'Cron Job',
           action: `System failed to sync Access Pass: ${accessPass.accessToken}`,
         });
       }

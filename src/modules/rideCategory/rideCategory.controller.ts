@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
 import type { Types } from 'mongoose';
+import type { AuthenticatedRequest } from '../../common/types/request.types.js';
 import { auditTrailService } from '../auditTrail/auditTrail.service.js';
 import { rideCategoryService } from './rideCategory.service.js';
 import { createSuccessResponse } from '../../common/utils/success-response.js';
-type RequestWithProfile = Request & { profile: { name: string } };
 
-export const create = async (req: RequestWithProfile, res: Response) => {
+export const create = async (req: AuthenticatedRequest, res: Response) => {
   const { name, description } = req.body;
 
   const result = await rideCategoryService.create({ name, description });
@@ -27,7 +27,7 @@ export const list = async (_req: Request, res: Response) => {
   return res.status(200).json(createSuccessResponse(data));
 };
 
-export const update = async (req: RequestWithProfile, res: Response) => {
+export const update = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { slug, name, description } = req.body;
 
@@ -45,7 +45,7 @@ export const update = async (req: RequestWithProfile, res: Response) => {
   return res.status(200).json(createSuccessResponse(result));
 };
 
-export const remove = async (req: RequestWithProfile, res: Response) => {
+export const remove = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
   await rideCategoryService.removeById(id as unknown as Types.ObjectId);

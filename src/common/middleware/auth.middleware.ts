@@ -57,9 +57,8 @@ export const requireSignin = (
         }
 
         req.profile = decoded as jwt.JwtPayload & {
-          department?: string;
-          name?: string;
-          _id?: string;
+          sub?: string;
+          roles?: string;
         };
       }
       next();
@@ -70,7 +69,7 @@ export const requireSignin = (
 export const authzMiddleware =
   (...department) =>
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const userRole = req.profile?.department;
+    const userRole = req.profile?.roles;
 
     if (!userRole || (department.length && !department.includes(userRole))) {
       return res

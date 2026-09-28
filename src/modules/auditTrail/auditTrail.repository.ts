@@ -1,4 +1,5 @@
 import AuditTrail from './auditTrail.model.js';
+import type { Types } from 'mongoose';
 
 const list = async ({
   filter = {},
@@ -10,7 +11,8 @@ const list = async ({
   skip?: number;
 }) => {
   return AuditTrail.find(filter)
-    .select('userName action payload createdAt ipAddress -_id')
+    .select('userId systemActor action payload createdAt ipAddress -_id')
+    .populate({ path: 'userId', select: 'name -_id' })
     .sort('-createdAt')
     .limit(limit)
     .skip(skip)
@@ -24,11 +26,13 @@ const count = async ({ filter = {} }: { filter?: Record<string, any> }) => {
 const create = async (data: {
   action: string;
   ip: string;
-  user?: string;
+  userId?: Types.ObjectId | string;
+  systemActor?: string;
   payload?: Record<string, any>;
 }) => {
   return AuditTrail.create({
-    userName: data.user,
+    userId: data.userId,
+    systemActor: data.systemActor,
     action: data.action,
     ipAddress: data.ip,
     payload: data.payload,

@@ -1,4 +1,5 @@
 import type { AuthenticatedRequest } from '../../common/types/request.types.js';
+import type { Types } from 'mongoose';
 import { auditTrailRepository } from './auditTrail.repository.js';
 import { getClientIP } from '../../common/utils/client-ip.js';
 
@@ -7,7 +8,18 @@ const list = async (params: {
   limit?: number;
   skip?: number;
 }) => {
-  return auditTrailRepository.list(params);
+  const auditTrails = await auditTrailRepository.list(params);
+
+  return auditTrails.map((entry) => ({
+    userName:
+      entry.systemActor ??
+      (entry.userId as unknown as { name?: string })?.name ??
+      'Unknown',
+    action: entry.action,
+    payload: entry.payload,
+    createdAt: entry.createdAt,
+    ipAddress: entry.ipAddress,
+  }));
 };
 
 const count = async (params: { filter?: Record<string, any> }) => {
@@ -16,18 +28,16 @@ const count = async (params: { filter?: Record<string, any> }) => {
 
 const create = async (data: {
   action: string;
-  user?: string;
+  userId?: Types.ObjectId | string;
+  systemActor?: string;
   request?: AuthenticatedRequest;
   payload?: Record<string, any>;
 }) => {
-  const user = data.user
-    ? data.user
-    : data.request
-      ? data.request.profile?.name
-      : '';
+  const userId = data.userId ?? data.request?.profile?.sub;
 
   const auditTrailData = {
-    user: user,
+    userId,
+    systemActor: data.systemActor,
     action: data.action,
     ip: data.request ? getClientIP(data.request) : '',
     payload: data.payload,
