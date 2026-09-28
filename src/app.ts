@@ -4,8 +4,8 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import cors from 'cors';
 import { catchAllLimiter } from './common/middleware/rate-limit.middleware.js';
+import { corsMiddleware } from './common/middleware/cors.middleware.js';
 import rideCategoryRoutes from './modules/rideCategory/rideCategory.routes.js';
 import rideRoutes from './modules/ride/ride.routes.js';
 import ticketRoutes from './modules/ticket/ticket.routes.js';
@@ -26,26 +26,9 @@ import { errorHandler } from './common/middleware/error-handler.middleware.js';
 import { notFoundHandler } from './common/middleware/not-found.handler.js';
 import { sanitizeRequestForMongoDB } from './common/middleware/mongo-sanitize.mniddleware.js';
 const app = express();
-const allowedDomains = config.cors.origin;
 
 app.set('trust proxy', 1);
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedDomains.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(
-        new Error(`This site ${origin} does not have access.`),
-        false,
-      );
-    },
-    credentials: true,
-    methods: 'GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin'],
-  }),
-);
+app.use(corsMiddleware);
 
 app.use(helmet());
 app.disable('x-powered-by');
