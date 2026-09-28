@@ -1,5 +1,6 @@
 const nextConfig = {
   /* config options here */
+  poweredByHeader: false,
   headers: () => {
     const defaultArr = ["'self'"];
     const fontArr = ["'self'", "https:", "data:"];
