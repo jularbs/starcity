@@ -1,0 +1,16 @@
+import mongoose from 'mongoose';
+const auditTrailSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    systemActor: { type: String },
+    action: { type: String, required: true },
+    payload: { type: Object },
+    ipAddress: { type: String },
+  },
+  {
+    timestamps: true,
+    capped: { size: 20000000, max: 60000, autoIndexId: true },
+  },
+);
+
+export default mongoose.model('AuditTrail', auditTrailSchema);

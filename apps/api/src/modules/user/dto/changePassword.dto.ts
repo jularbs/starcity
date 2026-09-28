@@ -1,0 +1,18 @@
+import { z } from 'zod';
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string({ error: 'Current Password is required' })
+      .min(1, { message: 'Current Password is required' }),
+    newPassword: z.string().min(8, {
+      message: 'New Password must be 8 characters long',
+    }),
+    confirmation: z
+      .string({ error: 'Confirmation Password is required' })
+      .min(1, { message: 'Confirmation Password is required' }),
+  })
+  .refine((data) => data.confirmation === data.newPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmation'],
+  });

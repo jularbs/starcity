@@ -1,0 +1,3 @@
+[submodule "lib/qr-code-styling"]
+	path = lib/qr-code-styling
+	url = https://github.com/jularbs/qr-code-styling.git

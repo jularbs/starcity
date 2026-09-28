@@ -1,0 +1,17 @@
+.DS_Store
+
+node_modules
+security-cert
+
+.env
+.env.*
+!.env.example
+
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+dump
+
+dist
+coverage

@@ -1,0 +1,67 @@
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Schema;
+
+const promoSchema = new mongoose.Schema(
+  {
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+    campaignName: {
+      type: String,
+      required: true,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    percentageDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    fixedDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    maxDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    minimumRequired: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    acceptedPaymentMethods: [
+      {
+        type: ObjectId,
+        ref: 'PaymentOption',
+      },
+    ],
+    maxUsage: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
+  },
+  { timestamps: true, toJSON: { getters: true } },
+);
+
+export default mongoose.model('Promo', promoSchema);
