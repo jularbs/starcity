@@ -552,13 +552,12 @@ const TicketPortal = ({ open, onOpenChange }) => {
         }
       })
       .catch((error) => {
-        console.log(error);
         setLoading({ ...loading, [paymentOption]: false });
         if (error.error)
           setMessage({
             ...message,
             success: "",
-            error: error.message || error.error,
+            error: error.error.message || "An unexpected error occurred, please try again later.",
           });
       });
   };

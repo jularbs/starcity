@@ -1,3 +1,5 @@
+import { HttpError } from "@/lib/http-error";
+
 export const getAccessPasses = async ({
   salt,
   refid,
@@ -18,7 +20,8 @@ export const getAccessPasses = async ({
   );
 
   if (!res.ok) {
-    throw await res.json();
+    const body = await res.json().catch(() => null);
+    throw new HttpError(res.status, body?.error?.message ?? "Unable to load access pass.", body?.error?.code);
   }
 
   return res.json();
