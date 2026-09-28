@@ -18,7 +18,9 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "api:docker:up": "pnpm --filter api docker:up",
+    "api:docker:down": "pnpm --filter api docker:down"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,json,md,yml,yaml}": [
