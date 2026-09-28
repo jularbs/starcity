@@ -2,7 +2,7 @@
 //FORMS
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { Resolver, useForm } from "react-hook-form"
 import {
     Form,
     FormControl,
@@ -50,7 +50,7 @@ const UpdateTicketComponent = ({ slug = "", open, onOpenChange }:
     })
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
         defaultValues: {
             _id: "",
             name: "",

@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 //FORMS
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 
 import {
     Form,
@@ -63,7 +63,7 @@ export function NewPromoForm({
         campaignName: z.string().min(1, { message: "Campaign name required" }),
         code: z.string().min(1, { message: "Code required" }),
         minimumRequired: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
-        percentageDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
+        percentageDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }).lt(100, { message: "Percentage should be < 100" }),
         fixedDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
         maxDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
         paymentOptions: z.string().array().min(1, { message: "Select at least 1 payment method" }),
@@ -82,7 +82,7 @@ export function NewPromoForm({
     })
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
         defaultValues: {
             campaignName: "",
             code: "",

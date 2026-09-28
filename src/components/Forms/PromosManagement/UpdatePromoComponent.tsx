@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 //FORMS
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 
 import {
     Form,
@@ -112,7 +112,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
         campaignName: z.string().min(1, { message: "Campaign name required" }),
         code: z.string().min(1, { message: "Code required" }),
         minimumRequired: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
-        percentageDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
+        percentageDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }).lt(100, { message: "Percentage should be < 100" }),
         fixedDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
         maxDiscount: z.coerce.number({ message: "Please input a valid number" }).gte(0, { message: "Price should be greater than 0" }),
         paymentOptions: z.string().array().min(1, { message: "Select at least 1 payment method" }),
@@ -131,7 +131,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
     })
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
         defaultValues: {
             _id: "",
             campaignName: "",
@@ -342,6 +342,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                                                 id="minimumRequired"
                                                 type="number"
                                                 {...field}
+                                                value={field.value ?? 0}
                                                 placeholder="e.g. 2000 (0 for no minimum requirement)"
                                             />
                                         </FormControl>
@@ -363,6 +364,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                                                     id="percentageDiscount"
                                                     type="number"
                                                     {...field}
+                                                    value={field.value ?? 0}
                                                     placeholder="e.g. 10"
                                                 />
                                             </FormControl>
@@ -383,6 +385,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                                                     id="fixedDiscount"
                                                     type="number"
                                                     {...field}
+                                                    value={field.value ?? 0}
                                                     placeholder="e.g. 300"
                                                 />
                                             </FormControl>
@@ -404,6 +407,7 @@ const UpdatePromoComponent = ({ id = "", open, onOpenChange }:
                                                 id="maxDiscount"
                                                 type="number"
                                                 {...field}
+                                                value={field.value ?? 0}
                                                 placeholder="e.g. 1000 (0 for no maximum discount)"
                                             />
                                         </FormControl>

@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 //FORMS
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { Resolver, useForm } from "react-hook-form"
 
 import {
     Form,
@@ -45,7 +45,7 @@ export function NewTicketForm({
     });
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+        resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
         defaultValues: {
             name: "",
             code: "",
