@@ -516,7 +516,6 @@ const TicketPortal = ({ open, onOpenChange }) => {
             email: personalDetails.confirmEmail,
           };
           createDragonPayCheckout(params).then((data) => {
-            console.log(data);
             window.location = data.Url;
           });
         }
@@ -540,9 +539,7 @@ const TicketPortal = ({ open, onOpenChange }) => {
                 error: "Paymaya redirect URL not available. Please try a different payment method.",
               });
             }
-            console.log(paymayaResponse);
           } catch (error) {
-            console.log(error);
             setMessage({
               ...message,
               success: "",

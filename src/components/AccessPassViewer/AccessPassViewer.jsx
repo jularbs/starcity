@@ -11,8 +11,6 @@ const AccessPassViewer = ({ accessPasses, details }) => {
   const salt = searchParams.get("s");
   const refid = searchParams.get("r");
 
-  console.log("salt: ", salt);
-  console.log("refId: ", refid);
   useEffect(() => {
     filter();
   }, [accessPasses]);
