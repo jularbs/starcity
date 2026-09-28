@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BooleanSchema } from '../../../common/schemas/boolean.js';
+import escapeHtml from 'escape-html';
 
 export const updateImageSliderSchema = z.object({
   order: z.coerce
@@ -14,6 +15,10 @@ export const updateImageSliderSchema = z.object({
   name: z
     .string({ error: 'Name is required' })
     .min(1, { message: 'Name must not be empty' })
+    .transform((val) => escapeHtml(val))
+    .refine((val) => /^[a-zA-ZÀ-ÿ\s'\-;&]+$/.test(val), {
+      message: 'Name contains invalid symbols',
+    })
     .optional(),
   status: BooleanSchema.optional(),
   startDate: z.coerce.date({ error: 'Start date is required' }).optional(),

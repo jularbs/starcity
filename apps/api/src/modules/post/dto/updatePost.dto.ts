@@ -1,8 +1,13 @@
 import { z } from 'zod';
+import escapeHtml from 'escape-html';
 
 export const updatePostSchema = z
   .object({
-    title: z.string().min(1, 'Title is required').optional(),
+    title: z
+      .string()
+      .min(1, 'Title is required')
+      .transform((val) => escapeHtml(val))
+      .optional(),
     slug: z.string().min(1, 'Slug is required').optional(),
     content: z.string().min(1, 'Content is required').optional(),
     status: z.enum(['draft', 'published']).default('draft').optional(),

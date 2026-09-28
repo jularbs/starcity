@@ -2,15 +2,21 @@ import { z } from 'zod';
 import { BooleanSchema } from '../../../common/schemas/boolean.js';
 import { ObjectIdSchema } from '../../../common/schemas/objectId.js';
 import { Types } from 'mongoose';
+import escapeHtml from 'escape-html';
 
 export const createPromoSchema = z
   .object({
     code: z
       .string({ error: 'Code is required' })
-      .min(1, { message: 'Code must not be empty' }),
+      .min(1, { message: 'Code must not be empty' })
+      .transform((val) => escapeHtml(val))
+      .refine((val) => /^[a-zA-ZÀ-ÿ\s'\-;&]+$/.test(val), {
+        message: 'Promo Code contains invalid symbols',
+      }),
     campaignName: z
       .string({ error: 'Campaign name is required' })
-      .min(1, { message: 'Campaign name must not be empty' }),
+      .min(1, { message: 'Campaign name must not be empty' })
+      .transform((val) => escapeHtml(val)),
     startDate: z.coerce.date({ error: 'Start date is required' }),
     endDate: z.coerce.date({ error: 'End date is required' }),
     percentageDiscount: z.coerce

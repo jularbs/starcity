@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from './ui/button';
 import useSWR from 'swr';
-import { LoaderCircle, Minus, Plus, X } from 'lucide-react';
+import { ArrowLeft, LoaderCircle, Minus, Plus, X } from 'lucide-react';
 import { getOptionByName } from '@/actions/option';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -406,6 +406,15 @@ const TicketPortal = ({ open, onOpenChange }) => {
               {loading['bpi'] && <LoaderCircle className="animate-spin" />}
             </Button>
           )}
+
+          <Button
+            className="w-full font-bold mt-2"
+            variant="outline"
+            onClick={handleStepDown}
+          >
+            <ArrowLeft />
+            Back
+          </Button>
         </div>
       </div>
     );
@@ -510,7 +519,11 @@ const TicketPortal = ({ open, onOpenChange }) => {
               }}
               value={promoCode}
             />
-            <Button type="submit" onClick={handleApplyPromoCode}>
+            <Button
+              type="submit"
+              disabled={promoCode.length === 0}
+              onClick={handleApplyPromoCode}
+            >
               {loading.promoCode && <LoaderCircle className="animate-spin" />}
               Apply
             </Button>
@@ -658,14 +671,25 @@ const TicketPortal = ({ open, onOpenChange }) => {
       })
       .catch((error) => {
         setLoading({ ...loading, [paymentOption]: false });
-        if (error.error)
+        const checkoutError = error?.error ?? error;
+
+        if (checkoutError?.code === 'VALIDATION_ERROR') {
+          const details = checkoutError.details || {};
           setMessage({
             ...message,
             success: '',
-            error:
-              error.error.message ||
-              'An unexpected error occurred, please try again later.',
+            error: Object.values(details).flat().filter(Boolean).join(' '),
           });
+          return;
+        }
+
+        setMessage({
+          ...message,
+          success: '',
+          error:
+            checkoutError?.message ||
+            'An unexpected error occurred, please try again later.',
+        });
       });
   };
 
