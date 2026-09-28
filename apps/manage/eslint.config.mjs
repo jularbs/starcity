@@ -1,13 +1,31 @@
-import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
-import nextTypescript from "eslint-config-next/typescript";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
-  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]
-}];
+const eslintConfig = [
+  {
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      '.turbo/**',
+      'out/**',
+      'build/**',
+      'public/tinymce/**',
+      'next-env.d.ts',
+    ],
+  },
+  ...nextCoreWebVitals,
+  ...nextTypescript,
+  {
+    // Pre-existing violations; warn until the affected effects are refactored.
+    rules: {
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
+    },
+  },
+  // Must be last to disable rules that conflict with Prettier
+  eslintConfigPrettier,
+];
 
 export default eslintConfig;

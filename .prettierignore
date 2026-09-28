@@ -1,0 +1,20 @@
+node_modules
+pnpm-lock.yaml
+package-lock.json
+.turbo
+dist
+build
+out
+.next
+coverage
+.env
+.env.*
+next-env.d.ts
+
+# Vendored / generated assets
+apps/manage/public/tinymce
+apps/web/certificates
+apps/api/dump
+
+# Handlebars email templates: whitespace-sensitive HTML
+*.hbs
