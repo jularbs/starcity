@@ -43,7 +43,7 @@ export const update = async (req: Request, res: Response) => {
   });
   const r = await result.populate('rideCategoryId', 'name _id');
   auditTrailService.create({
-    action: `Updated ride ${r.name}`,
+    action: `Updated ride ${id}`,
     payload: {},
     request: req,
   });

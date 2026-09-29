@@ -55,7 +55,7 @@ export const update = async (req: Request, res: Response) => {
   );
 
   auditTrailService.create({
-    action: `Updated Payment Option ${slug}`,
+    action: `Updated Payment Option ${id}`,
     payload: { name: name },
     request: req,
   });

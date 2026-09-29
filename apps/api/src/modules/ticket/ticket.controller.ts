@@ -67,7 +67,7 @@ export const update = async (req: Request, res: Response) => {
     updatedData,
   );
   auditTrailService.create({
-    action: `Updated ticket ${name}`,
+    action: `Updated ticket ${id}`,
     payload: result,
     request: req,
   });
