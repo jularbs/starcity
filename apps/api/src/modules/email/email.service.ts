@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Types } from 'mongoose';
 import { emailQueueService, type QueuedEmail } from './emailQueue.service.js';
+import { accessPassTokenService } from '../accessPass/accessPassToken.service.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const templateDir = path.join(__dirname, 'templates');
@@ -58,12 +59,19 @@ const buildHtmlFromTemplate = async (templateName: string, data: any) => {
 
 export const emailService = {
   sendAcknowledgementReceiptBySaleId: async (saleId: Types.ObjectId) => {
-    // TODOS: refactor to use saleService
     const sale = await saleService.getByIdWithDetails(saleId);
+
+    const expiryDate = new Date(sale.expiryDate);
+    expiryDate.setDate(expiryDate.getDate() + 7);
+    const tokenData = await accessPassTokenService.createAccessPassToken(
+      sale._id,
+      expiryDate,
+    );
 
     const html = await buildHtmlFromTemplate('accessPassEmailNotification', {
       ...sale.toObject(),
-      websiteUrl: config.app.websiteUrl,
+      accessPassToken: tokenData.token,
+      apiUrl: config.app.apiUrl,
     });
 
     const emailInput: EmailInput = {

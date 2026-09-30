@@ -1,36 +1,25 @@
 'use client';
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { getImageSource, showPHdate } from '@/lib/utils';
-const AccessPassViewer = ({ accessPasses, details }) => {
-  const [filtered, setFiltered] = useState([]);
+const AccessPassViewer = ({
+  accessPasses,
+  details,
+  singleTicketPath = '/accesspass',
+}) => {
+  //TODOS: Deprecate salt and refID usage 1 month after implementation of session management
   const searchParams = useSearchParams();
   const salt = searchParams.get('s');
   const refid = searchParams.get('r');
-
-  useEffect(() => {
-    filter();
-  }, [accessPasses]);
-
-  const filter = () => {
-    const ticketNames = accessPasses.map((item) => {
-      return item.ticketId.name;
-    });
-
-    const utn = [...new Set(ticketNames)];
-
-    const filteredTickets = utn.map((name) => {
-      return {
-        name: name,
-        accessPass: accessPasses.filter((ap) => ap.ticketId.name === name),
-      };
-    });
-
-    setFiltered(filteredTickets);
-  };
+  const filtered = [
+    ...new Set(accessPasses.map((item) => item.ticketId.name)),
+  ].map((name) => ({
+    name,
+    accessPass: accessPasses.filter(
+      (accessPass) => accessPass.ticketId.name === name,
+    ),
+  }));
 
   const accesspassCard = (accesspass, index) => {
     return (
@@ -64,8 +53,13 @@ const AccessPassViewer = ({ accessPasses, details }) => {
           This QR Code is valid until {details.expiryDate}.
         </p>
         <a
-          href={`/accesspass?t=${accesspass.accessToken}&s=${salt}&r=${refid}`}
-          target={'_blank'}
+          href={
+            singleTicketPath === '/my-tickets'
+              ? `/my-tickets?t=${encodeURIComponent(accesspass.accessToken)}`
+              : `/accesspass?t=${encodeURIComponent(accesspass.accessToken)}&s=${encodeURIComponent(salt ?? '')}&r=${encodeURIComponent(refid ?? '')}`
+          }
+          target="_blank"
+          rel="noreferrer"
         >
           <Button className="block w-full bg-sc-orange font-bold mt-4 hover:text-white">
             Download

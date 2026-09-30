@@ -9,6 +9,7 @@ import {
   list,
   createCheckout,
   readBySaltRefID,
+  readMyTickets,
   resendAR,
   regenerateAccessPass,
   resyncSaleByRefId,
@@ -33,6 +34,18 @@ router.get(
   list,
 );
 
+router.get(
+  '/v1/sale/my-tickets',
+  createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    message: 'Too many attempts, please try again in 15 minutes.',
+    skipSuccessfulRequests: true,
+  }),
+  readMyTickets,
+);
+
+//TODOS: Deprecate salt and refID usage 1 month after implementation of session management
 router.get(
   '/v1/sale/access-pass',
   createRateLimiter({

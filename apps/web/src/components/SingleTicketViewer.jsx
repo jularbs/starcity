@@ -12,7 +12,13 @@ import { toJpeg } from 'html-to-image';
 import { useState } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 
-const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
+const SingleTicketViewer = ({
+  singleTicket,
+  termsAndCondition,
+  details,
+  backHref = '',
+}) => {
+  //TODOS: Deprecate salt and refID usage 1 month after implementation of session management
   const searchParams = useSearchParams();
   const salt = searchParams.get('s');
   const refid = searchParams.get('r');
@@ -37,7 +43,7 @@ const SingleTicketViewer = ({ singleTicket, termsAndCondition, details }) => {
   return (
     <div className="max-w-200 mx-auto mt-12.5">
       <div className="absolute right-3 top-17.5">
-        <Link href={`/accesspass?s=${salt}&r=${refid}`}>
+        <Link href={backHref || `/accesspass?s=${salt ?? ''}&r=${refid ?? ''}`}>
           <Button className="flex items-center gap-1 pr-4!" variant="outline">
             <ChevronLeft className="w-1.25" />
             <span className="text-xs font-bold">Back </span>

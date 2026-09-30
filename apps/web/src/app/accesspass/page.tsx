@@ -9,6 +9,7 @@ export default async function Page({
 }: {
   searchParams: Promise<{ [key: string]: string }>;
 }) {
+  //TODOS: Deprecate salt and refID usage 1 month after implementation of session management
   const filters = await searchParams;
 
   let data;

@@ -4,6 +4,9 @@ import { fromZonedTime } from 'date-fns-tz';
 import { saleService } from './sale.service.js';
 import { Types } from 'mongoose';
 import { createSuccessResponse } from '../../common/utils/success-response.js';
+import { accessPassTokenService } from '../accessPass/accessPassToken.service.js';
+import { hashAccessPassToken } from '../auth/token.helpers.js';
+import { AppError } from '../../common/errors/app-error.js';
 
 export const resendAR = async (req: Request, res: Response) => {
   const { id } = req.body;
@@ -14,6 +17,7 @@ export const resendAR = async (req: Request, res: Response) => {
   res.status(200).json(createSuccessResponse({}));
 };
 
+//TODOS: Deprecate salt and refID usage 1 month after implementation of session management
 export const readBySaltRefID = async (req: Request, res: Response) => {
   const { salt, refid } = req.query;
 
@@ -21,6 +25,43 @@ export const readBySaltRefID = async (req: Request, res: Response) => {
     refid as string,
     salt as string,
   );
+
+  const accessPasses = await accessPassService.getBySalesId(saleData._id);
+
+  res
+    .status(200)
+    .json(createSuccessResponse({ ...saleData.toObject(), accessPasses }));
+};
+
+export const readMyTickets = async (req: Request, res: Response) => {
+  const accessPassToken = req.cookies?.accessPassToken;
+  if (typeof accessPassToken !== 'string' || !accessPassToken) {
+    throw new AppError({
+      message: 'Access pass session is required',
+      statusCode: 401,
+      code: 'ACCESS_PASS_SESSION_REQUIRED',
+    });
+  }
+
+  const tokenRecord = await accessPassTokenService.findAccessPassTokenByToken(
+    hashAccessPassToken(accessPassToken),
+  );
+  if (!tokenRecord) {
+    throw new AppError({
+      message: 'Access pass session is invalid or expired',
+      statusCode: 401,
+      code: 'ACCESS_PASS_SESSION_INVALID',
+    });
+  }
+
+  const saleData = await saleService.getById(tokenRecord.saleId);
+  if (!saleData) {
+    throw new AppError({
+      message: 'Sale transaction not found',
+      statusCode: 404,
+      code: 'SALE_NOT_FOUND',
+    });
+  }
 
   const accessPasses = await accessPassService.getBySalesId(saleData._id);
 

@@ -53,3 +53,11 @@ export function getPasswordResetExpirationDate(): Date {
   );
   return expiresAt;
 }
+
+export function generateAccessPassToken(): string {
+  return crypto.randomUUID();
+}
+
+export function hashAccessPassToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}

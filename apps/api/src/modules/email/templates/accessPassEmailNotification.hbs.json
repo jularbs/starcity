@@ -2,7 +2,6 @@
   "customerName": "Ralph Jularbal",
   "expiryDate": "September 24, 2026",
   "refId": "123456",
-  "websiteUrl": "https://www.example.com",
   "salt": "asdf",
   "emailAddress": "ralph@example.com",
   "contactNumber": "123-456-7890",
@@ -28,5 +27,7 @@
       "qty": 7,
       "priceAcquired": "100.00"
     }
-  ]
+  ],
+  "accessPassToken": "your-access-pass-token",
+  "apiUrl": "https://www.example.com"
 }
