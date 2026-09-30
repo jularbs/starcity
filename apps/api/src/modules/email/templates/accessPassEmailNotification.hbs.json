@@ -28,6 +28,5 @@
       "priceAcquired": "100.00"
     }
   ],
-  "accessPassToken": "your-access-pass-token",
-  "apiUrl": "https://www.example.com"
+  "accessPassUrl": "https://www.example.com"
 }

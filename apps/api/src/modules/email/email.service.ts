@@ -67,11 +67,15 @@ export const emailService = {
       sale._id,
       expiryDate,
     );
+    const accessPassUrl = new URL(
+      '/access-pass-session',
+      config.app.websiteUrl,
+    );
+    accessPassUrl.searchParams.set('token', tokenData.token);
 
     const html = await buildHtmlFromTemplate('accessPassEmailNotification', {
       ...sale.toObject(),
-      accessPassToken: tokenData.token,
-      apiUrl: config.app.apiUrl,
+      accessPassUrl: accessPassUrl.toString(),
     });
 
     const emailInput: EmailInput = {
