@@ -19,7 +19,8 @@ import { Button } from '@/components/ui/button';
 import RemoveUserComponent from './RemoveUserComponent';
 import UnblockUserComponent from './UnblockUserComponent';
 import UpdateUserComponent from './UpdateUserComponent';
-import { Edit, Trash } from 'lucide-react';
+import { Edit, KeyRound, Trash } from 'lucide-react';
+import ResetMfaComponent from './ResetMfaComponent';
 
 const UserListComponent = () => {
   const { data, isLoading } = useSWR(
@@ -32,6 +33,7 @@ const UserListComponent = () => {
   const [updateOpen, setUpdateOpen] = useState<boolean>(false);
   const [removeOpen, setRemoveOpen] = useState<boolean>(false);
   const [unblockOpen, setUnblockOpen] = useState<boolean>(false);
+  const [resetMfaOpen, setResetMfaOpen] = useState<boolean>(false);
   const [currentId, setCurrentId] = useState('');
 
   const showData = () => {
@@ -92,6 +94,20 @@ const UserListComponent = () => {
                     Unblock
                   </Button>
                 )}
+                {item.mfaEnabledAt && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="Reset MFA"
+                    aria-label={`Reset MFA for ${item.name}`}
+                    onClick={() => {
+                      setCurrentId(item._id);
+                      setResetMfaOpen(true);
+                    }}
+                  >
+                    <KeyRound />
+                  </Button>
+                )}
                 <Button
                   size="icon"
                   onClick={() => {
@@ -135,6 +151,11 @@ const UserListComponent = () => {
         id={currentId}
         open={unblockOpen}
         onOpenChange={setUnblockOpen}
+      />
+      <ResetMfaComponent
+        id={currentId}
+        open={resetMfaOpen}
+        onOpenChange={setResetMfaOpen}
       />
       <Card className="p-0 gap-0!">
         <CardHeader className="flex flex-col items-center justify-between p-4 lg:flex-row">

@@ -47,6 +47,7 @@ export const config = {
     idleTimeoutInMinutes: env.SESSION_IDLE_TIMEOUT_MINUTES,
     passwordResetExpiresInMinutes: env.PASSWORD_RESET_EXPIRES_IN_MINUTES,
     cookieSecure: env.JWT_COOKIE_SECURE,
+    mfaEncryptionKey: env.MFA_ENCRYPTION_KEY,
   },
   aws: {
     s3: {

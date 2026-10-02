@@ -24,6 +24,52 @@ import { revokedAccessTokenRepository } from './revokedAccessToken.repository.js
 import { userService } from '../user/user.service.js';
 import { emailService } from '../email/email.service.js';
 import { AppError } from '../../common/errors/app-error.js';
+import { mfaService } from './mfa.service.js';
+
+const completeSignin = async (req: Request, res: Response, user) => {
+  const payload = {
+    sub: user._id,
+    roles: user.department,
+    jti: generateAccessTokenId(),
+  };
+  const token = signAccessToken(payload);
+  const refreshToken = generateRefreshToken();
+
+  await refreshTokenRepository.storeRefreshToken(
+    user._id,
+    hashRefreshToken(refreshToken),
+  );
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: config.auth.cookieSecure,
+    sameSite: 'strict',
+    maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
+  });
+
+  await userService.updateById(user._id, {
+    mistakes: 0,
+    lastLogin: new Date(),
+  });
+  await auditTrailService.create({
+    userId: user._id,
+    action: 'Logged in to system',
+    request: req,
+    payload: { email: user.email },
+  });
+
+  return res.status(200).json(
+    createSuccessResponse({
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        department: user.department,
+      },
+    }),
+  );
+};
 
 export const signup = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -127,51 +173,65 @@ export const signin = async (req: Request, res: Response) => {
     });
   }
 
-  //generate JWT
-  const payload = {
-    sub: user._id,
-    roles: user.department,
-    jti: generateAccessTokenId(),
-  };
-  const token = signAccessToken(payload);
+  if (user.mfaEnabledAt && user.mfaSecret) {
+    const challengeToken = await mfaService.createLoginChallengeForUser(
+      user._id,
+    );
+    return res.status(200).json(
+      createSuccessResponse({
+        mfaRequired: true,
+        challengeToken,
+        expiresInSeconds: 300,
+      }),
+    );
+  }
 
-  const refreshToken = generateRefreshToken();
-  const hashedRefreshToken = hashRefreshToken(refreshToken);
+  return completeSignin(req, res, user);
+};
 
-  // Store hashed refresh token in the database
+export const verifySigninMfa = async (req: Request, res: Response) => {
+  const { challengeToken, code } = req.body;
+  const challenge = await mfaService.findActiveLoginChallenge(challengeToken);
 
-  await refreshTokenRepository.storeRefreshToken(user._id, hashedRefreshToken);
+  if (!challenge) {
+    throw new AppError({
+      message: 'MFA challenge is invalid or expired',
+      code: 'INVALID_MFA_CHALLENGE',
+      statusCode: 401,
+    });
+  }
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: config.auth.cookieSecure,
-    sameSite: 'strict',
-    maxAge: config.auth.refreshExpiresInDays * 24 * 60 * 60 * 1000,
-  });
+  const user = await userService.getById(challenge.userId);
+  if (!user || !user.status || !user.mfaEnabledAt || !user.mfaSecret) {
+    await mfaService.consumeLoginChallenge(challengeToken);
+    throw new AppError({
+      message: 'MFA challenge is invalid or expired',
+      code: 'INVALID_MFA_CHALLENGE',
+      statusCode: 401,
+    });
+  }
 
-  userService.updateById(user._id, {
-    mistakes: 0,
-    lastLogin: new Date(),
-  });
+  const verifiedFactor = await mfaService.verifyUserFactor(user, code, true);
+  if (!verifiedFactor) {
+    await mfaService.recordFailedLoginChallengeAttempt(challengeToken);
+    throw new AppError({
+      message: 'Verification code is invalid',
+      code: 'INVALID_MFA_CODE',
+      statusCode: 401,
+    });
+  }
 
-  auditTrailService.create({
-    userId: user._id,
-    action: 'Logged in to system',
-    request: req,
-    payload: { email: email },
-  });
+  const consumedChallenge =
+    await mfaService.consumeLoginChallenge(challengeToken);
+  if (!consumedChallenge) {
+    throw new AppError({
+      message: 'MFA challenge is invalid or expired',
+      code: 'INVALID_MFA_CHALLENGE',
+      statusCode: 401,
+    });
+  }
 
-  res.status(200).json(
-    createSuccessResponse({
-      token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        department: user.department,
-      },
-    }),
-  );
+  return completeSignin(req, res, user);
 };
 
 export const refreshAccessToken = async (req: Request, res: Response) => {

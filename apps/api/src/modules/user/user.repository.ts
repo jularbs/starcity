@@ -53,7 +53,9 @@ const list = async ({
 }) => {
   const filters = buildFilter(params);
   return User.find(filters)
-    .select('_id name email createdAt department status lastLogin mistakes')
+    .select(
+      '_id name email createdAt department status lastLogin mistakes mfaEnabledAt',
+    )
     .skip(skip ?? 0)
     .limit(limit ?? 0)
     .exec();
@@ -70,6 +72,31 @@ const updateById = async (
 ) => {
   return User.findByIdAndUpdate(id, update, { returnDocument: 'after' });
 };
+
+const consumeRecoveryCode = async (id: Types.ObjectId, codeHash: string) =>
+  User.findOneAndUpdate(
+    {
+      _id: id,
+      mfaEnabledAt: { $ne: null },
+      mfaRecoveryCodeHashes: codeHash,
+    },
+    { $pull: { mfaRecoveryCodeHashes: codeHash } },
+    { returnDocument: 'after' },
+  );
+
+const updateMfaTotpStep = async (id: Types.ObjectId, step: number) =>
+  User.findOneAndUpdate(
+    {
+      _id: id,
+      mfaEnabledAt: { $ne: null },
+      $or: [
+        { mfaLastTotpStep: { $exists: false } },
+        { mfaLastTotpStep: { $lt: step } },
+      ],
+    },
+    { $set: { mfaLastTotpStep: step } },
+    { returnDocument: 'after' },
+  );
 
 const removeById = async (id: Types.ObjectId) => {
   return User.findByIdAndUpdate(
@@ -92,6 +119,8 @@ export const userRepository = {
   list,
   countDocuments,
   updateById,
+  consumeRecoveryCode,
+  updateMfaTotpStep,
   removeById,
   create,
 };

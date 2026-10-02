@@ -19,6 +19,8 @@ import {
 import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
 import { changePasswordSchema } from './dto/changePassword.dto.js';
 import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
+import { adminResetMfa } from './user.controller.js';
+import { adminMfaResetSchema } from './dto/adminMfaReset.dto.js';
 
 const changePasswordRateLimit = createRateLimiter({
   windowMs: 30 * 60 * 1000,
@@ -56,6 +58,14 @@ router.patch(
   changePasswordRateLimit,
   validateRequest({ body: changePasswordSchema }),
   changePassword,
+);
+
+router.delete(
+  '/v1/user/:id/mfa',
+  requireSignin,
+  authzMiddleware(ADMIN_ROLE),
+  validateRequest({ params: userIdParamsSchema, body: adminMfaResetSchema }),
+  adminResetMfa,
 );
 
 router.patch(

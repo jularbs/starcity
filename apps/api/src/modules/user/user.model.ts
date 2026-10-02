@@ -38,6 +38,15 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    mfaSecret: String,
+    mfaPendingSecret: String,
+    mfaPendingExpiresAt: Date,
+    mfaEnabledAt: Date,
+    mfaRecoveryCodeHashes: {
+      type: [String],
+      default: [],
+    },
+    mfaLastTotpStep: Number,
   },
   { timestamps: true },
 );

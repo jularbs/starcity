@@ -1,7 +1,7 @@
 name: spc-services
 services:
   mongodb:
-    image: mongo:latest
+    image: mongo:8.2
     container_name: spc-mongodb
     ports:
       - '27017:27017'

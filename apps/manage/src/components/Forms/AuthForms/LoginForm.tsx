@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { SignIn } from '@/actions/auth';
+import { SignIn, verifySigninMfa } from '@/actions/auth';
 import { useState } from 'react';
 import { LoaderCircle } from 'lucide-react';
 
@@ -39,6 +39,10 @@ export function LoginForm({
 
   //Component States
   const [loading, setLoading] = useState(false);
+  const [mfaChallengeToken, setMfaChallengeToken] = useState<string | null>(
+    null,
+  );
+  const [mfaCode, setMfaCode] = useState('');
   const [message, setMessage] = useState({
     success: '',
     error: '',
@@ -64,13 +68,39 @@ export function LoginForm({
       const response = await SignIn({
         ...values,
       });
-      setLoading(false);
-
       const auth = response.data;
-      setCookie('token', auth.token, { expires: 7, path: '/' });
-      setValue(auth.user);
+      if (auth.mfaRequired) {
+        setMfaChallengeToken(auth.challengeToken);
+        setLoading(false);
+        return;
+      }
 
-      redirect('/dashboard');
+      finishSignin(auth);
+    } catch (err) {
+      setLoading(false);
+      if (isRedirectError(err)) {
+        throw err;
+      }
+      setMessage({ success: '', error: getErrorMessage(err) });
+    }
+  }
+
+  function finishSignin(auth: { token: string; user: Record<string, string> }) {
+    setCookie('token', auth.token, { expires: 7, path: '/' });
+    setValue(auth.user);
+    redirect('/dashboard');
+  }
+
+  async function verifyMfaCode() {
+    if (!mfaChallengeToken) return;
+    setLoading(true);
+    setMessage({ success: '', error: '' });
+    try {
+      const response = await verifySigninMfa({
+        challengeToken: mfaChallengeToken,
+        code: mfaCode,
+      });
+      finishSignin(response.data);
     } catch (err) {
       setLoading(false);
       if (isRedirectError(err)) {
@@ -96,47 +126,84 @@ export function LoginForm({
                 {message.error && (
                   <AlertError title="Invalid Login" message={message.error} />
                 )}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel htmlFor="email">
-                        <span className="text-primary">Email</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          id="email"
-                          type="email"
-                          {...field}
-                          placeholder="m@example.com"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-xs font-light" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center">
-                        <FormLabel htmlFor="password">
-                          <span className="text-primary">Password</span>
-                        </FormLabel>
-                      </div>
-                      <FormControl>
-                        <Input id="password" type="password" {...field} />
-                      </FormControl>
-                      <FormMessage className="text-xs font-light" />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">
-                  Login
+                {!mfaChallengeToken ? (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="email">
+                            <span className="text-primary">Email</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              id="email"
+                              type="email"
+                              {...field}
+                              placeholder="m@example.com"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs font-light" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center">
+                            <FormLabel htmlFor="password">
+                              <span className="text-primary">Password</span>
+                            </FormLabel>
+                          </div>
+                          <FormControl>
+                            <Input id="password" type="password" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-xs font-light" />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                ) : (
+                  <div className="grid gap-4">
+                    <p className="text-sm text-muted-foreground">
+                      Enter the 6-digit code from your authenticator app or a
+                      recovery code.
+                    </p>
+                    <Input
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      maxLength={32}
+                      value={mfaCode}
+                      onChange={(event) => setMfaCode(event.target.value)}
+                      aria-label="Authenticator or recovery code"
+                    />
+                  </div>
+                )}
+                <Button
+                  type={mfaChallengeToken ? 'button' : 'submit'}
+                  onClick={mfaChallengeToken ? verifyMfaCode : undefined}
+                  className="w-full"
+                  disabled={loading || (Boolean(mfaChallengeToken) && !mfaCode)}
+                >
+                  {mfaChallengeToken ? 'Verify and sign in' : 'Login'}
                   {loading && <LoaderCircle className="animate-spin" />}
                 </Button>
+                {mfaChallengeToken && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => {
+                      setMfaChallengeToken(null);
+                      setMfaCode('');
+                      setMessage({ success: '', error: '' });
+                    }}
+                  >
+                    Back to password
+                  </Button>
+                )}
                 <a
                   href="/auth/forgot-password"
                   className="text-sm text-center underline-offset-2 hover:underline"

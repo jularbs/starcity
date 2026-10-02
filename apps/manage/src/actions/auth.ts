@@ -25,6 +25,106 @@ export const SignIn = async ({
   return res.json();
 };
 
+export const verifySigninMfa = async (data: {
+  challengeToken: string;
+  code: string;
+}) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/signin/mfa`,
+    {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(data),
+    },
+  );
+
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const getMfaStatus = async () => {
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/mfa/status`,
+  );
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const beginMfaSetup = async (currentPassword: string) => {
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/mfa/setup`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword }),
+    },
+  );
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const confirmMfaSetup = async (code: string) => {
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/mfa/enable`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    },
+  );
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const disableMfa = async (data: {
+  currentPassword: string;
+  code: string;
+}) => {
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/mfa/disable`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    },
+  );
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const regenerateMfaRecoveryCodes = async (data: {
+  currentPassword: string;
+  code: string;
+}) => {
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/mfa/recovery-codes`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    },
+  );
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const resetUserMfa = async (id: string, reason: string) => {
+  const res = await apiFetch(
+    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/user/${id}/mfa`,
+    {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    },
+  );
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
 export const SignUp = async ({
   name,
   email,

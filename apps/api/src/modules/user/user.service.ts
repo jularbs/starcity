@@ -32,6 +32,12 @@ const updateById = async (
   return userRepository.updateById(id, update);
 };
 
+const consumeRecoveryCode = async (id: Types.ObjectId, codeHash: string) =>
+  userRepository.consumeRecoveryCode(id, codeHash);
+
+const updateMfaTotpStep = async (id: Types.ObjectId, step: number) =>
+  userRepository.updateMfaTotpStep(id, step);
+
 const removeById = async (id: Types.ObjectId) => {
   return userRepository.removeById(id);
 };
@@ -50,6 +56,8 @@ export const userService = {
   countUsers,
   list,
   updateById,
+  consumeRecoveryCode,
+  updateMfaTotpStep,
   removeById,
   create,
   resetMistakes,
