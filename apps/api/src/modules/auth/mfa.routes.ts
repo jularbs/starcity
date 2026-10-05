@@ -2,7 +2,10 @@ import express from 'express';
 import { z } from 'zod';
 import { createRateLimiter } from '../../common/middleware/rate-limit.middleware.js';
 import { validateRequest } from '../../common/middleware/validate-request.middleware.js';
-import { requireSignin } from '../../common/middleware/auth.middleware.js';
+import {
+  requireSignin,
+  requireSigninForMfaEnrollment,
+} from '../../common/middleware/auth.middleware.js';
 import {
   beginMfaSetup,
   confirmMfaSetup,
@@ -32,11 +35,11 @@ router.post(
   verifySigninMfa,
 );
 
-router.get('/v1/mfa/status', requireSignin, getMfaStatus);
+router.get('/v1/mfa/status', requireSigninForMfaEnrollment, getMfaStatus);
 
 router.post(
   '/v1/mfa/setup',
-  requireSignin,
+  requireSigninForMfaEnrollment,
   createRateLimiter({
     windowMs: 15 * 60 * 1000,
     limit: 5,
@@ -48,7 +51,7 @@ router.post(
 
 router.post(
   '/v1/mfa/enable',
-  requireSignin,
+  requireSigninForMfaEnrollment,
   createRateLimiter({
     windowMs: 15 * 60 * 1000,
     limit: 10,

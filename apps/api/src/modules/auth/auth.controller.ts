@@ -61,6 +61,7 @@ const completeSignin = async (req: Request, res: Response, user) => {
   return res.status(200).json(
     createSuccessResponse({
       token,
+      enrollmentRequired: !user.mfaEnabledAt || !user.mfaSecret,
       user: {
         _id: user._id,
         name: user.name,

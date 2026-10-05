@@ -1,9 +1,13 @@
 'use client';
-import { redirect } from 'next/navigation';
 import { validateToken } from '@/actions/auth';
 import { refreshAccessTokenOnce } from '@/lib/api-client';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+
+const requiresMfaEnrollment = (error: unknown) =>
+  typeof error === 'object' &&
+  error !== null &&
+  'code' in error &&
+  error.code === 'MFA_ENROLLMENT_REQUIRED';
 
 export function AuthProvider({
   children,
@@ -14,30 +18,36 @@ export function AuthProvider({
 
   useEffect(() => {
     let active = true;
-    validateToken()
-      .then(() => {
-        if (active) setAuthenticated(true);
-      })
-      .catch(() => {
-        refreshAccessTokenOnce()
-          .then((newToken) => {
-            if (!newToken) throw new Error('Unable to refresh access token');
-            if (active) setAuthenticated(true);
-          })
-          .catch((err) => {
-            if (!active) return;
-            toast.error('Authentication Error!', {
-              style: {
-                background: 'rgba(220, 46, 46, 1)',
-                color: 'white',
-                border: 'none',
-              },
-              description: err.error,
-              duration: 5000,
-            });
-            redirect('/auth/login');
-          });
-      });
+    const checkSession = async () => {
+      try {
+        await validateToken();
+      } catch (error) {
+        if (!active) return;
+        if (requiresMfaEnrollment(error)) {
+          window.location.replace('/auth/enroll-mfa');
+          return;
+        }
+        const newToken = await refreshAccessTokenOnce();
+        if (!newToken) {
+          window.location.replace('/auth/login');
+          return;
+        }
+        try {
+          await validateToken();
+        } catch (refreshedError) {
+          if (!active) return;
+          if (requiresMfaEnrollment(refreshedError)) {
+            window.location.replace('/auth/enroll-mfa');
+            return;
+          }
+          window.location.replace('/auth/login');
+          return;
+        }
+      }
+      if (active) setAuthenticated(true);
+    };
+
+    void checkSession();
 
     return () => {
       active = false;

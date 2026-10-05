@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { removeCookie } from 'typescript-cookie';
 import { toast } from 'sonner';
@@ -22,7 +23,8 @@ type SetupData = {
   manualEntryKey: string;
 };
 
-const MfaSettings = () => {
+const MfaSettings = ({ required = false }: { required?: boolean }) => {
+  const router = useRouter();
   const { data: statusResponse, mutate: refreshStatus } = useSWR(
     'mfa-status',
     getMfaStatus,
@@ -87,7 +89,7 @@ const MfaSettings = () => {
     try {
       await disableMfa({ currentPassword, code });
       removeCookie('token', { path: '/' });
-      window.location.assign('/auth/login');
+      router.replace('/auth/login');
     } catch (error) {
       toast.error(getErrorMessage(error));
       setLoading(false);
@@ -131,9 +133,14 @@ const MfaSettings = () => {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setRecoveryCodes([])}
+              onClick={() => {
+                setRecoveryCodes([]);
+                if (required) router.replace('/dashboard');
+              }}
             >
-              I saved these codes
+              {required
+                ? 'I saved these codes, continue'
+                : 'I saved these codes'}
             </Button>
           </section>
         )}
@@ -185,37 +192,47 @@ const MfaSettings = () => {
               Authenticator app is enabled. {status.recoveryCodesRemaining}{' '}
               recovery codes remain.
             </p>
-            <Input
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              placeholder="Current password"
-              aria-label="Current password"
-            />
-            <Input
-              autoComplete="one-time-code"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              placeholder="Authenticator code"
-              aria-label="Authenticator code"
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={regenerateCodes}
-                disabled={loading || !currentPassword || !/^\d{6}$/.test(code)}
-              >
-                Regenerate recovery codes
+            {required && recoveryCodes.length === 0 ? (
+              <Button onClick={() => router.replace('/dashboard')}>
+                Continue to dashboard
               </Button>
-              <Button
-                variant="destructive"
-                onClick={turnOffMfa}
-                disabled={loading || !currentPassword || !code}
-              >
-                Turn off MFA
-              </Button>
-            </div>
+            ) : !required ? (
+              <>
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  placeholder="Current password"
+                  aria-label="Current password"
+                />
+                <Input
+                  autoComplete="one-time-code"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  placeholder="Authenticator code"
+                  aria-label="Authenticator code"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={regenerateCodes}
+                    disabled={
+                      loading || !currentPassword || !/^\d{6}$/.test(code)
+                    }
+                  >
+                    Regenerate recovery codes
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={turnOffMfa}
+                    disabled={loading || !currentPassword || !code}
+                  >
+                    Turn off MFA
+                  </Button>
+                </div>
+              </>
+            ) : null}
           </div>
         ) : (
           <div className="grid gap-4">

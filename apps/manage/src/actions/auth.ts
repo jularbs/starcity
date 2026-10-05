@@ -174,6 +174,7 @@ export const validateToken = async () => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_ENDPOINT}/v1/validate-token`,
     {
+      credentials: 'include',
       headers: {
         Authorization: `Bearer ${getCookie('token')}`,
       },
@@ -181,10 +182,10 @@ export const validateToken = async () => {
   );
 
   if (!res.ok) {
-    throw await res.json();
+    throw { ...(await res.json()), status: res.status };
   }
 
-  return res.json();
+  if (res.status !== 204) return res.json();
 };
 
 export const refreshAccessToken = async () => {

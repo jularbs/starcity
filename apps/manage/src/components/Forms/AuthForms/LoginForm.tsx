@@ -85,10 +85,14 @@ export function LoginForm({
     }
   }
 
-  function finishSignin(auth: { token: string; user: Record<string, string> }) {
+  function finishSignin(auth: {
+    token: string;
+    user: Record<string, string>;
+    enrollmentRequired?: boolean;
+  }) {
     setCookie('token', auth.token, { expires: 7, path: '/' });
     setValue(auth.user);
-    redirect('/dashboard');
+    redirect(auth.enrollmentRequired ? '/auth/enroll-mfa' : '/dashboard');
   }
 
   async function verifyMfaCode() {
