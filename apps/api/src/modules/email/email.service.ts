@@ -23,7 +23,7 @@ const mailConfig = {
     user: config.email.address,
     pass: config.email.password,
   },
-  tls: { rejectUnauthorized: false },
+  tls: { rejectUnauthorized: true },
 };
 
 const transporter = nodemailer.createTransport(mailConfig);

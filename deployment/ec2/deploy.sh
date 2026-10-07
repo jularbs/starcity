@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+APP_ROOT=${APP_ROOT:-/opt/starcity/app}
+RUNTIME_ENV_FILE=${RUNTIME_ENV_FILE:-/opt/starcity/shared/runtime.env}
+
+if [[ "$(id -u)" -eq 0 ]]; then
+  echo 'Run deployment as the non-root ubuntu user; do not run PM2 as root.' >&2
+  exit 2
+fi
+if [[ ! -f "$APP_ROOT/pnpm-workspace.yaml" || ! -f "$APP_ROOT/pnpm-lock.yaml" ]]; then
+  echo 'APP_ROOT must be the repository checkout.' >&2
+  exit 2
+fi
+if [[ ! -r "$RUNTIME_ENV_FILE" ]]; then
+  echo "Runtime env file is missing or unreadable: $RUNTIME_ENV_FILE" >&2
+  exit 2
+fi
+if [[ "$(node --version)" != v24.* ]]; then
+  echo "Node.js 24 is required; found $(node --version)." >&2
+  exit 2
+fi
+for command in pnpm pm2 docker curl; do
+  command -v "$command" >/dev/null || { echo "Required command not found: $command" >&2; exit 2; }
+done
+
+set -a
+# shellcheck disable=SC1090 # Runtime env is an operator-owned mode-600 file outside the checkout.
+source "$RUNTIME_ENV_FILE"
+set +a
+
+: "${NEXT_PUBLIC_API_ENDPOINT:?Set the public API URL in runtime.env}"
+: "${NEXT_PUBLIC_WEB_DOMAIN:?Set the public web URL in runtime.env}"
+: "${NEXT_PUBLIC_MANAGE_DOMAIN:?Set the public manage URL in runtime.env}"
+for url in "$NEXT_PUBLIC_API_ENDPOINT" "$NEXT_PUBLIC_WEB_DOMAIN" "$NEXT_PUBLIC_MANAGE_DOMAIN"; do
+  [[ "$url" == https://* ]] || { echo "Public production URLs must use HTTPS: $url" >&2; exit 2; }
+done
+
+API_ENV_LINK="$APP_ROOT/apps/api/.env"
+if [[ -e "$API_ENV_LINK" && ! -L "$API_ENV_LINK" ]]; then
+  echo "$API_ENV_LINK exists and is not a symlink. Move its local contents outside the repo, then retry." >&2
+  exit 2
+fi
+ln -sfn "$RUNTIME_ENV_FILE" "$API_ENV_LINK"
+
+docker compose \
+  --project-name starcity-local-dependencies \
+  --env-file "$RUNTIME_ENV_FILE" \
+  -f "$APP_ROOT/deployment/ec2/compose.dependencies.yaml" \
+  up -d --wait --wait-timeout 180 mongodb mysql
+
+cd "$APP_ROOT"
+pnpm install --frozen-lockfile
+
+# Next.js public settings are compiled into its production bundle.
+export NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
+pnpm --filter api build
+pnpm --filter manage build
+pnpm --filter web build
+
+for app in manage web; do
+  standalone="$APP_ROOT/apps/$app/.next/standalone/apps/$app"
+  mkdir -p "$standalone/.next"
+  cp -a "$APP_ROOT/apps/$app/.next/static" "$standalone/.next/static"
+  if [[ -d "$APP_ROOT/apps/$app/public" ]]; then
+    cp -a "$APP_ROOT/apps/$app/public" "$standalone/public"
+  fi
+done
+
+pm2 startOrReload "$APP_ROOT/deployment/ec2/ecosystem.config.cjs" --update-env
+pm2 save
+
+curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 \
+  --max-time 10 http://127.0.0.1:8000/healthz >/dev/null
+curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 \
+  --max-time 10 http://127.0.0.1:3000/auth/login >/dev/null
+curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 \
+  --max-time 10 http://127.0.0.1:3001/robots.txt >/dev/null
+
+echo 'API, manage, and web processes are healthy.'
+pm2 status

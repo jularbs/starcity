@@ -1,0 +1,51 @@
+name: starcity-local-dependencies
+
+services:
+  mongodb:
+    image: mongo:8.2
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?Set MONGO_ROOT_USER in the runtime env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in the runtime env}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password
+          "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval
+          'quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)'
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:3306:3306'
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB:?Set MYSQL_DB in the runtime env}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in the runtime env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in the runtime env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in the runtime env}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../../apps/api/docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - MYSQL_PWD="$$MYSQL_PASSWORD" mysql --user="$$MYSQL_USER"
+          --database="$$MYSQL_DATABASE" --execute='SELECT 1'
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+volumes:
+  mongo-data:
+  mysql-data:

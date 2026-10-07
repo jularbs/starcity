@@ -11,3 +11,6 @@ dist
 .next
 out
 *.tsbuildinfo
+deployment/ec2/runtime.env
+deployment/ec2/*.pem
+deployment/ec2/*.key

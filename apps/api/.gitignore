@@ -6,6 +6,7 @@ security-cert
 .env
 .env.*
 !.env.example
+*.env.runtime
 
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
