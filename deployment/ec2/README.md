@@ -8,13 +8,40 @@ Use Ubuntu 24.04 x86-64 in Singapore. `t3.medium` (2 vCPU, 4 GiB RAM) is a start
 
 Allow inbound HTTPS only from Cloudflare's current IP ranges. Do not expose SSH, ports 3000-3001, 8000, 27017, 3306, 1025, or 8025. Use SSM for administration. The host needs outbound HTTPS to GitHub, NodeSource, Docker's package repository, npm/pnpm registries, your UAT S3 bucket, the SMTP provider, and PayMaya sandbox.
 
+You do **not** need to create or download an EC2 SSH key pair for Session
+Manager. Attach an instance profile with `AmazonSSMManagedInstanceCore` when
+launching the instance. Your human IAM Identity Center/user role separately
+needs permission to start/resume/terminate sessions and describe the target.
+The SSM Agent must be installed, running, and able to make outbound HTTPS
+connections to AWS Systems Manager.
+
+Use an AWS-published Ubuntu 24.04 AMI with SSM Agent preinstalled, or provide
+this EC2 **launch-time user data** so Session Manager works before you run the
+host installer:
+
+```bash
+#!/bin/bash
+set -eu
+region=ap-southeast-1
+curl --fail --silent --show-error --retry 5 \
+  "https://s3.$region.amazonaws.com/amazon-ssm-$region/latest/debian_amd64/amazon-ssm-agent.deb" \
+  -o /tmp/amazon-ssm-agent.deb
+dpkg -i /tmp/amazon-ssm-agent.deb
+rm -f /tmp/amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+```
+
+Wait until Systems Manager reports the instance **Online**. The installer also
+installs/enables SSM Agent, but it must be run after you have connected; it
+cannot establish the initial Session Manager connection by itself.
+
 Run the host installer as root:
 
 ```sh
 sudo bash deployment/ec2/install-host.sh
 ```
 
-It installs Node 24, pnpm 11.12.0, PM2, Docker/Compose, and Nginx. The Ubuntu `ubuntu` account is added to the Docker group; reconnect your SSM session before using Docker as that user.
+It installs Node 24, pnpm 11.12.0, PM2, Docker/Compose, Nginx, and SSM Agent. The Ubuntu `ubuntu` account is added to the Docker group; reconnect your SSM session before using Docker as `ubuntu`.
 
 Create directories:
 
