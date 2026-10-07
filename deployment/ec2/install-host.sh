@@ -21,7 +21,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 apt-get -o Acquire::Retries=5 -o DPkg::Lock::Timeout=120 update
 apt-get -o Acquire::Retries=5 -o DPkg::Lock::Timeout=120 install -y \
-  ca-certificates curl gnupg nginx util-linux
+  ca-certificates curl git gnupg nginx util-linux
 
 install -m 0755 -d /etc/apt/keyrings
 curl --fail --silent --show-error --retry 5 \

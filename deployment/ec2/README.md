@@ -35,13 +35,23 @@ Wait until Systems Manager reports the instance **Online**. The installer also
 installs/enables SSM Agent, but it must be run after you have connected; it
 cannot establish the initial Session Manager connection by itself.
 
-Run the host installer as root:
+The installer is part of the repository, so clone the repository in step 2
+before running it. For the initial clone, make sure Git is available first:
 
 ```sh
-sudo bash deployment/ec2/install-host.sh
+sudo apt-get update
+sudo apt-get install -y git
 ```
 
-It installs Node 24, pnpm 11.12.0, PM2, Docker/Compose, Nginx, and SSM Agent. The Ubuntu `ubuntu` account is added to the Docker group; reconnect your SSM session before using Docker as `ubuntu`.
+After completing step 2, run the installer by absolute path from any directory:
+
+```sh
+sudo bash /opt/starcity/app/deployment/ec2/install-host.sh
+```
+
+It installs Git, Node 24, pnpm 11.12.0, PM2, Docker/Compose, Nginx, and SSM
+Agent. The Ubuntu `ubuntu` account is added to the Docker group; reconnect your
+SSM session before using Docker as `ubuntu`.
 
 Create directories:
 
@@ -62,7 +72,7 @@ Host github-starcity-uat
   IdentitiesOnly yes
 ```
 
-Clone only `develop`:
+Clone only `develop` as `ubuntu`:
 
 ```sh
 sudo -iu ubuntu git clone --branch develop --single-branch \
@@ -107,11 +117,30 @@ MongoDB and test turnstile MySQL use named Docker volumes and loopback-only publ
 
 Create proxied Cloudflare A records for `uat.starcity.com.ph`, `uat-manage.starcity.com.ph`, and `uat-api.starcity.com.ph`, all pointing to the EC2 Elastic IP. Set SSL/TLS to **Full (strict)**. Restrict origin port 443 to Cloudflare IP ranges because the API trusts `CF-Connecting-IP`.
 
-Create an Origin Certificate for those hosts and transfer it directly to EC2 through an approved secure method, not through Git or chat. Install it:
+Create an Origin Certificate for those hosts in Cloudflare. You can enter its
+certificate and private key directly into files in your active SSM shell; this
+does not require Secrets Manager or SSH. First check your organization's SSM
+Session Manager preferences: if session input/transcripts are recorded to
+CloudWatch Logs or S3, a pasted private key may be captured there. If so, use
+your approved secret-transfer method instead. Do not paste the key into chat,
+Git, or a command argument.
 
 ```sh
-sudo install -o root -g root -m 0600 /secure/path/fullchain.pem /opt/starcity/shared/tls/fullchain.pem
-sudo install -o root -g root -m 0600 /secure/path/privkey.pem /opt/starcity/shared/tls/privkey.pem
+sudo tee /opt/starcity/shared/tls/fullchain.pem >/dev/null <<'STAR_CITY_CERT'
+PASTE THE ENTIRE CLOUDFLARE CERTIFICATE HERE, INCLUDING ITS BEGIN/END LINES
+STAR_CITY_CERT
+
+sudo tee /opt/starcity/shared/tls/privkey.pem >/dev/null <<'STAR_CITY_KEY'
+PASTE THE ENTIRE MATCHING PRIVATE KEY HERE, INCLUDING ITS BEGIN/END LINES
+STAR_CITY_KEY
+
+sudo chown root:root /opt/starcity/shared/tls/fullchain.pem /opt/starcity/shared/tls/privkey.pem
+sudo chmod 0644 /opt/starcity/shared/tls/fullchain.pem
+sudo chmod 0600 /opt/starcity/shared/tls/privkey.pem
+cert_public_key=$(sudo openssl x509 -in /opt/starcity/shared/tls/fullchain.pem -pubkey -noout | openssl pkey -pubin -outform DER | sha256sum | cut -d' ' -f1)
+private_public_key=$(sudo openssl pkey -in /opt/starcity/shared/tls/privkey.pem -pubout -outform DER | sha256sum | cut -d' ' -f1)
+test "$cert_public_key" = "$private_public_key" && echo 'Certificate and private key match.'
+
 sudo install -o root -g root -m 0644 /opt/starcity/app/deployment/ec2/nginx-uat.conf /etc/nginx/sites-available/starcity-uat
 sudo ln -sfn /etc/nginx/sites-available/starcity-uat /etc/nginx/sites-enabled/starcity-uat
 sudo nginx -t

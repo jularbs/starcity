@@ -1,5 +1,9 @@
+import path from 'node:path';
+
 const nextConfig = {
   /* config options here */
+  output: 'standalone',
+  outputFileTracingRoot: path.resolve(process.cwd(), '../..'),
   poweredByHeader: false,
   headers: () => {
     const defaultArr = ["'self'"];

@@ -61,6 +61,11 @@ pnpm --filter web build
 
 for app in manage web; do
   standalone="$APP_ROOT/apps/$app/.next/standalone/apps/$app"
+  if [[ ! -f "$standalone/server.js" ]]; then
+    echo "Next.js standalone server missing: $standalone/server.js" >&2
+    echo "Ensure apps/$app/next.config enables output: standalone and the monorepo tracing root." >&2
+    exit 1
+  fi
   mkdir -p "$standalone/.next"
   cp -a "$APP_ROOT/apps/$app/.next/static" "$standalone/.next/static"
   if [[ -d "$APP_ROOT/apps/$app/public" ]]; then
