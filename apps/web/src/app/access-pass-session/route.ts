@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token');
-  const response = NextResponse.redirect(new URL('/my-tickets', request.url));
+  const webOrigin =
+    process.env.NEXT_PUBLIC_WEB_DOMAIN || request.nextUrl.origin;
+  const response = NextResponse.redirect(new URL('/my-tickets', webOrigin));
 
   if (!token) {
     return response;
