@@ -15,6 +15,13 @@ const storeToken = async (
   return newToken;
 };
 
+const findActiveByToken = async (hashedToken: string) => {
+  return PasswordResetToken.findOne({
+    token: hashedToken,
+    expiresAt: { $gt: new Date() },
+  });
+};
+
 const consumeByToken = async (hashedToken: string) => {
   return PasswordResetToken.findOneAndDelete({
     token: hashedToken,
@@ -28,6 +35,7 @@ const removeAllForUser = async (userId: Types.ObjectId) => {
 
 export const passwordResetTokenRepository = {
   storeToken,
+  findActiveByToken,
   consumeByToken,
   removeAllForUser,
 };

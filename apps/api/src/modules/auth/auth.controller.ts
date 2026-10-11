@@ -365,7 +365,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   const hashedToken = hashPasswordResetToken(token);
   const resetToken =
-    await passwordResetTokenRepository.consumeByToken(hashedToken);
+    await passwordResetTokenRepository.findActiveByToken(hashedToken);
 
   if (!resetToken) {
     throw new AppError({
@@ -403,6 +403,16 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   const salt = generateSalt();
   const hashed_password = encryptPassword({ password: newPassword, salt });
+
+  const consumedToken =
+    await passwordResetTokenRepository.consumeByToken(hashedToken);
+  if (!consumedToken) {
+    throw new AppError({
+      message: 'Invalid or expired password reset link.',
+      code: 'INVALID_RESET_TOKEN',
+      statusCode: 400,
+    });
+  }
 
   await userService.updateById(user._id, {
     hashed_password,
