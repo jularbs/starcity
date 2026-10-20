@@ -58,6 +58,10 @@ const getBySalesId = async (salesId: Types.ObjectId) => {
   return accessPassRepository.findBySalesId(salesId);
 };
 
+const getBySalesIdForSync = async (salesId: Types.ObjectId) => {
+  return accessPassRepository.findBySalesIdForSync(salesId);
+};
+
 const getByAccessToken = async (accessToken: string) => {
   return accessPassRepository.findByAccessToken(accessToken);
 };
@@ -157,6 +161,7 @@ export const accessPassService = {
   removeBySalesId,
   removeByBeforeDate,
   getBySalesId,
+  getBySalesIdForSync,
   getByAccessToken,
   getInRange,
   getCountByBeforeDate,

@@ -231,7 +231,7 @@ const resyncSaleByRefId = async (id: string) => {
     });
   }
 
-  const accesspasses = await accessPassService.getBySalesId(sale._id);
+  const accesspasses = await accessPassService.getBySalesIdForSync(sale._id);
 
   await Promise.all(
     accesspasses.map(async (ap) => {

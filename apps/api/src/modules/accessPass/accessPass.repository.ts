@@ -37,6 +37,10 @@ const findBySalesId = async (salesId: Types.ObjectId) => {
     .select('ticketId QRcode accessToken -_id');
 };
 
+const findBySalesIdForSync = async (salesId: Types.ObjectId) => {
+  return AccessPass.find({ salesId });
+};
+
 const findByAccessToken = async (accessToken: string) => {
   return AccessPass.findOne({ accessToken })
     .populate('ticketId', 'name slug -_id')
@@ -55,6 +59,7 @@ export const accessPassRepository = {
   deleteBySalesId,
   deleteByBeforeDate,
   findBySalesId,
+  findBySalesIdForSync,
   findByAccessToken,
   findInRange,
   countByBeforeDate,
