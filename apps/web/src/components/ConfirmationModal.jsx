@@ -87,26 +87,16 @@ const ConfirmationModal = () => {
                 </div>
               </div>
             );
-        } else {
-          return (
-            <div className="text-center p-3">
-              <Info className="mx-auto mb-2 text-neutral-400" size={60} />
-              <div className="font-bold text-2xl">
-                Your transaction is pending.
-              </div>
-              <div className="text-xs px-4 leading-4 text-neutral-600">
-                You will receive an email regarding instructions on how to
-                complete your transaction. Tickets and acknowledgement receipt
-                will be sent once completed
-              </div>
-            </div>
-          );
         }
 
     return (
       <div className="text-center p-3">
-        <AlertCircle className="mx-auto mb-2 text-red-400" size={60} />
-        <div className="font-bold text-2xl pb-4">Transaction not found</div>
+        <Info className="mx-auto mb-2 text-neutral-400" size={60} />
+        <div className="font-bold text-2xl">Your transaction is pending.</div>
+        <div className="text-xs px-4 leading-4 text-neutral-600">
+          We are awaiting for payment confirmation on this transaction. Tickets
+          and acknowledgement receipt will be sent once completed
+        </div>
       </div>
     );
   };
