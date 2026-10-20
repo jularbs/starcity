@@ -15,7 +15,7 @@ type CreatePostInput = {
   excerpt: string;
   featuredImage: Express.Multer.File | null;
   status: string;
-  publishDate: Date;
+  publishDate?: Date;
 };
 
 type ListParams = {

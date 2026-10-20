@@ -30,7 +30,9 @@ export const create = async (req: AuthenticatedRequest, res: Response) => {
     excerpt,
     featuredImage: imageFile,
     status,
-    publishDate: fromZonedTime(publishDate, 'Asia/Manila'),
+    ...(publishDate !== undefined && {
+      publishDate: fromZonedTime(publishDate, 'Asia/Manila'),
+    }),
   });
   auditTrailService.create({
     action: 'Created new post',
@@ -82,8 +84,10 @@ export const update = async (req: Request, res: Response) => {
     content: content,
     slug: slug,
     ...(excerpt && { excerpt }),
-    status: status,
-    publishDate: fromZonedTime(publishDate, 'Asia/Manila'),
+    ...(status !== undefined && { status }),
+    ...(publishDate !== undefined && {
+      publishDate: fromZonedTime(publishDate, 'Asia/Manila'),
+    }),
     ...(imageFile && { featuredImage: imageFile }),
   };
   const result = await postService.updateById(

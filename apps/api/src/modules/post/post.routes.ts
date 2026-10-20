@@ -1,5 +1,6 @@
 import express from 'express';
 import { createPostSchema } from './dto/createPost.dto.js';
+import { updatePostSchema } from './dto/updatePost.dto.js';
 import { postIdParamsSchema } from './dto/postIdParams.dto.js';
 import { postSlugParamsSchema } from './dto/postSlugParams.dto.js';
 import { listPostSchema } from './dto/listPost.dto.js';
@@ -54,6 +55,7 @@ router.patch(
   validateRequest({
     file: UploadedImageFileSchema.optional(),
     params: postIdParamsSchema,
+    body: updatePostSchema,
   }),
   update,
 );

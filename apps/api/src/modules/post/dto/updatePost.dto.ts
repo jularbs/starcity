@@ -10,7 +10,7 @@ export const updatePostSchema = z
       .optional(),
     slug: z.string().min(1, 'Slug is required').optional(),
     content: z.string().min(1, 'Content is required').optional(),
-    status: z.enum(['draft', 'published']).default('draft').optional(),
+    status: z.enum(['draft', 'published']).optional(),
     publishDate: z.coerce.date().optional(),
   })
   .refine(
