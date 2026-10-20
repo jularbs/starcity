@@ -10,7 +10,7 @@ export const updatePromoSchema = z
       .string({ error: 'Code is required' })
       .min(1, { message: 'Code must not be empty' })
       .transform((val) => escapeHtml(val))
-      .refine((val) => /^[a-zA-ZÀ-ÿ\s'\-;&]+$/.test(val), {
+      .refine((val) => /^[a-zA-ZÀ-ÿ0-9'\-;&]+$/.test(val), {
         message: 'Promo Code contains invalid symbols',
       })
       .optional(),
