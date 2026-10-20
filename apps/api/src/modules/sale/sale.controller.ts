@@ -127,8 +127,8 @@ export const regenerateAccessPass = async (req: Request, res: Response) => {
 };
 
 export const resyncSaleByRefId = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { refid } = req.params;
 
-  await saleService.resyncSaleByRefId(id as string);
+  await saleService.resyncSaleByRefId(refid as string);
   return res.status(200).json(createSuccessResponse({}));
 };
