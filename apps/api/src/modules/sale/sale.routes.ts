@@ -67,10 +67,10 @@ router.get(
 );
 
 router.get(
-  '/v1/sale/resync/:id',
+  '/v1/sale/resync/:refid',
   requireSignin,
   authzMiddleware(ADMIN_ROLE, ECOMMERCE_MANAGER_ROLE),
-  validateRequest({ params: saleIdParamsSchema }),
+  validateRequest({ params: saleRefidParamsSchema }),
   resyncSaleByRefId,
 );
 
