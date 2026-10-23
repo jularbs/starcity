@@ -64,6 +64,7 @@ mv "$node_staging" "$NODE_ROOT"
 for executable in node npm npx corepack; do
   ln -sfn "$NODE_ROOT/bin/$executable" "/usr/local/bin/$executable"
 done
+export PATH="$NODE_ROOT/bin:/usr/local/bin:$PATH"
 hash -r
 npm install --global --prefix /usr/local "pnpm@$PNPM_VERSION" "pm2@$PM2_VERSION"
 usermod -aG docker ubuntu
@@ -80,6 +81,7 @@ systemctl is-active --quiet amazon-ssm-agent
 install -d -o ubuntu -g ubuntu -m 0750 /opt/starcity/app /opt/starcity/shared
 install -d -o root -g root -m 0700 /opt/starcity/shared/tls
 
+[[ "$(command -v node)" == "$NODE_ROOT/bin/node" ]] || { echo 'Pinned Node.js is not first on PATH.' >&2; exit 1; }
 [[ "$(node --version)" == "v$NODE_VERSION" ]] || { echo 'Node installation version check failed.' >&2; exit 1; }
 [[ "$(pnpm --version)" == "$PNPM_VERSION" ]] || { echo 'pnpm installation version check failed.' >&2; exit 1; }
 [[ "$(pm2 --version)" == "$PM2_VERSION" ]] || { echo 'PM2 installation version check failed.' >&2; exit 1; }
