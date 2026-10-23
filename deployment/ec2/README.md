@@ -23,12 +23,17 @@ host installer:
 #!/bin/bash
 set -eu
 region=ap-southeast-1
-curl --fail --silent --show-error --retry 5 \
-  "https://s3.$region.amazonaws.com/amazon-ssm-$region/latest/debian_amd64/amazon-ssm-agent.deb" \
-  -o /tmp/amazon-ssm-agent.deb
-dpkg -i /tmp/amazon-ssm-agent.deb
-rm -f /tmp/amazon-ssm-agent.deb
-systemctl enable --now amazon-ssm-agent
+if command -v snap >/dev/null 2>&1 && snap list amazon-ssm-agent >/dev/null 2>&1; then
+  snap start --enable amazon-ssm-agent
+  systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service
+else
+  curl --fail --silent --show-error --retry 5 \
+    "https://s3.$region.amazonaws.com/amazon-ssm-$region/latest/debian_amd64/amazon-ssm-agent.deb" \
+    -o /tmp/amazon-ssm-agent.deb
+  dpkg -i /tmp/amazon-ssm-agent.deb
+  rm -f /tmp/amazon-ssm-agent.deb
+  systemctl enable --now amazon-ssm-agent.service
+fi
 ```
 
 Wait until Systems Manager reports the instance **Online**. The installer also

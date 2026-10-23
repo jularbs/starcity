@@ -69,15 +69,21 @@ hash -r
 npm install --global --prefix /usr/local "pnpm@$PNPM_VERSION" "pm2@$PM2_VERSION"
 usermod -aG docker ubuntu
 
-ssm_agent_deb=$(mktemp)
-curl --fail --silent --show-error --retry 5 \
-  https://s3.ap-southeast-1.amazonaws.com/amazon-ssm-ap-southeast-1/latest/debian_amd64/amazon-ssm-agent.deb \
-  -o "$ssm_agent_deb"
-dpkg -i "$ssm_agent_deb"
-rm -f "$ssm_agent_deb"
+if command -v snap >/dev/null 2>&1 && snap list amazon-ssm-agent >/dev/null 2>&1; then
+  snap start --enable amazon-ssm-agent
+  ssm_agent_unit='snap.amazon-ssm-agent.amazon-ssm-agent.service'
+else
+  ssm_agent_deb=$(mktemp)
+  curl --fail --silent --show-error --retry 5 \
+    https://s3.ap-southeast-1.amazonaws.com/amazon-ssm-ap-southeast-1/latest/debian_amd64/amazon-ssm-agent.deb \
+    -o "$ssm_agent_deb"
+  dpkg -i "$ssm_agent_deb"
+  rm -f "$ssm_agent_deb"
+  ssm_agent_unit='amazon-ssm-agent.service'
+fi
 
-systemctl enable --now docker nginx amazon-ssm-agent
-systemctl is-active --quiet amazon-ssm-agent
+systemctl enable --now docker nginx "$ssm_agent_unit"
+systemctl is-active --quiet "$ssm_agent_unit"
 install -d -o ubuntu -g ubuntu -m 0750 /opt/starcity/app /opt/starcity/shared
 install -d -o root -g root -m 0700 /opt/starcity/shared/tls
 
