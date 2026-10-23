@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 APP_ROOT=${APP_ROOT:-/opt/starcity/app}
 export APP_ROOT
-  bash -lc 'cd /opt/starcity/app && bash deployment/ec2/update-develop.sh'if [[ ! -r "$APP_ROOT/.nvmrc" ]]; then
+if [[ ! -r "$APP_ROOT/.nvmrc" ]]; then
   echo "Node version file is missing: $APP_ROOT/.nvmrc" >&2
   exit 2
 fi
