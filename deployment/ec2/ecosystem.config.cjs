@@ -2,12 +2,13 @@ const path = require('node:path');
 
 const appRoot =
   process.env.STARCITY_APP_ROOT || path.resolve(__dirname, '../..');
+const nodeInterpreter = process.env.STARCITY_NODE_BIN || process.execPath;
 
 const app = (name, cwd, script, port) => ({
   name: `starcity-${name}`,
   cwd,
   script,
-  interpreter: process.execPath,
+  interpreter: nodeInterpreter,
   exec_mode: 'fork',
   instances: 1,
   autorestart: true,

@@ -8,7 +8,12 @@ if [[ ! -r "$APP_ROOT/.nvmrc" ]]; then
   exit 2
 fi
 EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
-NODE_BIN=$(command -v node || true)
+PINNED_NODE_BIN="/opt/node-v$EXPECTED_NODE_VERSION/bin/node"
+if [[ -x "$PINNED_NODE_BIN" ]]; then
+  NODE_BIN="$PINNED_NODE_BIN"
+else
+  NODE_BIN=$(command -v node || true)
+fi
 if [[ -z "$NODE_BIN" || ! -x "$NODE_BIN" ]]; then
   echo 'Node.js is not available on PATH. Run deployment/ec2/install-host.sh as root.' >&2
   exit 2

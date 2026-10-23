@@ -20,13 +20,19 @@ if [[ ! -r "$APP_ROOT/.nvmrc" ]]; then
   exit 2
 fi
 EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
-NODE_BIN=$(command -v node || true)
+PINNED_NODE_BIN="/opt/node-v$EXPECTED_NODE_VERSION/bin/node"
+if [[ -x "$PINNED_NODE_BIN" ]]; then
+  NODE_BIN="$PINNED_NODE_BIN"
+else
+  NODE_BIN=$(command -v node || true)
+fi
 if [[ -z "$NODE_BIN" || ! -x "$NODE_BIN" ]]; then
   echo 'Node.js is not available on PATH. Run deployment/ec2/install-host.sh as root.' >&2
   exit 2
 fi
 NODE_BIN=$(readlink -f "$NODE_BIN")
 export PATH="$(dirname "$NODE_BIN"):/usr/local/bin:$PATH"
+export STARCITY_NODE_BIN="$NODE_BIN"
 if [[ ! -r "$RUNTIME_ENV_FILE" ]]; then
   echo "Runtime env file is missing or unreadable: $RUNTIME_ENV_FILE" >&2
   exit 2

@@ -172,8 +172,20 @@ The deploy script validates exact Node, pnpm, and PM2 versions before changing
 anything. It links the protected env file to the ignored `apps/api/.env`,
 starts/waits for databases, installs the frozen workspace lockfile, builds
 API/manage/web, replaces staged Next.js standalone assets, and reloads PM2.
-The PM2 app definitions use the same Node executable running PM2. Repeated
-deploys replace static/public assets rather than nesting stale copies.
+The deploy passes its verified Node executable to each PM2 app explicitly, so
+the applications use the pinned runtime even if the PM2 daemon was started by
+another Node installation. Repeated deploys replace static/public assets
+rather than nesting stale copies. Verify runtime processes with:
+
+```sh
+for app in starcity-api starcity-manage starcity-web; do
+  pid=$(pm2 pid "$app")
+  printf '%s: ' "$app"
+  readlink -f "/proc/$pid/exe"
+done
+```
+
+Each path should resolve under `/opt/node-v24.22.1/bin/node`.
 `NEXT_PUBLIC_*` values are compiled into the Next.js builds; rerun deploy after
 changing public URLs. API, manage, and web listen on loopback ports 8000, 3000,
 and 3001; Nginx is the only public entry point.
