@@ -3,16 +3,20 @@ set -Eeuo pipefail
 
 APP_ROOT=${APP_ROOT:-/opt/starcity/app}
 export APP_ROOT
-EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
-NODE_ROOT="/opt/node-v$EXPECTED_NODE_VERSION"
-
-if [[ ! -x "$NODE_ROOT/bin/node" ]]; then
-  echo "Pinned Node.js binary is missing: $NODE_ROOT/bin/node. Run deployment/ec2/install-host.sh as root." >&2
+if [[ ! -r "$APP_ROOT/.nvmrc" ]]; then
+  echo "Node version file is missing: $APP_ROOT/.nvmrc" >&2
   exit 2
 fi
-export PATH="$NODE_ROOT/bin:/usr/local/bin:$PATH"
+EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
+NODE_BIN=$(command -v node || true)
+if [[ -z "$NODE_BIN" || ! -x "$NODE_BIN" ]]; then
+  echo 'Node.js is not available on PATH. Run deployment/ec2/install-host.sh as root.' >&2
+  exit 2
+fi
+NODE_BIN=$(readlink -f "$NODE_BIN")
+export PATH="$(dirname "$NODE_BIN"):/usr/local/bin:$PATH"
 if [[ "$(node --version)" != "v$EXPECTED_NODE_VERSION" ]]; then
-  echo "Pinned Node.js v$EXPECTED_NODE_VERSION did not resolve first on PATH; found $(node --version) at $(command -v node)." >&2
+  echo "Node.js v$EXPECTED_NODE_VERSION is required; found $(node --version) at $(command -v node). Run deployment/ec2/install-host.sh as root." >&2
   exit 2
 fi
 

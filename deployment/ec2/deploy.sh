@@ -4,8 +4,6 @@ umask 077
 
 APP_ROOT=${APP_ROOT:-/opt/starcity/app}
 RUNTIME_ENV_FILE=${RUNTIME_ENV_FILE:-/opt/starcity/shared/runtime.env}
-EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
-NODE_ROOT="/opt/node-v$EXPECTED_NODE_VERSION"
 EXPECTED_PNPM_VERSION='11.12.0'
 EXPECTED_PM2_VERSION='6.0.14'
 
@@ -17,11 +15,18 @@ if [[ ! -f "$APP_ROOT/pnpm-workspace.yaml" || ! -f "$APP_ROOT/pnpm-lock.yaml" ]]
   echo 'APP_ROOT must be the repository checkout.' >&2
   exit 2
 fi
-if [[ ! -x "$NODE_ROOT/bin/node" ]]; then
-  echo "Pinned Node.js binary is missing: $NODE_ROOT/bin/node. Run deployment/ec2/install-host.sh as root." >&2
+if [[ ! -r "$APP_ROOT/.nvmrc" ]]; then
+  echo "Node version file is missing: $APP_ROOT/.nvmrc" >&2
   exit 2
 fi
-export PATH="$NODE_ROOT/bin:/usr/local/bin:$PATH"
+EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
+NODE_BIN=$(command -v node || true)
+if [[ -z "$NODE_BIN" || ! -x "$NODE_BIN" ]]; then
+  echo 'Node.js is not available on PATH. Run deployment/ec2/install-host.sh as root.' >&2
+  exit 2
+fi
+NODE_BIN=$(readlink -f "$NODE_BIN")
+export PATH="$(dirname "$NODE_BIN"):/usr/local/bin:$PATH"
 if [[ ! -r "$RUNTIME_ENV_FILE" ]]; then
   echo "Runtime env file is missing or unreadable: $RUNTIME_ENV_FILE" >&2
   exit 2
