@@ -4,6 +4,9 @@ umask 077
 
 APP_ROOT=${APP_ROOT:-/opt/starcity/app}
 RUNTIME_ENV_FILE=${RUNTIME_ENV_FILE:-/opt/starcity/shared/runtime.env}
+EXPECTED_NODE_VERSION=$(tr -d '[:space:]' < "$APP_ROOT/.nvmrc")
+EXPECTED_PNPM_VERSION='11.12.0'
+EXPECTED_PM2_VERSION='6.0.14'
 
 if [[ "$(id -u)" -eq 0 ]]; then
   echo 'Run deployment as the non-root ubuntu user; do not run PM2 as root.' >&2
@@ -17,8 +20,16 @@ if [[ ! -r "$RUNTIME_ENV_FILE" ]]; then
   echo "Runtime env file is missing or unreadable: $RUNTIME_ENV_FILE" >&2
   exit 2
 fi
-if [[ "$(node --version)" != v24.* ]]; then
-  echo "Node.js 24 is required; found $(node --version)." >&2
+if [[ "$(node --version)" != "v$EXPECTED_NODE_VERSION" ]]; then
+  echo "Node.js v$EXPECTED_NODE_VERSION is required; found $(node --version). Run deployment/ec2/install-host.sh as root." >&2
+  exit 2
+fi
+if [[ "$(pnpm --version)" != "$EXPECTED_PNPM_VERSION" ]]; then
+  echo "pnpm $EXPECTED_PNPM_VERSION is required; found $(pnpm --version). Run deployment/ec2/install-host.sh as root." >&2
+  exit 2
+fi
+if [[ "$(pm2 --version)" != "$EXPECTED_PM2_VERSION" ]]; then
+  echo "PM2 $EXPECTED_PM2_VERSION is required; found $(pm2 --version). Run deployment/ec2/install-host.sh as root." >&2
   exit 2
 fi
 for command in pnpm pm2 docker curl; do
@@ -67,6 +78,7 @@ for app in manage web; do
     exit 1
   fi
   mkdir -p "$standalone/.next"
+  rm -rf "$standalone/.next/static" "$standalone/public"
   cp -a "$APP_ROOT/apps/$app/.next/static" "$standalone/.next/static"
   if [[ -d "$APP_ROOT/apps/$app/public" ]]; then
     cp -a "$APP_ROOT/apps/$app/public" "$standalone/public"

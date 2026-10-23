@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 APP_ROOT=${APP_ROOT:-/opt/starcity/app}
+export APP_ROOT
 
 if [[ "$(id -u)" -eq 0 ]]; then
   echo 'Run as the non-root ubuntu deployment user.' >&2

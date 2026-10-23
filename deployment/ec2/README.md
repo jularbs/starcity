@@ -49,9 +49,14 @@ After completing step 2, run the installer by absolute path from any directory:
 sudo bash /opt/starcity/app/deployment/ec2/install-host.sh
 ```
 
-It installs Git, Node 24, pnpm 11.12.0, PM2, Docker/Compose, Nginx, and SSM
-Agent. The Ubuntu `ubuntu` account is added to the Docker group; reconnect your
-SSM session before using Docker as `ubuntu`.
+It installs Git, the exact Node version recorded in the repository's `.nvmrc`
+(currently 24.22.1), pnpm 11.12.0, PM2 6.0.14, Docker/Compose, Nginx, and SSM
+Agent. Node is downloaded from nodejs.org and SHA-256 verified before install;
+the installer refuses an unrecognized `.nvmrc` version until its verified
+archive checksum is deliberately updated. The Ubuntu `ubuntu` account is added
+to the Docker group; reconnect your SSM session before using Docker as `ubuntu`.
+When intentionally changing `.nvmrc`, update the version and official Linux
+x64 checksum together in `install-host.sh`, run the host installer, then deploy.
 
 Create directories:
 
@@ -158,7 +163,15 @@ Run as non-root `ubuntu`:
 sudo -iu ubuntu bash -lc 'cd /opt/starcity/app && bash deployment/ec2/deploy.sh'
 ```
 
-The deploy script validates prerequisites, links the protected env file to the ignored `apps/api/.env`, starts/waits for databases, installs the frozen workspace lockfile, builds API/manage/web, stages Next.js standalone assets, and reloads PM2. `NEXT_PUBLIC_*` values are compiled into the Next.js builds; rerun deploy after changing public URLs. API, manage, and web listen on loopback ports 8000, 3000, and 3001; Nginx is the only public entry point.
+The deploy script validates exact Node, pnpm, and PM2 versions before changing
+anything. It links the protected env file to the ignored `apps/api/.env`,
+starts/waits for databases, installs the frozen workspace lockfile, builds
+API/manage/web, replaces staged Next.js standalone assets, and reloads PM2.
+The PM2 app definitions use the same Node executable running PM2. Repeated
+deploys replace static/public assets rather than nesting stale copies.
+`NEXT_PUBLIC_*` values are compiled into the Next.js builds; rerun deploy after
+changing public URLs. API, manage, and web listen on loopback ports 8000, 3000,
+and 3001; Nginx is the only public entry point.
 
 Check local health and logs:
 

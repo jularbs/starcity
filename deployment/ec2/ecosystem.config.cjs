@@ -7,7 +7,7 @@ const app = (name, cwd, script, port) => ({
   name: `starcity-${name}`,
   cwd,
   script,
-  interpreter: 'node',
+  interpreter: process.execPath,
   exec_mode: 'fork',
   instances: 1,
   autorestart: true,
